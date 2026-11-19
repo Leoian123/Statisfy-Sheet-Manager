@@ -1,0 +1,153 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STATISFY Sheet Manager</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+
+<header class="topbar">
+  <div class="brand"><b>STATISFY</b><span>Gestionale schede · mockup</span></div>
+  <label class="row small" for="char-select" id="char-select-wrap">
+    <span class="label">Personaggio</span>
+    <select class="input" id="char-select" style="width:auto"></select>
+  </label>
+  <div class="seg" role="group" aria-label="Ruolo">
+    <button type="button" data-role="giocatore" aria-pressed="true">Giocatore</button>
+    <button type="button" data-role="master" aria-pressed="false">Master</button>
+  </div>
+  <div class="seg" role="group" aria-label="Tema">
+    <button type="button" data-theme-btn="dark" aria-pressed="false" title="Tema scuro">Scuro</button>
+    <button type="button" data-theme-btn="light" aria-pressed="false" title="Tema chiaro">Chiaro</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="nav" id="nav" aria-label="Sezioni">
+    <a href="#scheda" data-route="scheda">Scheda personaggio</a>
+    <a href="#crea" data-route="crea">Creazione guidata</a>
+    <a href="#levelup" data-route="levelup">Level up</a>
+    <a href="#combattimento" data-route="combattimento">Combattimento</a>
+    <div class="nav-sep"></div>
+    <a href="#master" data-route="master">Area Master <span class="lock" id="master-lock">MASTER</span></a>
+    <div class="nav-sep"></div>
+    <p class="nav-note footnote">Prototipo di design. Dati di esempio dalla scheda Excel di Kelvin; PNG, pesi e stati di combattimento sono inventati. Le modifiche non vengono salvate.</p>
+  </nav>
+  <main id="view" tabindex="-1"></main>
+</div>
+
+<script src="rules.js" charset="utf-8"></script>
+<script src="data.js" charset="utf-8"></script>
+<script src="screens/scheda.js" charset="utf-8"></script>
+<script src="screens/crea.js" charset="utf-8"></script>
+<script src="screens/levelup.js" charset="utf-8"></script>
+<script src="screens/master.js" charset="utf-8"></script>
+<script>
+(function () {
+  const S = window.STATISFY;
+  const ROUTES = ["scheda", "crea", "levelup", "combattimento", "master"];
+
+  // Risorse correnti: se mancano, partono dal massimo
+  for (const c of S.data.characters) {
+    if (!c.resources) {
+      const d = S.rules.derived(c);
+      c.resources = { hp: d.hp, mp: d.mp, sp: d.sp };
+    }
+  }
+
+  const state = {
+    role: "giocatore",
+    charId: "kelvin",
+    data: S.data,
+    rules: S.rules,
+    ui: S.ui,
+    get char() { return S.data.characters.find((c) => c.id === state.charId) || S.data.characters[0]; },
+    setChar(id) { state.charId = id; renderCharSelect(); render(); },
+    go(route) { location.hash = route; },
+    rerender() { render(); },
+  };
+  S.state = state;
+
+  const view = document.getElementById("view");
+  const charSelect = document.getElementById("char-select");
+
+  function visibleChars() {
+    return state.role === "master" ? S.data.characters : S.data.characters.filter((c) => c.owner === state.char.owner || c.id === state.charId);
+  }
+  function renderCharSelect() {
+    charSelect.innerHTML = visibleChars()
+      .map((c) => `<option value="${c.id}" ${c.id === state.charId ? "selected" : ""}>${S.ui.esc(c.name)} · Lv ${c.level}</option>`)
+      .join("");
+  }
+  charSelect.addEventListener("change", () => state.setChar(charSelect.value));
+
+  document.querySelectorAll("[data-role]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.role = b.dataset.role;
+      if (state.role === "giocatore") state.charId = "kelvin";
+      document.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      document.getElementById("master-lock").hidden = state.role === "master";
+      renderCharSelect();
+      render();
+    })
+  );
+
+  function currentTheme() {
+    const t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  function syncThemeButtons() {
+    const t = currentTheme();
+    document.querySelectorAll("[data-theme-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeBtn === t)));
+  }
+  document.querySelectorAll("[data-theme-btn]").forEach((b) =>
+    b.addEventListener("click", () => {
+      document.documentElement.dataset.theme = b.dataset.themeBtn;
+      try { localStorage.setItem("statisfy-theme", b.dataset.themeBtn); } catch (e) {}
+      syncThemeButtons();
+    })
+  );
+  try { const saved = localStorage.getItem("statisfy-theme"); if (saved) document.documentElement.dataset.theme = saved; } catch (e) {}
+  syncThemeButtons();
+
+  function route() {
+    const r = location.hash.replace("#", "");
+    return ROUTES.includes(r) ? r : "scheda";
+  }
+
+  function render() {
+    const r = route();
+    document.querySelectorAll("#nav a[data-route]").forEach((a) => {
+      if (a.dataset.route === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    // Su mobile la nav è una riga scorrevole: porta in vista la voce attiva
+    const active = document.querySelector("#nav a[aria-current]");
+    const nav = document.getElementById("nav");
+    if (active && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = active.offsetLeft - 16;
+    if (r === "master" && state.role !== "master") {
+      view.innerHTML = S.ui.win("Accesso negato",
+        `<div class="sysmsg"><span class="tag">[SISTEMA]</span><span>Area riservata al Master.</span><span>Passa al ruolo Master dalla barra in alto per vederla.</span></div>
+         <div class="row"><button class="btn primary" type="button" id="to-master">Passa a Master</button></div>`);
+      view.querySelector("#to-master").addEventListener("click", () => document.querySelector('[data-role="master"]').click());
+      return;
+    }
+    // Ogni schermata parte da un contenitore pulito: niente handler rimasti dalla precedente
+    for (const ev of ["onclick", "onkeydown", "oninput", "onchange", "onsubmit"]) view[ev] = null;
+    const screen = S.screens[r];
+    if (!screen) { view.innerHTML = S.ui.win("Schermata mancante", `<p class="muted">La schermata "${r}" non è ancora disponibile.</p>`); return; }
+    try {
+      screen.render(view, state);
+    } catch (err) {
+      console.error(err);
+      view.innerHTML = S.ui.win("Errore", `<p class="muted">${S.ui.esc(err.message)}</p>`);
+    }
+  }
+
+  window.addEventListener("hashchange", () => { render(); view.focus({ preventScroll: true }); });
+  document.getElementById("master-lock").hidden = false;
+  renderCharSelect();
+  render();
+})();
+</script>

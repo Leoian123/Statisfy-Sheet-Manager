@@ -1,0 +1,246 @@
+# STATISFY - CREAZIONE DEL PERSONAGGIO
+## Guida per l'Inizio del Gioco
+
+---
+
+## PROCESSO DI CREAZIONE
+
+### SEQUENZA DI CREAZIONE
+
+1. **Nome del Personaggio**
+2. **Scelta della Classe Base**
+3. **Distribuzione delle Statistiche**
+4. **Conferma e Ingresso nel Mondo**
+
+---
+
+## STEP 1: NOME DEL PERSONAGGIO
+
+### SCELTA DEL NOME
+
+INSERISCI IL NOME DEL TUO PERSONAGGIO:
+[_________________________]
+
+REGOLE:
+- Minimo 3 caratteri, massimo 15
+- Solo lettere e numeri (no simboli speciali)
+- Deve essere unico nel server
+- Non può essere cambiato dopo la creazione
+- Rispetta le linee guida della community
+
+**SUGGERIMENTI:**
+- Il nome sarà visibile in tutte le classifiche mondiali
+- Altri giocatori lo vedranno nei forum e nel gioco
+- Scegli qualcosa che ti rappresenti a lungo termine
+- Evita riferimenti al mondo reale (per immersione)
+
+---
+
+## STEP 2: CLASSE BASE
+
+### CLASSI DISPONIBILI
+
+Tutte le classi partono dallo stesso livello di potenza. La differenza sta negli strumenti iniziali e nelle abilità che sbloccherai crescendo.
+
+#### GUERRIERO
+
+DESCRIZIONE: Maestro del combattimento fisico e delle armi
+FOCUS: Danno corpo a corpo, resistenza, protezione alleati
+
+ABILITÀ INIZIALE: "Attacco Possente"
+- Costo: 15 Stamina
+- Effetto: +50% danno fisico
+- Cooldown: 3 turni
+
+EQUIPAGGIAMENTO INIZIALE:
+- Spada di Ferro (Req: 15 STR)
+- Armatura di Cuoio Rinforzato (+5 Difesa)
+- Scudo di Legno (Blocco: 20%)
+
+#### MAGO
+
+DESCRIZIONE: Manipolatore delle forze arcane e degli elementi
+FOCUS: Danno magico a distanza, controllo del campo di battaglia
+
+ABILITÀ INIZIALE: "Dardo Magico"
+- Costo: 20 Mana
+- Effetto: Danno magico puro (sempre colpisce)
+- Cooldown: 1 turno
+
+EQUIPAGGIAMENTO INIZIALE:
+- Bastone di Frassino (Req: 15 INT, +10% Mana)
+- Vesti di Stoffa (+3 Rigenerazione Mana)
+- Grimorio Basilare (Contiene 1 incantesimo, Dardo Magico, e ha 2 slot liberi per impararne rapidamente altri 2)
+
+#### LADRO
+
+DESCRIZIONE: Specialista della furtività e degli attacchi precisi
+FOCUS: Attacchi critici, evasione, abilità utilitarie
+
+ABILITÀ INIZIALE: "Colpo Furtivo"
+- Costo: 10 Stamina
+- Effetto: +100% probabilità critico se non visto
+- Cooldown: 2 turni
+
+EQUIPAGGIAMENTO INIZIALE:
+- Daga Affilata (Req: 15 DEX, +5% Critico)
+- Armatura di Cuoio Morbido (+10% Evasione)
+- Kit da Scasso (Strumenti per serrature e trappole)
+
+#### CHIERICO
+
+DESCRIZIONE: Servitore delle divinità con poteri di guarigione
+FOCUS: Supporto di gruppo, guarigione, benedizioni
+
+ABILITÀ INIZIALE: "Cura Minore"
+- Costo: 25 Mana
+- Effetto: Ripristina 40-60 HP
+- Cooldown: 1 turno
+
+EQUIPAGGIAMENTO INIZIALE:
+- Mazza Benedetta (Req: 12 STR, +10% vs Non-morti)
+- Vesti Sacre (+5 Difesa Magica)
+- Simbolo Sacro (Focus per incantesimi divini)
+
+**NOTA IMPORTANTE:**
+Le classi base sono solo il punto di partenza. Attraverso le tue azioni e scelte potrai:
+- Sbloccare classi segrete rare
+- Combinare elementi di classi diverse
+- Sviluppare specializzazioni uniche
+- Ottenere poteri tramite titoli e quest
+
+---
+
+## STEP 3: DISTRIBUZIONE STATISTICHE
+
+### STATISTICHE BASE
+
+Ogni statistica parte da **10 punti**. Hai **20 punti aggiuntivi** da distribuire come preferisci.
+
+Si possono anche togliere punti a una statistica per darli a un'altra, senza limite: una statistica può scendere fino a 1. Sotto 10 scattano penalità a scaglioni, descritte e non in percentuale:
+
+- 7-9: fastidi. Ciò che quella statistica governa riesce peggio del normale.
+- 4-6: handicap evidente. Non si regge un'arma vera, ci si ammala facilmente, si impara a fatica, secondo la statistica.
+- 1-3: invalidante. Quell'aspetto del personaggio è di fatto inutilizzabile.
+
+In ogni caso non si soddisfano i requisiti degli oggetti che chiedono quella statistica.
+
+STATISTICHE ATTUALI:
+
+FORZA (STR): 10 [+] [-]
+- Influenza: Danno fisico, requisiti armi, capacità carico
+- Importante per: Guerrieri, combattenti corpo a corpo
+
+DESTREZZA (DEX): 10 [+] [-]
+- Influenza: Velocità attacco, precisione, evasione
+- Importante per: Ladri, arcieri, combattenti agili
+
+VITALITÀ (VIT): 10 [+] [-]
+- Influenza: Punti vita, resistenze, rigenerazione
+- Importante per: Tutti (sopravvivenza generale)
+
+INTELLIGENZA (INT): 10 [+] [-]
+- Influenza: Mana, potenza magica, apprendimento
+- Importante per: Maghi, Chierici, crafting
+
+PUNTI RIMANENTI: 20
+
+### CONSIGLI PER LA DISTRIBUZIONE
+
+#### BUILD BILANCIATE (Raccomandato per principianti)
+
+GUERRIERO EQUILIBRATO:
+- STR: 15 (+5) - Danno e requisiti armi
+- VIT: 15 (+5) - Sopravvivenza
+- DEX: 15 (+5) - Precisione e velocità
+- INT: 15 (+5) - Versatilità
+
+MAGO VERSATILE:
+- INT: 17 (+7) - Focus principale
+- VIT: 13 (+3) - Sopravvivenza base
+- DEX: 12 (+2) - Velocità casting
+- STR: 8 (-2) - Meno importante
+
+#### BUILD SPECIALIZZATE (Per giocatori esperti)
+
+GUERRIERO DEVASTATORE:
+- STR: 20 (+10) - Massimo danno
+- VIT: 15 (+5) - Sopravvivenza
+- DEX: 10 (0) - Standard
+- INT: 5 (-5) - Minimo
+
+MAGO GLASS CANNON:
+- INT: 25 (+15) - Potenza magica suprema
+- VIT: 8 (-2) - Sacrifica sopravvivenza
+- DEX: 12 (+2) - Velocità casting
+- STR: 5 (-5) - Irrilevante
+
+**AVVERTIMENTO:**
+Build estreme possono essere potenti ma rischiose. I punti sotto 10 in una statistica creano penalità significative.
+
+---
+
+## STEP 4: CONFERMA E INGRESSO
+
+### RIEPILOGO FINALE
+
+RIEPILOGO PERSONAGGIO:
+
+Nome: [NOME_SCELTO]
+Classe: [CLASSE_SCELTA]
+
+Statistiche:
+- Forza: [VALORE]
+- Destrezza: [VALORE]
+- Vitalità: [VALORE]
+- Intelligenza: [VALORE]
+
+Abilità Iniziale: [ABILITÀ_CLASSE]
+Equipaggiamento: [LISTA_EQUIPAGGIAMENTO]
+
+ATTENZIONE: Una volta confermato, nome e stats iniziali
+non potranno essere modificati!
+
+[CONFERMA] [TORNA INDIETRO]
+
+### PRIMO INGRESSO IN AETHERMOOR
+
+Dopo aver confermato, il giocatore:
+
+1. **Materializzazione**: Appare nel regno di partenza scelto. La scelta è libera; per chi sceglie Valeria, il punto d'arrivo è la Valle di Lumengarde, descritta qui
+2. **Tutorial Integrato**: Prime interazioni con PNG guide
+3. **Ambientazione**: Scoperta del mondo fantasy senza riferimenti esterni
+4. **Prime Quest**: Missioni introduttive per apprendere le meccaniche
+
+**PRIMO PNG INCONTRATO:**
+**Elena la Saggia** - Anziana del villaggio che spiega le basi:
+- Come muoversi e interagire
+- Sistema di combattimento
+- Economia e commercio locale
+- Prime quest disponibili
+
+---
+
+## CONSIGLI STRATEGICI
+
+### PER NUOVI GIOCATORI
+1. **Non temere gli errori**: Il gioco premia la sperimentazione
+2. **Scegli quello che ti diverte**: La passione è più importante dell'ottimizzazione
+3. **Interagisci con tutti**: Ogni PNG può nascondere segreti importanti
+4. **Non avere fretta**: Statisfy premia la pazienza e l'osservazione
+
+### PER VETERANI DI ALTRI GIOCHI
+1. **Dimentica le meta conosciute**: Statisfy ha meccaniche uniche
+2. **Ogni scelta conta**: Non esistono respec facili o reset
+3. **La community è tutto**: L'isolamento limita le opportunità
+4. **Pensa a lungo termine**: La progressione richiede anni, non mesi
+
+### ELEMENTI DA RICORDARE
+- **Nome permanente**: Sarà la tua identità per anni
+- **Classe evolutiva**: È solo l'inizio, non la destinazione
+- **Stats iniziali**: Importanti ma non definitive
+- **Mondo vivo**: Le tue azioni hanno conseguenze durature
+
+---
+
+*Benvenuto in Aethermoor, dove il tuo destino è nelle tue mani e ogni scelta plasma il mondo attorno a te.*

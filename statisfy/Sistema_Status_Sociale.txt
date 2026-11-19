@@ -1,0 +1,180 @@
+# SISTEMA STATUS SOCIALE - STATISFY
+## Titoli e Reputazione
+
+---
+
+## SEZIONE 1: SISTEMA TITOLI
+
+### STRUTTURA TITOLO
+
+```
+NOME: [Evocativo]
+RARITÀ: [Comune → Divino]
+EFFETTI: Stats Bonus | Abilità Attiva | Passiva | Stats Sbloccate
+REQUISITI: Azione Scatenante | Contesto | Testimoni
+```
+
+### SCALA RARITÀ
+
+| Rarità | Acquisizione | Esempi |
+|--------|--------------|--------|
+| **COMUNE** | Impegno normale | "Primo Sangue", "Benefattore" |
+| **NON COMUNE** | Dedizione specifica | "Cacciatore di Tesori", "Maestro del Duello" |
+| **RARO** | Imprese notevoli | "Ammazzadraghi", "Pacificatore" |
+| **EPICO** | Gesta che cambiano mondo | "Salvatore di Regni", "Risvegliatore" |
+| **LEGGENDARIO** | Solo 1-2 per server | "Primo tra i Mortali", "Creatore di Razze" |
+| **MITICO** | Trascende mortalità | "Uccisore di Dei", "Architetto del Destino" |
+| **DIVINO** | Intervento diretto divinità | Variabili |
+
+### ESEMPI DETTAGLIATI
+
+| Titolo | Rarità | Acquisizione | Effetti |
+|--------|--------|--------------|---------|
+| Primo Sangue | Comune | Primo omicidio intelligente | +2 STR, +1 VIT, +5% critici vs umanoidi |
+| Ammazzadraghi | Raro | Drago 300+ anni da solo | +10 STR/VIT, +5 tutte, 50% resist fuoco/freddo |
+| Salvatore di Regni | Epico | Salva regno da distruzione | +15 tutte, PNG si inginocchiano |
+| Primo tra Mortali | Leggendario | Livello 500 primo nel server | +25 tutte, raddoppia regen, invuln 10s/giorno |
+
+### DINAMICHE
+
+**Contraddittori:** "Santo" e "Signore Tenebre" non coesistono
+
+**Evoluzione:** "Ammazzadraghi" → "Flagello dei Draghi" (10+ draghi)
+
+**Segreti:** Si rivelano solo in momenti specifici
+
+---
+
+## SEZIONE 2: ARCHITETTURA REPUTAZIONE
+
+### MODELLO PIRAMIDALE
+
+```
+                FAMA MONDIALE (1-3)
+               ↗              ↖
+      REGNI/IMPERI        DIVINITÀ MAGGIORI
+     ↗          ↖        ↗              ↖
+CITTÀ-STATO  ORGANIZZAZIONI  CULTI    CREATURE
+    ↗              ↖           ↗            ↖
+GRUPPI LOCALI      PNG INDIVIDUALI      SPIRITI
+```
+
+---
+
+## SEZIONE 3: LIVELLI REPUTAZIONE
+
+### LIVELLO 1: PNG INDIVIDUALE (-10 a +10)
+
+| Valore | Status | Effetti |
+|--------|--------|---------|
+| -10 | ODIO MORTALE | Attacca a vista, sabotaggio |
+| -8/-9 | OSTILITÀ | Prezzi +200%, servizi negati |
+| -5/-7 | DIFFIDENZA | Prezzi +100%, info incomplete |
+| -2/-4 | SOSPETTO | Prezzi +50%, verifica tutto |
+| -1 | INDIFFERENZA NEG | Prezzi +10%, risposte fredde |
+| 0 | NEUTRALITÀ | Standard |
+| +1 | SIMPATIA | Prezzi -5%, info extra |
+| +2/+4 | APPREZZAMENTO | Prezzi -20%, pettegolezzi |
+| +5/+7 | RISPETTO | Prezzi -40%, servizi esclusivi, quest unlock |
+| +8/+9 | DEVOZIONE | Quasi gratuito, difesa attiva |
+| +10 | ADORAZIONE | Tutto gratis, sacrifici, segreti famiglia |
+
+**Fattori Influenza:**
+- Prime impressioni: ×3
+- Favori diretti: ×2
+- Danni diretti: ×2
+- Coerenza nel tempo
+
+### LIVELLO 2: GRUPPO
+
+**Tipologie:** Professionali (Mercanti, Fabbri, Maghi), Sociali (Nobiltà, Clero, Criminali), Etnici (Elfi, Nani, Tribù)
+
+**Propagazione:**
+- PNG leader: ×3
+- Rispettati: ×2
+- Normali: ×1
+- Nuovi: ×0.5
+- In disgrazia: ×0.25
+
+**Velocità:** Piccoli (<20) = immediato | Medi (20-50) = 2-3 interazioni | Grandi (50+) = 5-10 interazioni
+
+### LIVELLO 3: REGIONALE (-1000 a +1000)
+
+| Range | Status | Effetti |
+|-------|--------|---------|
+| +800/1000 | EROE REGIONALE | Statue, feste annuali, accesso al re |
+| +600/799 | CELEBRITÀ | Riconoscimento strada, inviti corte |
+| +400/599 | STIMATO | Prezzi ridotti regione, zone ristrette |
+| +200/399 | CONOSCIUTO | Riconosciuto occasionalmente |
+| 0/199 | NEUTRALE | Standard |
+| -200/-1 | SOSPETTO | Guards attenti, prezzi aumentati |
+| -400/-201 | MAL VISTO | Servizi limitati, sorveglianza |
+| -600/-401 | NON GRATA | Bandito, arresti possibili |
+| -800/-601 | NEMICO | Ordini cattura, attack on sight |
+| -1000/-801 | NEMICO CORONA | Eserciti mobilitati, bounty 100k+ |
+
+**Difficoltà Scalare:**
+- Villaggio (2k): +1 rep = 0.05% influenza
+- Città (50k): +1 rep = 0.002%
+- Metropoli (500k): +1 rep = 0.0002%
+- Ogni livello: ×10 sforzo
+
+### LIVELLO 4: NAZIONALE
+
+| Regno | Difficoltà | Valori | Bonus per |
+|-------|------------|--------|-----------|
+| VALERIA | Media | Onore, commercio | Diplomazia, economic success |
+| QADESH | Alta | Potere magico, sole | Maestria magica, servizio |
+| FROSTLAND | Bassa | Forza, clan | Combat prowess, duelli |
+| ELDERMOOR | Altissima | Natura, saggezza | Protezione ambiente, rispetto |
+
+### LIVELLO 5: COSMICO
+
+**Luce:** Luxor (Estrema), Solaria (Alta)
+**Ombra:** Umbranis (Estrema), Morteus (Alta)
+
+---
+
+## SEZIONE 4: MECCANICHE
+
+### EFFETTI CASCATA
+
+**Verso l'Alto:**
+- Individuale → Gruppo: ×0.1
+- Gruppo → Regionale: ×0.05
+- Regionale → Nazionale: ×0.01
+- Nazionale → Cosmico: ×0.001
+
+**Verso il Basso:**
+- Divino → Tutto: ×10
+- Reale → Regionale: ×5
+- Regionale → Gruppi: ×2
+- Gruppi → PNG: ×1
+
+### CONFLITTI
+
+Situazioni possibili: Eroe Valeria + Nemico Qadesh | Amato mercanti + Odiato nobili | Benedetto Luxor + Maledetto Umbranis
+
+**Risoluzione:** PNG decidono su priorità personali. Higher-tier può override lower. Alcune alleanze mutually exclusive.
+
+---
+
+## SEZIONE 5: RECOVERY
+
+### REDENZIONE INDIVIDUALE
+- Grande favore personale
+- Behavior change consistente
+- Testimonials da PNG rispettati
+- Sacrifici dimostrati
+- Time heals: 1 punto/anno
+
+### AMNISTIE REGIONALI
+- Contributi eventi globali
+- Heroic acts che salvano regione
+- Diplomatic resolutions
+- Religious pilgrimages
+- Royal pardons
+
+---
+
+*Sistema che crea un mondo che "ricorda" ogni azione a ogni livello sociale.*

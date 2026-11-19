@@ -1,0 +1,179 @@
+# SISTEMA META-GIOCO - STATISFY
+## Tecnologia NeuroLink, Forum e Mondo Esterno
+
+---
+
+## SEZIONE 1: TECNOLOGIA NEUROLINK
+
+### CAPSULE DI IMMERSIONE
+
+| Modello | Prezzo | Caratteristiche |
+|---------|--------|-----------------|
+| **CONSUMER** | $50k-80k | 2.5m×1m×1m, supporto vitale base, monitoring standard |
+| **PROFESSIONAL** | $150k-300k | 3m×1.5m×1.2m, supporto avanzato, staff medico dedicato |
+
+### RAPPORTO TEMPORALE
+
+| Tempo Reale | Tempo Aethermoor |
+|-------------|------------------|
+| 1 ora | 3 ore |
+| 8 ore | 24 ore (1 giorno) |
+| 12 ore | 36 ore (1.5 giorni) |
+
+### LIMITI DI SESSIONE
+
+| Parametro | Consumer | Professional |
+|-----------|----------|--------------|
+| Max ore/settimana | 60 | 80 |
+| Sessione max | 10 ore | 12 ore |
+| Pause obbligatorie | Ogni 4 ore | Ogni 6 ore |
+| Disconnessione forzata | 10 ore | 12 ore |
+| Cooldown tra sessioni | 6 ore | 6 ore |
+
+### ECCEZIONI LOGOUT FORZATO
+- Dungeon instanced 4+ ore
+- Raid 10+ giocatori
+- Boss fight livello 400+
+- Quest storyline uniche
+- Max 4 ore extra, override se parametri vitali peggiorano
+
+### PROTOCOLLI EMERGENZA
+
+| Allarme | Azione |
+|---------|--------|
+| GIALLO | Warning, parametri borderline |
+| ARANCIONE | Pause forzata in 30 min |
+| ROSSO | Disconnessione immediata |
+| NERO | Emergency medical response |
+
+---
+
+## SEZIONE 2: TIMELINE DINAMICA
+
+### PRINCIPIO
+La progressione del mondo si adatta alle performance del giocatore, non segue timeline rigida.
+
+### POSIZIONE VS MEDIA MONDIALE
+
+| Posizione | Livello vs Media | Effetti |
+|-----------|------------------|---------|
+| **LEADER ASSOLUTO** | +50+ | Trendsetter, accelera ecosistema +6 mesi |
+| **TOP 1%** | +20-50 | Rispetto elite, offerte major guild, +3 mesi |
+| **TOP 10%** | +10-20 | Riconoscimento regionale, influenza locale |
+| **MEDIA** | ±10 | Esperienza standard |
+| **RITARDATARIO** | -10+ | Difficoltà contenuti, forum inaccessibili |
+
+### FATTORI ACCELERAZIONE
+
+| Azione | Impatto |
+|--------|---------|
+| First Achievement Mondiale | +3-6 mesi |
+| Meta Rivoluzionaria | +2-4 mesi |
+| Breakthrough Segreti | +1-3 mesi |
+| Leadership Eventi | +2-5 mesi |
+| Innovazione Copiata | +1-2 mesi |
+
+---
+
+## SEZIONE 3: FORUM OFF-GAME
+
+### STRUTTURA
+
+| Sezione | Contenuto |
+|---------|-----------|
+| **TRACKING** | Race to First, Leaderboards, Player Profiles |
+| **INTELLIGENCE** | Meta Analysis, Lore Hunters, Economic Reports, Datamining |
+| **GUILD BUSINESS** | Recruitment ($80-200k/year), Partnerships, Services |
+| **NATIONAL PRIDE** | Leaderboards nazionali, Diplomatic Relations, Championships |
+| **TRADING POST** | Item Exchange, RMT, Auction House |
+
+### RANKING UTENTI FORUM
+
+| Rank | Posts | Privilegi |
+|------|-------|-----------|
+| NEWBIE | 0-100 | Accesso limitato |
+| MEMBER | 101-1000 | Standard |
+| VETERAN | 1001-5000 | Moderazione minore |
+| ELITE | 5000+ | Sezioni VIP |
+| PRO VERIFIED | - | Badge speciale |
+| CORPORATE | - | Account aziendale |
+
+### GERGO TIPICO
+
+| Termine | Significato |
+|---------|-------------|
+| Marmaglia | Sotto livello 100 |
+| Ascended | Livello 500+ |
+| Corp Slave | Gioca solo per guild |
+| Whale | Spende molto in RMT |
+| Metaslave | Solo build popolari |
+| Git Gud | Risposta a lamentele |
+
+---
+
+## SEZIONE 4: EVENTI COMPETITIVI
+
+### CALENDAR
+
+| Evento | Periodo | Caratteristiche |
+|--------|---------|-----------------|
+| **WORLD CHAMPIONSHIP** | Agosto | $50M prize pool, 500M+ spettatori |
+| **GUILD WARS** | Trimestrale | 1000vs1000, controllo risorse 3 mesi |
+| **INNOVATION CHALLENGES** | Continuo | Prime completion, documentari |
+
+### MODERATION
+
+**Accettato:** Flame sportivo, Speculation, Business, Meta Discussion
+
+**Zero Tolerance:** Doxxing (ban permanente), Illegal RMT, Cheating, Harassment
+
+---
+
+## SEZIONE 5: ECONOMIA REALE
+
+### COMPENSI GUILD
+
+| Tier Player | Salary Range |
+|-------------|--------------|
+| Superstar (400+) | $100-300k/anno |
+| Core Team (350+) | $60-120k/anno |
+| Rotation (300+) | $30-80k/anno |
+| Academy | $20-40k/anno |
+
+### MODELLI PAGAMENTO
+
+| Modello | Struttura |
+|---------|-----------|
+| **CORPORATE** | Base + Bonus + Winnings + Streaming + Sponsorship |
+| **PROFIT SHARING** | Pool comune, 60-70% distribuito, multiplier performance |
+
+---
+
+## SEZIONE 6: TOOLS CLAUDE
+
+### ALGORITMO ADATTAMENTO FORUM
+
+```
+1. VALUTA POSIZIONE: Livello vs media, achievements, velocità, influenza
+2. DETERMINA ERA EFFETTIVA: Base + accelerazioni + milestone
+3. ADAPTA CONTENT: Tone, complexity, NPC reactions, corporate interest
+4. CREATE INTERACTIONS: Famosi = più replies, innovativi = quoted
+```
+
+### TEMPLATE RISPOSTA FORUM
+
+```
+SITUAZIONE: [Tipo thread]
+TONO: [Casual/Professional/Competitivo/Diplomatico]
+PERSONAGGIO: [Casual/Pro/Corporate/National]
+
+ELEMENTI:
+- Riferimento livello/guild/nazione
+- Conoscenze appropriate al background
+- Bias verso propria guild/nazione
+- Gergo e riferimenti meta
+```
+
+---
+
+*I forum rappresentano l'estensione sociale del gioco dove conseguenze virtuali hanno impatti economici e sociali reali.*

@@ -1,0 +1,215 @@
+# SISTEMA NARRATIVO COMPLETO - STATISFY
+## Storyline, Quest e Costruzione Narrativa
+
+---
+
+## SEZIONE 1: FILOSOFIA NARRATIVA
+
+### PRINCIPI FONDAMENTALI
+
+| Principio | Applicazione |
+|-----------|--------------|
+| **CRESCITA ORGANICA** | Storie da azioni giocatore, non script. PNG reagiscono e adattano. Mondo vive anche offline. |
+| **INTERCONNESSIONE** | Quest si influenzano. Azioni in una regione hanno effetti altrove. Conflitti hanno multiple prospettive. |
+| **PROGRESSIONE LUNGA** | Prime 100 ore = gavetta. Complessità cresce con potere. PNG alto livello accessibili solo con reputazione. |
+
+---
+
+## SEZIONE 2: STRUTTURA TIER DELLE TRAME
+
+### TIER 1 - STORIE LOCALI (Livello 1-99)
+
+| Caratteristica | Dettaglio |
+|----------------|-----------|
+| PNG | Livello 1-199 max |
+| Conseguenze | Villaggio/quartiere |
+| Durata | 1-3 sessioni |
+| Tipologie | Domestiche, Sopravvivenza, Mistero Semplice, Primo Contatto |
+
+### TIER 2 - STORIE REGIONALI (Livello 100-199)
+
+| Caratteristica | Dettaglio |
+|----------------|-----------|
+| PNG | Livello 100-399 |
+| Conseguenze | Città/province, migliaia di vite |
+| Riconoscimento | Inizio attenzione autorità |
+| Tipologie | Politiche, Militari, Economiche, Religiose |
+
+### TIER 3 - STORIE CONTINENTALI (Livello 200-399)
+
+| Caratteristica | Dettaglio |
+|----------------|-----------|
+| PNG | Livello 200-499, primi contatti leggendari |
+| Conseguenze | Interi regni, equilibri di potere |
+| Accesso | Informazioni e luoghi segreti |
+| Tipologie | Diplomatiche, Arcane, Dinastiche, Apocalittiche |
+
+### TIER 4 - STORIE LEGGENDARIE (Livello 400-599)
+
+| Caratteristica | Dettaglio |
+|----------------|-----------|
+| PNG | Livello 400-699, divinità minori |
+| Conseguenze | Mondiali/dimensionali |
+| Legacy | Azioni entrano nelle leggende |
+| Tipologie | Cosmiche, Temporali, Creative, Trascendentali |
+
+---
+
+## SEZIONE 3: SISTEMA QUEST
+
+### TEMPLATE STANDARD
+
+```
+NOME: [Titolo evocativo]
+RARITÀ: [Comune → Mitico]
+FONTE: [Chi assegna]
+LIVELLO: [Range]
+OBIETTIVI: Primario (obbligatorio) | Secondario (opzionali) | Nascosto (discovery)
+REWARDS: Successo completo | Parziale | Bonus segreti
+MALUS: Fallimento semplice | Critico | Sociale
+TEMPO: [Se applicabile]
+CONNESSIONI: [Link altre quest]
+```
+
+### SCALA RARITÀ
+
+| Rarità | Livello | Impatto | Rewards |
+|--------|---------|---------|---------|
+| COMUNE | 1-50 | Villaggio | 10-100 corone, +1/+2 rep |
+| NON COMUNE | 25-100 | Comunità | 100-1000 corone, equipment |
+| RARO | 75-200 | Regione | 1k-10k corone, titoli minori |
+| EPICO | 150-300 | Regno | 10k+ corone, terre/titoli |
+| UNICO | 200-400 | Personalizzato | Variabile, oggetti evolutivi |
+| LEGGENDARIO | 300-500 | Continente | Potere quasi-divino |
+| MITICO | 400+ | Mondo | Trascendenza, status divino |
+
+### ELIGIBILITÀ
+
+**Level Requirements:** Max -20 (facile) / Max +30 (impossibile) dal consigliato
+
+**Reputation Gates:**
+- Comune: Nessuno
+- Non Comune: 200+ punti organizzazione
+- Raro: 500+ punti regionali
+- Epico: 1000+ punti nazionali
+- Leggendario: Status Eroe
+- Mitico: Chiamata cosmica
+
+### DISCOVERY
+
+| Rarità | Dove trovarla |
+|--------|---------------|
+| Comune | Bacheche, taverne, mercati |
+| Non Comune | Organizzazioni |
+| Raro | Contatti alto livello |
+| Epico+ | Invitation only / Eventi globali / Visioni divine |
+
+---
+
+## SEZIONE 4: PNG NARRATIVI
+
+### PIRAMIDE
+
+| Tipo | Livello | Caratteristiche |
+|------|---------|-----------------|
+| **ANCHOR** | 1-99 | Sempre accessibili, crescono col PG, continuità narrativa |
+| **GATEWAY** | 100-399 | Accessibili con rep, introducono storyline superiori |
+| **LEGENDARY** | 400+ | Solo per eccezionali, impatto massiccio |
+
+---
+
+## SEZIONE 5: TECNICHE NARRATIVE
+
+### CONSEGUENZE RITARDATE
+
+| Timing | Effetto |
+|--------|---------|
+| IMMEDIATE | Risultato diretto dell'azione |
+| MEDIO (5-10 sessioni) | Reazioni secondarie, vendette, gossip |
+| LUNGO (20+ sessioni) | Nemici cresciuti, reputation consolidata, legacy |
+
+### INFORMAZIONI STRATIFICATE
+
+| Livello | Accessibilità |
+|---------|---------------|
+| SUPERFICIE | Evidente a tutti |
+| PROFONDO | Investigazione |
+| ARCANO | Conoscenze speciali |
+
+### CONFLITTO MORALE
+
+Sempre almeno 4 opzioni:
+- A: Benefici immediati, costi nascosti
+- B: Sacrifici ora, guadagni futuri
+- C: Compromesso con tensioni
+- D: Soluzione creativa giocatore
+
+---
+
+## SEZIONE 6: MILESTONE NARRATIVE
+
+| Livello | Nome | Accesso |
+|---------|------|---------|
+| 25 | Primo Riconoscimento | PNG locali conoscono nome |
+| 50 | Guerriero Emergente | Inviti tornei |
+| 100 | Guerriero Scelto | Nobiltà minore |
+| 200 | Guerriero Importante | Corti reali |
+| 300 | Eroe Riconosciuto | Segreti di stato |
+| 400 | Leggenda Vivente | Forze cosmiche |
+
+---
+
+## SEZIONE 7: MECCANICHE FALLIMENTO
+
+### PENALITÀ PER RARITÀ
+
+| Rarità | Abandonment | Time Failure | Critical |
+|--------|-------------|--------------|----------|
+| Comune | Nessuna | Quest riproposta | -1 rep |
+| Non Comune | -1 rep | Conseguenze locali | -3 rep |
+| Raro | -5 rep | Conseguenze regionali | -10 rep |
+| Epico | -10 rep, ban simili | Cascade effects | -20 rep, nemici |
+| Leggendario | Marked unreliable | World state changes | Cosmic marking |
+| Mitico | Divine disfavor | Apocalisse parziale | Maledizione permanente |
+
+---
+
+## SEZIONE 8: REWARD FORMULAS
+
+### MONETARY
+`Livello × Moltiplicatore` (Comune: ×10-25 | Non Comune: ×25-75 | Raro: ×75-200 | Epico: ×200-500 | Leggendario: ×500+)
+
+### EXPERIENCE
+- Standard: 10% livello
+- Perfect: 15% livello
+- Creative: +5%
+- Group: split +25%
+- First time: +50%
+
+### REPUTATION
+Local: +1-5 | Regional: +5-20 | National: +10-50 | Continental: +25-100 | Global: +50-200
+
+---
+
+## SEZIONE 9: TOOLS CLAUDE
+
+### CHECKLIST PRE-SESSIONE
+```
+□ Azioni sessione precedente
+□ PNG che reagiscono
+□ Conseguenze breve termine
+□ Hook nuova storyline
+□ Coerenza personalità PNG
+□ Sfide appropriate al livello
+```
+
+### PRINCIPI IMPROVVISAZIONE
+1. "Sì, e..." - Accettare ed espandere
+2. Consequences not Punishment
+3. Build on Established
+4. Show Don't Tell
+5. Leave Hooks
+
+---
+
+*Sistema che trasforma ogni quest in opportunità narrativa con conseguenze durature.*

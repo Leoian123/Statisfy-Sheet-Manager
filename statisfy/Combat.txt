@@ -1,0 +1,400 @@
+# SISTEMA DI COMBATTIMENTO STATISFY
+
+Combattimento Tattico a Turni
+
+## FILOSOFIA DEL SISTEMA
+
+Il combattimento in Statisfy è progettato per premiare:
+
+- Ingegno e Creatività: Combinazioni inaspettate di abilità
+- Lettura della Situazione: Sfruttare ambiente e condizioni
+- Pianificazione Strategica: Gestione di risorse e timing
+- Adattabilità: Reagire ai cambiamenti del campo di battaglia
+
+## STRUTTURA DEL TURNO
+
+### TEMPLATE STATO COMBATTIMENTO
+
+```
+=== TURNO [NUMERO] ===
+
+PERSONAGGIO:
+- Vita: [Attuale/Massima]
+- Mana: [Attuale/Massima]
+- Stamina: [Attuale/Massima]
+- Posizione: [Descrizione posizionale]
+- Effetti Attivi: [Buff/Debuff con durata]
+- Equipaggiamento: [Arma/Armatura/Accessori attivi]
+- Cooldown Attivi: [Abilità in ricarica con turni rimanenti]
+- Azioni Disponibili: [Lista abilità utilizzabili]
+
+NEMICI:
+- [Nome Nemico 1]:
+  - Vita: [Attuale/Stimata]
+  - Stato: [Condizione generale]
+  - Posizione: [Dove si trova]
+  - Effetti Visibili: [Buff/Debuff evidenti]
+  - Atteggiamento: [Aggressivo/Difensivo/Cauto]
+  - Ultima Azione: [Cosa ha fatto]
+- [Nome Nemico 2]: [Stesso formato...]
+
+AMBIENTE:
+- Condizioni: [Tempo, illuminazione, terreno]
+- Elementi Interagibili: [Oggetti, strutture utilizzabili]
+- Hazard: [Pericoli ambientali]
+- Vantaggi Tattici: [Posizioni strategiche]
+
+PROSSIMA AZIONE: [Cosa vuoi fare?]
+```
+
+## MECCANICHE CORE
+
+### SISTEMA DI RISORSE
+
+#### VITA (HP)
+
+- Resistenza fisica del personaggio
+- Se raggiunge 0 = sconfitta/morte temporanea
+- Recuperabile con pozioni, magia, riposo
+
+#### MANA (MP)
+
+- Energia magica per incantesimi
+- Si rigenera lentamente ogni turno (10-20%)
+- Essenziale per magie potenti
+
+#### STAMINA (SP)
+
+- Energia fisica per abilità speciali
+- Si rigenera più velocemente del mana (25-30%)
+- Necessaria per tecniche di combattimento avanzate
+
+### SISTEMA DI POSIZIONAMENTO
+
+#### ZONE DI COMBATTIMENTO
+
+- Mischia: Corpo a corpo, alta damage ma rischio
+- Media Distanza: Equilibrio tra sicurezza e efficacia
+- Lunga Distanza: Sicurezza ma limitazioni
+- Elevato: Vantaggi tattici ma vulnerabilità specifiche
+- Coperto: Protezione ma limiti di movimento
+
+#### MOVIMENTO TATTICO
+
+- Cambiare posizione costa parte del turno
+- Alcune abilità richiedono posizioni specifiche
+- L'ambiente può limitare o favorire certi movimenti
+
+### SISTEMA DI AZIONI
+
+#### AZIONI BASE (SEMPRE DISPONIBILI)
+
+##### ATTACCO SEMPLICE
+
+- Costo: Solo il turno
+- Effetto: Danno moderato e affidabile
+- Varianti: A seconda dell'arma equipaggiata
+
+##### DIFESA
+
+- Costo: Solo il turno
+- Effetto: Riduce significativamente i danni subiti
+- Bonus: Può generare contrattacchi
+
+##### MOVIMENTO
+
+- Costo: Parte del turno
+- Effetto: Cambia posizione tattica
+- Combinabile: Con molte altre azioni
+
+##### OGGETTO
+
+- Costo: Parte del turno
+- Effetto: Usa pozione, strumento, artefatto
+- Limitazioni: Inventario e situazione
+
+#### AZIONI AVANZATE (SKILL-BASED)
+
+##### ABILITÀ DI CLASSE
+
+- Guerriero: Colpi devastanti, tecniche di combattimento
+- Mago: Incantesimi elementali, manipolazione arcana
+- Ladro: Furtività, attacchi critici, trappole
+- Chierico: Guarigione, benedizioni, esorcismi
+
+##### ABILITÀ COMBINATE
+
+- Combinazioni di 2+ abilità nello stesso turno
+- Effetti sinergici potenziati
+- Costi aumentati ma risultati superiori
+
+#### AZIONI CREATIVE (SITUAZIONALI)
+
+##### SFRUTTAMENTO AMBIENTALE
+
+- Utilizzare elementi del paesaggio come armi
+- Creare vantaggi tattici temporanei
+- Trasformare pericoli in opportunità
+
+##### IMPROVVISAZIONE
+
+- Azioni non previste ma logiche nel contesto
+- Giudicate case-by-case dal sistema
+- Premiate per originalità e coerenza
+
+## SISTEMA DI COMBINAZIONI
+
+### MECCANICHE DI SINERGIA
+
+#### COMBO INTRA-PERSONALE
+
+Combinare le proprie abilità per effetti potenziati:
+
+Esempio - "Lama Infuocata":
+
+- Azione 1: Incantesimo Fiamma (Mana: 20)
+- Azione 2: Attacco con Spada (Stamina: 10)
+- Risultato: Danno normale + Danno da fuoco + Possibile combustione
+- Costo Totale: 20 Mana + 10 Stamina + Malus al prossimo turno
+
+#### COMBO AMBIENTALI
+
+Sfruttare l'ambiente in modi creativi:
+
+Esempio - "Frana Controllata":
+
+- Situazione: Combattimento su un ponte di pietra instabile
+- Azione: Colpo Devastante sulla struttura portante
+- Effetto: Crollo parziale, nemici devono fare test di equilibrio
+- Rischio: Anche il giocatore è a rischio caduta
+
+#### COMBO SEQUENZIALI
+
+Azioni che si potenziano nei turni successivi:
+
+Esempio - "Preparazione → Esecuzione":
+
+- Turno 1: Concentrazione (+50% damage prossimo attacco, vulnerabile)
+- Turno 2: Colpo Finale (Danno massimizzato)
+
+## SISTEMA DI LETTURA SITUAZIONALE
+
+### INDICATORI VISIBILI
+
+Il sistema fornisce indizi che i giocatori astuti possono interpretare:
+
+- Postura del nemico: Suggerisce prossime intenzioni
+- Ambiente: Elementi utilizzabili evidenziati
+- Condizioni: Meteo, illuminazione che influenzano strategie
+- Equipaggiamento: Debolezze e resistenze intuibili
+
+### INFORMAZIONI PROGRESSIVE
+
+Più si combatte contro un tipo di nemico, più si apprende:
+
+- Turno 1-2: Informazioni base
+- Turno 3-5: Pattern di comportamento
+- Turno 6+: Debolezze specifiche
+
+## ESEMPI PRATICI
+
+### ESEMPIO 1: COMBATTIMENTO CONTRO GOBLIN SCOUT
+
+=== TURNO 3 ===
+
+PERSONAGGIO (Guerriero Livello 12):
+- Vita: 78/100
+- Mana: 30/30
+- Stamina: 45/80
+- Posizione: Media distanza, terreno roccioso
+- Effetti Attivi: Lieve emorragia (-3 HP/turno, 2 turni)
+- Equipaggiamento: Spada lunga, Armatura di cuoio, Scudo
+- Cooldown: Colpo Devastante (1 turno rimanente)
+- Azioni Disponibili: Attacco, Difesa, Carica, Disarmo, Movimento
+
+NEMICI:
+- Goblin Scout (Archer):
+  - Vita: 42/60 (Ferito ma combattivo)
+  - Posizione: Lunga distanza, su roccia elevata
+  - Effetti: Mira concentrata (+10 precisione prossimo attacco)
+  - Atteggiamento: Cauto, mantiene distanza
+  - Ultima Azione: Freccia mirata (mancata per poco)
+
+AMBIENTE:
+- Condizioni: Giornata ventosa, visibilità buona
+- Elementi Interagibili: Rocce da lanciare, vegetazione fitta a ovest
+- Hazard: Terreno scivoloso vicino al ruscello
+- Vantaggi: Coperture naturali disponibili
+
+OSSERVAZIONI TATTICHE:
+- Il goblin sta ricaricando l'arco (vulnerable questo turno)
+- Una grossa pietra instabile è sopra la sua posizione
+- Il vento forte renderebbe difficili i tiri a distanza
+
+PROSSIMA AZIONE: [Cosa vuoi fare?]
+OPZIONI CREATIVE SUGGERITE:
+
+Combo "Frana Mirata": Lanciare una pietra contro il masso instabile
+Combo "Carica Coperta": Movimento + Vegetazione + Carica a sorpresa
+Difesa Tattica: Aspettare dietro copertura che il goblin scenda
+
+### ESEMPIO 2: COMBATTIMENTO MAGICO COMPLESSO
+
+=== TURNO 5 ===
+
+PERSONAGGIO (Mago Battaglia Livello 28):
+- Vita: 120/140
+- Mana: 95/200
+- Stamina: 60/60
+- Posizione: Centro della radura, su cerchio runico
+- Effetti Attivi: Scudo Magico (assorbe 50 danni, 3 turni)
+- Equipaggiamento: Bastone del Vento, Vesti Arcane, Amuleto Focus
+- Cooldown: Fulmine Cataclismatico (2 turni), Teleporto (1 turno)
+- Azioni: Palla di Fuoco, Freccia Magica, Barriera, Dispersione, Rituali
+
+NEMICI:
+- Orso Distorto (Bestia Magica):
+  - Vita: 180/300 (Moderatamente ferito)
+  - Posizione: Mischia, circonda il cerchio runico
+  - Effetti: Pelle Pietrificata (+30 resistenza fisica)
+  - Atteggiamento: Furioso, attacchi sempre più feroci
+  - Ultima Azione: Zampata devastante (bloccata dallo scudo)
+
+AMBIENTE:
+- Condizioni: Notte, luna piena (bonus ai rituali lunari)
+- Elementi: Cerchio runico attivo, alberi antichi, ruscello magico
+- Hazard: L'orso sta danneggiando il cerchio runico
+- Vantaggi: Potere lunare al massimo, ruscello conduce mana
+
+OSSERVAZIONI MAGICHE:
+- Il cerchio runico si sta incrinando (2-3 turni prima del collasso)
+- L'orso ha resistenza fisica ma vulnerabile a attacchi mentali
+- Il ruscello può amplificare incantesimi d'acqua
+- La luna piena permette rituali speciali
+
+PROSSIMA AZIONE: [Strategia magica?]
+COMBO CREATIVE DISPONIBILI:
+
+"Riparazione Esplosiva": Riparare il cerchio + sovraccaricare l'energia
+"Dominazione Lunare": Rituale di controllo mentale potenziato
+"Torrente Arcano": Canalizzare il ruscello in attacco d'acqua devastante
+
+## PRINCIPI DI VALUTAZIONE
+
+### CRITERI PER AZIONI CREATIVE
+
+**COERENZA LOGICA (Fondamentale)**
+
+- L'azione deve avere senso nel contesto
+- Le leggi di Aethermoor devono essere rispettate
+- Cause ed effetti devono essere ragionevoli
+
+**CREATIVITÀ (Premiata)**
+
+- Soluzioni non ovvie vengono favorite
+- Combinazioni originali hanno bonus
+- Pensiero fuori dagli schemi è incoraggiato
+
+**COSTO-BENEFICIO (Bilanciato)**
+
+- Azioni più potenti hanno costi maggiori
+- Rischi elevati per ricompense elevate
+- Nessuna soluzione gratuita ai problemi
+
+**COERENZA DEL PERSONAGGIO (Importante)**
+
+- Le azioni devono riflettere le capacità del PG
+- Limitazioni di classe e livello sono mantenute
+- La crescita è graduale e guadagnata
+
+## GESTIONE DEI FALLIMENTI
+
+### FALLIMENTI PARZIALI
+
+- Azione riuscita ma con conseguenze impreviste
+- Effetto ridotto ma comunque presente
+- Apertura a nuove opportunità tattiche
+
+### FALLIMENTI COMPLETI
+
+- Azione totalmente inefficace
+- Possibili contraccolpi o vulnerabilità
+- Lezioni apprese per tentativi futuri
+
+### FALLIMENTI CRITICI
+
+- Conseguenze negative significative
+- Possibili danni al personaggio o equipaggiamento
+- Cambiamenti drastici nella situazione tattica
+
+## INTEGRAZIONE CON IL SISTEMA PNG
+
+### NEMICI INTELLIGENTI
+
+I PNG nemici reagiscono alle tattiche del giocatore:
+
+- Apprendimento: Si adattano alle strategie ripetute
+- Personalità: Reagiscono secondo il loro carattere
+- Cooperazione: Nemici multipli possono coordinarsi
+- Fuga: Nemici intelligenti possono ritirarsi se svantaggiati
+
+### NEMICI CON MEMORIA
+
+- Ricordano tattiche usate in scontri precedenti
+- Sviluppano contromisure specifiche
+- Condividono informazioni con alleati
+- Possono preparare imboscate basate su conoscenze passate
+
+## NUMERI DEL DANNO
+
+- Danno inflitto = Base dell'arma × (1 + STR/100) − Difesa del bersaglio, minimo 1.
+- Le abilità moltiplicano il danno prima della Difesa (Attacco Possente: ×1,5).
+- Colpo critico: danno raddoppiato.
+- Blocco dello scudo: è la probabilità di annullare un colpo.
+
+| Rarità dell'arma | Base |
+|------------------|------|
+| Comune | 15-30 |
+| Non Comune | 30-60 |
+| Raro | 60-120 |
+| Epico | 120-250 |
+| Unico, Leggendario | 250-500 |
+| Mitico | 500+ |
+
+### CREATURE
+
+- Danno base = (10 + livello × 6) × rarità dell'incontro.
+- Vita = (40 + livello × 20) × rarità dell'incontro × taglia.
+
+#### RARITÀ DELL'INCONTRO
+
+A parità di livello le creature non si equivalgono: un drago vale un esercito di goblin. Ogni specie ha una rarità, sulla stessa scala degli oggetti, e il moltiplicatore è il cubo del grado: una creatura di grado N vale N³ creature Comuni di pari livello.
+
+| Rarità dell'incontro | Grado | Moltiplicatore di Vita e danno |
+|----------------------|-------|--------------------------------|
+| Comune | 1 | ×1 |
+| Non Comune | 2 | ×8 |
+| Raro | 3 | ×27 |
+| Epico | 4 | ×64 |
+| Unico, Leggendario | 5 | ×125 |
+| Mitico | 6 | ×216 |
+
+Goblin, lupi e bestie ordinarie sono Comuni; i draghi sono Leggendari. A livello 50 un goblin ha 1.040 Vita e 310 di danno base; un drago ha 130.000 Vita e 38.750 di danno base.
+
+#### TAGLIA
+
+Dentro la stessa rarità la taglia cambia solo la Vita:
+
+| Taglia | Vita | Chi |
+|--------|------|-----|
+| Fragile | ×0,5 | Bestie piccole, tiratori, spiriti |
+| Normale | ×1 | La maggior parte delle creature |
+| Robusta | ×1,5 | Bestie massicce, capibranco, costrutti |
+
+Le creature nominate hanno di più, a giudizio del narratore.
+
+## RICOMPARSA DELLE CREATURE
+
+Le creature ricompaiono secondo cicli che seguono la realtà (riproduzione, migrazioni, non-morti che si rialzano di notte), ma accelerati per reggere il ritmo di caccia di un MMO.
+
+Questo sistema crea combattimenti dinamici, strategici e narrativamente coinvolgenti, dove ogni scontro diventa un puzzle tattico unico da risolvere.

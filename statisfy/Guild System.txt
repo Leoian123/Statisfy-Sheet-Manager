@@ -1,0 +1,284 @@
+# SISTEMA GILDE STATISFY
+## Strutture Organizzative e Legacy Storiche
+
+---
+
+Nota temporale. Statisfy è uscito nel 2045 e il presente della campagna è il 2045, nel pieno del boom. I dati datati 2046 e 2047 in questo documento sono proiezioni: servono a tarare ciò che accadrà.
+
+---
+
+## FILOSOFIA DEL SISTEMA
+
+### LIBERTÀ ORGANIZZATIVA
+Le gilde in Statisfy mantengono massima flessibilità nella loro struttura interna. Non esistono template rigidi imposti dal gioco - ogni organizzazione evolve organicamente in base alle sue esigenze, cultura e obiettivi.
+
+### MODELLO SPORTIVO
+Le gilde maggiori operano su modelli simili alle squadre di calcio professionali, con:
+- **Gilde Principali:** Team di elite con i giocatori più forti
+- **Gilde Satellite:** Filiali per sviluppare talenti emergenti
+- **Sistemi di Prestiti:** Scambi temporanei di giocatori tra gilde alleate
+- **Academie:** Strutture dedicate alla formazione di nuovi membri
+
+---
+
+## TIPOLOGIE DI GILDE
+
+### MAJOR GUILDS (TIER 1)
+*Le squadre di Serie A del mondo Statisfy*
+
+#### CARATTERISTICHE GENERALI
+```
+DIMENSIONI: 200-500+ membri attivi
+BUDGET ANNUALE: $5M-50M+
+STRUTTURA: Corporazione complessa con dipendenti
+INFLUENZA: Globale, partnership governative
+OBIETTIVI: Dominanza competitiva, profitti, prestigio
+```
+
+#### ESEMPIO: "PHOENIX CORPORATION"
+
+SEDE CENTRALE: Seoul, Corea del Sud
+MEMBRI CORE TEAM: 47 giocatori livello 400+
+NETWORK TOTALE: 800+ membri (incluse satellite)
+BUDGET 2047: $23M
+DIPENDENTI NON-GIOCATORI: 120+
+
+STRUTTURA ORGANIZZATIVA:
+- CEO/Guild Master: [SunEmperor_KR]
+- Board of Directors: 5 top investors + 2 player representatives
+- Operations Manager: Gestione quotidiana
+- Talent Scouts: 12 scout globali
+- Analytics Team: 8 data analysts
+- Media Relations: 4 PR specialists
+- Legal Department: Contratti e compliance
+- Support Staff: IT, HR, Accounting
+
+GILDE SATELLITE:
+- Phoenix Rising (EU): Developmental team
+- Phoenix Academy (KR): Training nuovi talenti
+- Phoenix Trading (Global): Focus economia in-game
+- Phoenix Reserves (Multi): Backup players
+
+### ESTABLISHED GUILDS (TIER 2)
+*Organizzazioni consolidate con storia e tradizione*
+
+#### LEGACY STORICHE
+Molte gilde portano heritage da altri MMO, mantenendo cultura, tradizioni e strutture di comando sviluppate nel corso di anni o decenni.
+
+#### ESEMPIO: "MALEVOLENT CREEKS"
+
+ORIGINE: Guild storica da Helldivers (2015-2045)
+TRANSIZIONE: Migrata su Statisfy nel 2045
+MEMBRI: 180 attivi, 400+ alumni network
+FILOSOFIA: "Veterani che si adattano, tradizione che perdura"
+
+STRUTTURA (BASATA SU 30+ ANNI DI ESPERIENZA):
+- Council of Elders: 7 founder originali
+- Chapter Masters: Leader regionali (NA, EU, APAC)
+- Veteran Corps: Membri con 10+ anni nella guild
+- Active Roster: Giocatori current-gen
+- Hall of Fame: Ex-membri diventati legend
+- Recruitment Board: Veterani che valutano candidati
+
+CULTURA DISTINTIVA:
+- Riti di iniziazione basati su tradizioni Helldivers
+- Gerarchia basata su merito e longevità
+- Sistema di mentorship: veterani guidano nuovi
+- Archive storico: Registri di tutte le campagne dal 2015
+- Alumni network: Ex-membri come advisor/investors
+
+VANTAGGI COMPETITIVI:
+- Esperienza organizzativa decennale
+- Network globale consolidato
+- Cultura di team consolidata
+- Reputazione e credibilità nel settore
+- Pipeline di talenti rodato
+
+### STARTUP GUILDS (TIER 3)
+*Nuove organizzazioni in crescita*
+
+#### ESEMPIO: "IRON WOLVES COLLECTIVE"
+
+FONDAZIONE: 2046 (2° anno Statisfy)
+MEMBRI: 65 attivi
+APPROCCIO: Agile, sperimentale, democratico
+
+STRUTTURA FLAT:
+- Rotating Leadership: Guild Master cambia ogni 6 mesi
+- Specialized Teams: PvP, PvE, Economy, Recruitment
+- All-Hands Assembly: Decisioni prese per votazione
+- Profit Sharing: 70% ai membri, 30% reinvestito
+- Open Books: Finanze trasparenti per tutti
+
+INNOVATION:
+- Remote-first: Membri globali, nessuna sede fisica
+- Crypto Payments: Compensi in cryptocurrency
+- Skills-Based: Ruoli basati su competenze, non anzianità
+- External Partnerships: Collaborazioni con altre startup
+- Rapid Iteration: Struttura cambia ogni trimestre
+
+### SPECIALIST GUILDS (TIER 4)
+*Organizzazioni focalizzate su nicchie specifiche*
+
+#### ESEMPI DI SPECIALIZZAZIONI
+
+**"SHADOW MARKET SYNDICATE"**
+- **Focus:** Trading, economia, RMT
+- **Membri:** 25 traders professionali
+- **Struttura:** Partnership paritetica tra trader senior
+
+**"LORE HUNTERS SOCIETY"**
+- **Focus:** Exploration, discovery, content nascosti
+- **Membri:** 40 explorer/scholar
+- **Cultura:** Accademica, condivisione knowledge
+
+**"GLADIATOR ARENA"**
+- **Focus:** PvP competitivo, duelli, tornei
+- **Membri:** 30 fighter specializzati
+- **Organizzazione:** Ranking interno, sponsorizzazioni individuali
+
+---
+
+## MECCANICHE DI RECRUITMENT
+
+### TALENT SCOUTING SYSTEM
+
+#### MAJOR GUILDS APPROACH
+
+PIPELINE DI RECLUTAMENTO:
+- Scout Network: Talent scout pagati che monitorano server
+- Performance Metrics: Tracking automatico top performers
+- Trial Periods: 30-90 giorni di prova
+- Academy Programs: Sviluppo talenti young/promising
+- Poaching Operations: Reclutamento aggressivo da competitor
+
+CRITERI STANDARD:
+- Performance in-game: Livello, achievements, skill dimostrate
+- Disponibilità temporale: Commitment hour/week
+- Team attitude: Compatibility con cultura guild
+- Growth potential: Capacità di miglioramento
+- Media presence: Valore per brand/sponsorizzazioni
+
+#### LEGACY GUILDS APPROACH
+
+PROCESSO PIÙ SELETTIVO:
+- Referral System: Membri attuali devono "sponsorizzare"
+- Culture Fit: Allineamento con valori/tradizioni guild
+- Trial by Fire: Prove pratiche in situazioni reali
+- Community Integration: Valutazione su partecipazione sociale
+- Long-term Commitment: Preferenza per fedeltà vs performance
+
+VETTING PROCESS:
+- Application Review: CV gaming + motivational letter
+- Interview Panel: 3-5 veterani guild
+- Practical Tests: Performance sotto pressione
+- Social Integration: Periodo informal con membri
+- Final Vote: Decisione collegiale del council
+
+---
+
+## SISTEMI DI COMPENSAZIONE
+
+### MODELLI DI PAGAMENTO DIVERSIFICATI
+
+#### CORPORATE MODEL (Major Guilds)
+
+STRUCTURED COMPENSATION:
+- Base Salary: $30k-150k/anno (basato su performance/livello)
+- Performance Bonus: 20-50% salary based su risultati
+- Tournament Winnings: Split secondo contratto (50-80% al player)
+- Streaming Revenue: Revenue share su contenuti
+- Sponsorship Deals: Individuale + guild partnership
+- Benefits Package: Assicurazione, equipment, living allowance
+
+TIER STRUCTURE:
+- Superstar Players (400+ livello): $100-300k base
+- Core Team (350+ livello): $60-120k base
+- Rotation Players (300+ livello): $30-80k base
+- Academy/Development: $20-40k base
+- Specialist Roles: Variable compensation
+
+#### PROFIT SHARING MODEL (Established Guilds)
+
+DEMOCRATIC APPROACH:
+- Guild Revenue Pool: Tutte entrate in fondo comune
+- Operating Expenses: -30-40% per costi operativi
+- Equal Distribution: Remaining 60-70% diviso equamente
+- Performance Multiplier: Top performer ottiene 1.2-1.5x share
+- Veteran Bonus: Loyalty bonus per membri long-term
+- Reinvestment: Membri votano su % da reinvestire vs distribuire
+
+TYPICAL ANNUAL PAYOUT:
+- Active Member: $25-60k (dipende da successo guild)
+- Core Veteran: $40-80k (con loyalty bonus)
+- Leadership: $50-100k (con responsibility bonus)
+- Part-time/Casual: $5-20k (pro-rated contribution)
+
+---
+
+## RELAZIONI TRA GILDE
+
+### ECOSYSTEM COMPETITIVO
+
+#### ALLIANCE SYSTEMS
+
+FORMAL PARTNERSHIPS:
+- Training Agreements: Scambio know-how e strategie
+- Player Loans: Prestiti temporanei di talenti
+- Resource Sharing: Coordination su major raid/eventi
+- Intelligence Sharing: Info su competitor comuni
+- Joint Ventures: Progetti economici condivisi
+
+NON-AGGRESSION PACTS:
+- Territory Agreements: Divisione zone farming
+- Recruitment Boundaries: Accordi anti-poaching
+- Market Coordination: Evitare price wars dannose
+- Dispute Resolution: Meccanismi per risolvere conflitti
+
+#### RIVALRY DYNAMICS
+
+COMPETITIVE TENSIONS:
+- Talent Wars: Competition aggressiva per top players
+- Market Dominance: Controllo risorse/trading routes
+- Reputation Battles: Media warfare e PR campaigns
+- Tournament Supremacy: Head-to-head competitions
+- Ideological Conflicts: Clash tra culture/philosophie guild
+
+ESPIONAGE & INTELLIGENCE:
+- Spy Networks: Infiltrazione di competitor
+- Strategy Theft: Acquisizione tattiche avversarie
+- Sabotage Operations: Disruption planned competitor
+- Information Warfare: Leak strategici e disinformation
+- Counter-Intelligence: Protection da spionaggio nemico
+
+---
+
+## EVOLUZIONE NEL TEMPO
+
+### CICLO DI VITA DELLE GILDE
+
+#### FASE STARTUP (Anno 1-2)
+- Crescita rapida membri
+- Struttura informale e flessibile
+- Focus su performance immediate
+- Finanziamento personale/angel investors
+
+#### FASE GROWTH (Anno 2-4)
+- Professionalizzazione strutture
+- Primi investimenti significativi
+- Specializzazione ruoli interni
+- Espansione geographic/demographic
+
+#### FASE MATURITY (Anno 4+)
+- Strutture corporate consolidate
+- Brand recognition e partnerships
+- Diversificazione revenue streams
+- Legacy building e long-term planning
+
+#### FASE DECLINE/RENEWAL
+- Risk di stagnazione senior leadership
+- Challenge da competitor giovani/aggressivi
+- Necessità reinvention o merger/acquisition
+- Possible transformation o dissolution
+
+*Il sistema delle gilde in Statisfy riflette l'evoluzione naturale di organizzazioni competitive in un ambiente ad alta posta, dove tradizione e innovazione si scontrano nella ricerca del successo supremo.*

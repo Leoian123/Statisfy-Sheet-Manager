@@ -1,0 +1,266 @@
+# GLOSSARIO UNIFICATO - STATISFY
+## Terminologia Tecnica e Definizioni
+
+---
+
+## ENTITÀ E PERSONAGGI
+
+| Termine | Definizione |
+|---------|-------------|
+| **IMMORTALE** | Giocatore da Terra 2045 che accede ad Aethermoor via NeuroLink. Può resuscitare dopo la morte. I PNG lo percepiscono come "forestiero" con capacità insolite. |
+| **PNG** | Personaggio Non Giocante. Abitante nativo di Aethermoor per cui questo mondo È la realtà completa. Morte permanente. |
+| **MARMAGLIA** | Giocatori/PNG sotto livello 100. Termine gergale dei forum. |
+| **ASCENDED** | Giocatori livello 500+. Elite assoluta. |
+| **PROPLAYER** | Giocatore professionista che vive del gioco. Stipendi $30k-300k/anno. |
+
+---
+
+## MONDO E AMBIENTAZIONE
+
+| Termine | Definizione |
+|---------|-------------|
+| **AETHERMOOR** | Continente principale del mondo fantasy. Setting del gioco. |
+| **TERRA 2045** | Mondo reale cyberpunk da cui provengono gli Immortali. |
+| **MMIRPG** | Massive Multiplayer Immersive RPG: la definizione ufficiale di Statisfy. |
+| **MORPHEUS** | Corporazione che ha creato Statisfy e la tecnologia NeuroLink. |
+| **NEUROLINK** | Tecnologia di immersione neurale che permette accesso ad Aethermoor. |
+| **CAPSULA** | Dispositivo fisico per l'immersione ($50k-300k). |
+
+---
+
+## REGNI PRINCIPALI
+
+| Regno | Caratteristiche |
+|-------|-----------------|
+| **VALERIA** | Centro-Sud. Monarchia feudale. Capitale Lumengarde. Punto di partenza più comune (il regno di partenza si sceglie alla creazione). |
+| **QADESH** | Est. Impero teocratico del deserto. Capitale Solaris Magna. Magia solare. |
+| **FROSTLAND** | Nord. Confederazione clan guerrieri. Capitale Ironhold. |
+| **ELDERMOOR** | Ovest. Confederazione silvana elfica. Capitale Heartwood. |
+| **MYSTERIA** | Città-stato oligarchica. Governata dai Metadrakon (mutaforma). |
+| **RAIJIN** | Arcipelago orientale. Filosofia bushido. Impero a sé: shogunato antico che, separandosi dall'Impero Celeste, si è dichiarato impero a sua volta. |
+
+---
+
+## DIVINITÀ
+
+### Signori della Luce
+| Divinità | Dominio |
+|----------|---------|
+| **LUXOR** | Padre della Luce, ordine, giustizia |
+| **SOLARIA** | Madre Solare, protezione, valore |
+| **VERDANIA** | Nutrice Verde, crescita, natura |
+| **FERRUM** | Fabbro Divino, artigianato, armi |
+
+### Signori dell'Ombra
+| Divinità | Dominio |
+|----------|---------|
+| **UMBRANIS** | Regina delle Tenebre, destino, caos |
+| **MORTEUS** | Giudice Finale, morte, anime |
+| **TEMPESTUS** | Distruttore, tempeste, furia |
+| **VENENUM** | Sussurratore, inganno, veleni |
+
+---
+
+## STATISTICHE
+
+### Stats Base (sempre disponibili)
+| Stat | Abbreviazione | Effetti Principali |
+|------|---------------|-------------------|
+| **FORZA** | STR | Danno fisico, carico, intimidazione |
+| **DESTREZZA** | DEX | Velocità attacco, precisione, evasione |
+| **VITALITÀ** | VIT | HP, resistenze, rigenerazione |
+| **INTELLIGENZA** | INT | Mana, potenza magica, apprendimento |
+
+### Stats Avanzate (sbloccabili)
+| Categoria | Stats |
+|-----------|-------|
+| Sociali | Carisma, Oratoria, Diplomazia, Intimidazione |
+| Divine | Fede, Benedizione, Santità, Devozione |
+| Oscure | Oscurità, Corruzione, Necromanzia, Maledizione |
+| Naturali | Natura, Armonia, Selvatichezza, Elementi |
+| Artigianali | Forgia, Alchimia, Incantamento, Ingegneria |
+| Mentali | Saggezza, Memoria, Concentrazione, Volontà |
+
+---
+
+## RISORSE COMBATTIMENTO
+
+| Risorsa | Uso | Rigenerazione |
+|---------|-----|---------------|
+| **HP** (Vita) | Resistenza fisica. 0 = sconfitta | Pozioni, magia, riposo |
+| **MP** (Mana) | Energia magica per incantesimi | 10-20% per turno |
+| **SP** (Stamina) | Energia fisica per abilità speciali | 25-30% per turno |
+
+---
+
+## PROGRESSIONE
+
+### Scala di Potere
+
+| Livello | Rango di potere | Ruolo sociale tipico | Ruoli Tipici |
+|---------|-----------------|----------------------|--------------|
+| 1-99 | Soldati Semplici | Umani Semplici | Contadini, guardie, artigiani |
+| 100-199 | Guerrieri Scelti | Soldati e Ufficiali | Capitani, mercenari veterani |
+| 200-299 | Guerrieri Importanti | Nobili Minori | Baroni, cavalieri, comandanti |
+| 300-399 | Eroi | Nobili e Re Minori | Conti, duchi, grandi maghi |
+| 400-499 | Leggende | Eroi e Sovrani | Imperatori, arcimalgi |
+| 500-599 | Miti | Miti e Leggende | Eroi ascesi, draghi antichi |
+| 600+ | Divinità | Divinità | Dèi, entità cosmiche |
+
+I ruoli tipici valgono per città e capitali. In un villaggio le stesse cariche stanno molto più in basso: un sergente o un sindaco di paese possono essere sotto il livello 100.
+
+### Sistema Maestria
+
+| Grado | Nome | Descrizione |
+|-------|------|-------------|
+| I | Assoluto Novizio | Esecuzione base |
+| II | Novizio | Movimenti fluidi |
+| III | Praticante | Primi accenni stile personale |
+| IV | Amatore | Auto-correzione |
+| V | Dilettante | Tecniche avanzate |
+| VI | Specializzando | Analisi altri praticanti |
+| VII | Abile | Integrazione seamless |
+| VIII | Esperto | Innovazione |
+| IX | Professionista | Esecuzione quasi perfetta |
+| X | Maestro | Comprensione filosofica |
+
+---
+
+## SISTEMA MORTE
+
+| Termine | Definizione |
+|---------|-------------|
+| **RESPAWN** | Resurrezione automatica degli Immortali all'ultimo checkpoint. |
+| **PENALITÀ MORTE** | -1.5 livelli + malus temporaneo -10% stats per 1 ora. |
+| **CHECKPOINT** | Punto di salvataggio (automatico ogni 2h, manuale in templi/taverne). |
+| **MORTE PERMANENTE** | Solo per PNG. Nessuna resurrezione possibile (salvo rarissime eccezioni narrative). |
+| **MORTE NARRATIVA** | Morte che attiva trasformazioni speciali (vampirismo, benedizione, eredità). |
+
+---
+
+## PVP E FLAGGING
+
+| Status | Condizione | Effetti |
+|--------|------------|---------|
+| **BIANCO** | Mai ucciso innocente | Protezioni, bonus rep |
+| **GRIGIO** | PvP recente non consensuale | 2h durata, attaccabile |
+| **ROSSO** | 3+ uccisioni innocenti in 48h | Bounty, drop items, ban città |
+
+---
+
+## TITOLI
+
+| Rarità | Acquisizione |
+|--------|--------------|
+| **COMUNE** | Impegno normale |
+| **NON COMUNE** | Dedizione specifica |
+| **RARO** | Imprese notevoli |
+| **EPICO** | Gesta che cambiano il mondo |
+| **LEGGENDARIO** | Solo 1-2 per server |
+| **MITICO** | Trascendono mortalità |
+| **DIVINO** | Intervento diretto divinità |
+
+---
+
+## REPUTAZIONE
+
+| Scala | Range | Effetti Estremi |
+|-------|-------|-----------------|
+| **PNG Individuale** | -10 a +10 | -10: attacca a vista / +10: sacrifici personali |
+| **Gruppo** | -100 a +100 | Servizi negati ↔ Accesso esclusivo |
+| **Regionale** | -1000 a +1000 | Nemico della Corona ↔ Eroe Regionale |
+| **Nazionale** | Qualitativo | Esilio ↔ Consigliere Reale |
+| **Cosmica** | Qualitativo | Maledizione Divina ↔ Benedizione Divina |
+
+---
+
+## QUEST
+
+| Rarità | Impatto |
+|--------|---------|
+| **COMUNE** | Villaggio |
+| **NON COMUNE** | Comunità |
+| **RARO** | Regione |
+| **EPICO** | Regno |
+| **UNICO** | Personalizzato |
+| **LEGGENDARIO** | Continente |
+| **MITICO** | Mondo |
+
+---
+
+## GILDE
+
+| Tier | Tipo | Caratteristiche |
+|------|------|-----------------|
+| 1 | Major Guild | 200-500+ membri, budget $5M-50M+, corporazione |
+| 2 | Established | Legacy storiche, tradizioni, 100-200 membri |
+| 3 | Startup | Nuove, agili, 50-100 membri |
+| 4 | Specialist | Nicchie specifiche (trading, PvP, lore) |
+
+---
+
+## ECONOMIA
+
+| Valuta | Uso |
+|--------|-----|
+| **CORONE D'ORO** | Valuta standard Valeria, più accettata |
+| **VALUTE REGIONALI** | Ogni regno ha propria moneta |
+| **GEMME MAGICHE** | Transazioni alto valore, componenti magici |
+| **RMT** | Real Money Trading - conversione legale game↔realtà |
+
+---
+
+## TEMPO
+
+| Reale | Aethermoor |
+|-------|------------|
+| 1 ora | 3 ore |
+| 8 ore | 24 ore (1 giorno) |
+| 12 ore | 36 ore (1.5 giorni) |
+
+---
+
+## GERGO FORUM
+
+| Termine | Significato |
+|---------|-------------|
+| **Git Gud** | Risposta a lamentele difficoltà |
+| **Whale** | Chi spende molto in RMT |
+| **Grinder** | Chi dedica vita al gioco |
+| **Metaslave** | Chi segue solo build popolari |
+| **Corp Slave** | Chi gioca solo per major guild |
+| **Weekend Warrior** | Giocatore casual |
+| **Theorycrafting** | Analisi matematica meccaniche |
+
+---
+
+## MAGIA - SFERE ARCANE E DOMINI DIVINI
+
+La magia ha due origini distinte. Dettagli in `Magic.txt.txt` e `Ambientazione.txt`.
+
+### Sfere arcane (magia dei progenitori)
+
+| Sfera | Dominio |
+|-------|---------|
+| Ignis | Fuoco, calore, passione |
+| Aqua | Acqua, adattamento, guarigione |
+| Terra | Stabilità, resistenza, crescita |
+| Ventus | Aria, movimento, libertà |
+| Mens | Mente, pensiero, memoria |
+| Anima | Spirito, anime, morte |
+| Vis | Forza, energia pura |
+| Vita | Processi vitali, rigenerazione |
+| Spatium | Spazio (sfera pura, senza progenitore) |
+| Tempus | Tempo (sfera pura, senza progenitore) |
+
+### Domini divini (magia concessa dagli dèi)
+
+| Dominio | Divinità originaria | Dèi derivati | Opposto |
+|---------|--------------------|--------------|---------|
+| Luce | Luxor | Solaria, Verdania, Ferrum | Ombra |
+| Ombra | Umbranis (detta anche Umbris) | Morteus, Tempestus, Venenum | Luce |
+
+Un chierico non usa le sfere arcane: riceve potere dal dio in cui crede. Un dio non si astrae come i progenitori: coltiva il proprio potere e lo concede ai fedeli.
+---
+
+*Glossario di riferimento rapido per tutti i termini tecnici di STATISFY.*

@@ -1,0 +1,403 @@
+# SISTEMA DI CRAFTING E EQUIPAGGIAMENTO - STATISFY
+
+Maestria Artigianale e Competizione Creativa
+
+## FILOSOFIA DEL SISTEMA
+
+### DUE VIE PARALLELE
+
+Il sistema di crafting in Statisfy opera su due binari distinti ma complementari:
+
+## RICETTE CODIFICATE
+
+Formule tradizionali tramandate da maestri artigiani
+Risultati prevedibili ma mai identici
+Richiedono materiali specifici e tecniche precise
+Base per l'apprendimento delle fondamenta
+
+## CRAFTING LIBERO
+
+Sperimentazione pura basata su logica e creatività
+Risultati imprevedibili, possibile fallimento totale
+Utilizza qualsiasi materiale disponibile nell'ambiente
+Può portare a scoperte rivoluzionarie
+
+## MECCANICHE CORE
+
+### SISTEMA DI QUALITÀ DINAMICO
+
+#### FATTORI DI INFLUENZA
+
+QUALITÀ FINALE DIPENDE DA:
+- Skill Level dell'artigiano
+- Qualità dei materiali utilizzati
+- Strumenti e ambiente di lavoro
+- Tempo dedicato al processo
+- Condizioni ambientali (temperatura, umidità, etc.)
+- Stato mentale/fisico dell'artigiano
+- Innovazioni personali applicate
+- Fattore casuale (fortuna/sfortuna)
+
+## SISTEMA DI RARITÀ E QUALITÀ COMBINATO
+
+Il sistema opera su due assi distinti che si intersecano:
+
+ASSE RARITÀ (Rarità Base dell'Oggetto):
+
+COMUNE: Oggetti standard, facilmente reperibili
+NON COMUNE: Oggetti di fattura o materiali poco diffusi
+RARO: Oggetti con storia minore o materiali particolari
+EPICO: Artefatti con background leggendario significativo
+UNICO: Pezzi unici al mondo, irripetibili
+LEGGENDARIO: Oggetti che hanno plasmato la storia
+MITICO: Artefatti di potere cosmico
+EVOLUTIVO: Oggetti che crescono con l'utilizzatore (rarissimo)
+ASSE QUALITÀ (Craftsmanship/Condizioni):
+
+DIFETTOSO: Barely functional, effetti negativi
+SCADENTE: Funziona ma con penalità significative
+COMUNE: Performance standard senza bonus
+BUONO: Piccoli bonus, fattura solida
+ECCELLENTE: Bonus notevoli, craftsmanship superior
+MASTERWORK: Proprietà speciali dalla maestria artigianale
+LEGGENDARIO: Perfection tecnica che entra nella storia
+MITICO: Craftsmanship che trascende le limitazioni materiali
+
+## OGGETTI EVOLUTIVI - RARITÀ SUPREMA
+
+Gli oggetti Evolutivi rappresentano la categoria più rara: artefatti con "anima propria" che crescono e si trasformano in base alle azioni del proprietario.
+
+## ESEMPIO: PUGNALE DEL SOLDATO SENZA NOME
+
+NOME: Pugnale del Soldato Senza Nome
+
+## RARITÀ BASE: EVOLUTIVO
+
+### QUALITÀ: COMUNE
+
+STATO ATTUALE: Comune (per rarità effettiva)
+
+DESCRIZIONE: "L'ultima arma di un soldato che ha deciso di combattere
+da solo contro un intero esercito per coprire la ritirata dei suoi alleati.
+Un semplice pugnale di acciaio, ma che ha interiorizzato la voglia di
+rivalsa e il simbolo eroico del suo possessore originale."
+
+ABILITÀ EVOLUTIVA: "Eco del Senza Nome"
+"Il pugnale evolve con l'uso, adattandosi al suo portatore.
+Può raggiungere lo stato di leggenda se usato a dovere."
+
+PERCORSO DI EVOLUZIONE:
+- Comune → Non Comune: 0/10 colpi critici acheived
+- Non Comune → Raro: 0/100 colpi critici acheived
+- Raro → Epico: 0/1000 colpi critici acheived
+- Epico → Unico: Sconfiggere un esercito (100+ nemici in singola battaglia)
+- Unico → Leggendario: Sconfiggere eroe o PNG leggendario in duello
+- Leggendario → Mitico: Completare questline "L'Eredità del Senza Nome"
+
+STATS EVOLUTIVE:
+- Attacco: 45 → 650+ (cresce con ogni evoluzione)
+- Durabilità: 120 → Infinita (a livello Mitico)
+- Peso: Costante
+- Abilità: Si sbloccano nuove abilità ad ogni evoluzione
+
+## CARATTERISTICHE OGGETTI EVOLUTIVI
+
+CRITERI DI RICONOSCIMENTO:
+
+Legati a eventi eroici o tragici di grande impatto emotivo
+Hanno "assorbito" parte dell'essenza del proprietario originale
+Richiedono azioni coerenti con il loro "spirito" per evolvere
+Impossibili da duplicare o replicare attraverso crafting
+MECCANICHE SPECIALI:
+
+Binding Permanente: Si legano al primo utilizzatore che ne dimostra degno
+Evolution Tracking: Il gioco monitora le azioni specifiche richieste
+Narrative Integration: L'evoluzione è legata alla storia personale del giocatore
+Unique Paths: Ogni oggetto evolutivo ha requisiti completamente diversi
+
+## ALTRI ESEMPI DI EVOLUTIVI
+
+### ANELLO DEL SAGGIO FOLLE
+
+#### RARITÀ: EVOLUTIVO
+
+STORIA: Anello di uno studioso che ha sacrificato la sanità mentale per
+        la conoscenza suprema
+
+EVOLUZIONE BASATA SU:
+- Comune → Raro: Decifrare 50 testi antichi
+- Raro → Epico: Scoprire 5 segreti lost del mondo
+- Epico → Unico: Risolvere un mistero che nessuno ha mai risolto
+- Unico → Leggendario: Sacrificare qualcosa di prezioso per knowledge
+- Leggendario → Mitico: Trascendere i limiti della sanità per ultimate truth
+
+## SCUDO DEL PROTETTORE ETERNO
+
+### RARITÀ: EVOLUTIVO
+
+STORIA: Scudo di una guardia che ha protetto la sua città per 40 anni
+        senza mai fallire
+
+EVOLUZIONE BASATA SU:
+- Comune → Raro: Salvare 100 vite innocenti
+- Raro → Epico: Proteggere una città da invasione
+- Epico → Unico: Never let an ally die under your protection (1 anno)
+- Unico → Leggendario: Sacrifice yourself per salvare qualcuno
+- Leggendario → Mitico: Become the ultimate guardian of a realm
+
+## RARITÀ EFFETTIVA PER EVOLUTIVI
+
+Un Evolutivo (Comune) può diventare:
+- Evolutivo + Evoluzione Mitica = Oltre-Mitico (nuova categoria suprema)
+- Evolutivo + Evoluzione Leggendaria = Mitico effettivo
+- Evolutivo + Evoluzione Unica = Leggendario effettivo
+- E così via...
+
+Gli Evolutivi that raggiungono full evolution diventano gli oggetti
+più potenti esistenti nel gioco, surpassing persino i Mitici standard.
+
+## PROCESSO DI CRAFTING INTERATTIVO
+
+### FASI DI CREAZIONE
+
+#### FASE 1: PIANIFICAZIONE
+
+- Selezione progetto (ricetta o freestyle)
+- Analisi materiali disponibili
+- Scelta strumenti e workspace
+- Valutazione condizioni operative
+
+## FASE 2: PREPARAZIONE
+
+- Processamento materiali grezzi
+- Setup ambiente di lavoro
+- Calibrazione strumenti
+- Sincronizzazione mentale/fisica
+
+## FASE 3: ESECUZIONE
+
+- Applicazione tecniche scelte
+- Monitoring qualità in real-time
+- Adattamenti dinamici al processo
+- Gestione imprevisti/complicazioni
+
+## FASE 4: FINALIZZAZIONE
+
+- Rifinitura e dettagli finali
+- Testing funzionalità
+- Valutazione qualità achieved
+- Catalogazione per future referenze
+
+## CRAFTING BASATO SU RICETTE
+
+### SISTEMA DI APPRENDIMENTO
+
+#### ACQUISIZIONE CONOSCENZE
+
+Maestri Artigiani: PNG che insegnano ricette specifiche
+Tomi Antichi: Libri contenenti formule perdute
+Reverse Engineering: Analizzare oggetti per capire costruzione
+Guild Knowledge: Segreti condivisi nelle organizzazioni artigiane
+Quest Rewards: Ricette uniche da missioni speciali
+
+## ESEMPIO: FORGIATURA SPADA
+
+RICETTA BASE: "Spada di Ferro Standard"
+MATERIALI RICHIESTI:
+- 3x Lingotti di Ferro (purezza >80%)
+- 1x Manico di Legno Duro
+- Carbone per forgia (temperatura 1200°C)
+- Olio per tempra di qualità
+
+PROCESSO:
+- Riscaldamento ferro a temperatura ottimale
+- Martellatura: 47 colpi con ritmo specifico
+- Piegatura e riforgiatura per resistenza
+- Temperaggio in olio alla temperatura esatta
+- Affilatura con pietra whetstones appropriate
+- Assemblaggio finale con manico
+
+VARIABILI:
+- Timing martellatura influenza durezza
+- Temperatura tempra determina flessibilità
+- Qualità materiali modifica stats finali
+- Skill artigiano permette personalizzazioni
+
+## CRAFTING LIBERO E SPERIMENTALE
+
+### SISTEMA DI IMPROVVISAZIONE
+
+#### ESEMPIO: COSTRUZIONE ARCO SURVIVAL
+
+SITUAZIONE: Player in foresta senza ricette, solo materiali naturali
+
+MATERIALI DISPONIBILI:
+- Ramo di Tasso (legno flessibile identificato)
+- Tendini di Cervo (da caccia precedente)
+- Resina di Pino (raccolta da alberi)
+- Pietre affilate (per lavorazione)
+- Tempo e pazienza
+
+PROCESSO CREATIVO:
+- Valutazione curvatura naturale ramo
+- Intaglio graduale per ottenere flessibilità uniforme
+- Test di resistenza progressive
+- Preparazione corda con tendini intrecciati
+- Applicazione resina per rinforzi
+- Bilanciamento finale e taratura tiro
+- Test firing per calibrazione
+
+OUTCOME POSSIBILI:
+- Fallimento: Ramo si spezza, materiali sprecati
+- Scarso: Arco debole, impreciso, durata limitata
+- Discreto: Arco funzionale per caccia basic
+- Buono: Arco affidabile con buona precisione
+- Eccezionale: Arco superior quality con bonus nascosti
+
+## SISTEMA DI SCOPERTA
+
+### MECCANICHE DI INNOVAZIONE
+
+Combinazioni Inusuali: Mescolare materiali mai testati insieme
+Tecniche Personali: Sviluppare metodi propri attraverso sperimentazione
+Accidenti Felici: Errori che portano a scoperte rivoluzionarie
+Environmental Crafting: Sfruttare condizioni ambientali speciali
+Cross-Disciplinary: Applicare tecniche di un craft ad altro campo
+
+## CLASSI DI PRODUZIONE SPECIALIZZATE
+
+Le classi di produzione non si scelgono alla creazione del personaggio: si sbloccano giocando. La via dipende dalla classe (vedi `Progressione_Personaggio_Completo.txt`, "Classi avanzate e di produzione").
+
+### FORGIATORI (BLACKSMITHS)
+
+#### SPECIALIZZAZIONI
+
+Weaponsmith: Armi di ogni tipo e complessità
+Armorsmith: Protezioni, scudi, equipaggiamento difensivo
+Toolmaker: Strumenti per altri crafters, implementi specializzati
+Artistic Metalwork: Gioielli, decorazioni, opere d'arte metallica
+
+## ABILITÀ ESCLUSIVE
+
+Metal Sense: Valutare purezza e proprietà metalli al tatto
+Forge Mastery: Controllo preciso temperatura e timing
+Alloy Creation: Creare leghe custom con proprietà uniche
+Enchantment Infusion: Incorporare magie negli oggetti metallici
+
+## ALCHIMISTI
+
+### SPECIALIZZAZIONI
+
+Combat Alchemist: Veleni, esplosivi, pozioni da battaglia
+Healing Brewer: Medicine, cure, antidoti specializzati
+Enhancement Creator: Pozioni bonus stats, trasformazioni temporanee
+Transmutation Master: Conversione materiali, creazione elementi rari
+
+## LABORATORI E EQUIPMENT
+
+Portable Kit: Setup basic per field work
+Workshop Standard: Laboratorio completo per produzioni serie
+Master Laboratory: Facility advanced per ricerca cutting-edge
+Institutional Research: Partnership con università/organizzazioni
+
+## TESSITORI ARCANI (ARCANE WEAVERS)
+
+### FOCUS SPECIALIZZATO
+
+Creazione vesti magiche e accessori enchanted
+Intessere incantesimi direttamente nel tessuto
+Manipolare fibre magiche rare (silk spider, cloud cotton, etc.)
+Produrre cloaks of invisibility, robes of power, magical tapestries
+
+## INGEGNERI COSTRUTTORI
+
+### PROGETTI SCALE DIVERSA
+
+Gadget Personali: Device portatili, strumenti specializzati
+Siege Equipment: Catapulte, arieti, macchine da guerra
+Architectural Marvels: Ponti, torri, fortifications
+Megastructures: Progetti che richiedono coordinamento multiple gilde
+
+## COMPETIZIONI E MARKETPLACE
+
+### TORNEI ARTIGIANALI
+
+#### COMPETIZIONI REGOLARI
+
+FORGE MASTERS CHAMPIONSHIP (Annuale)
+- Categoria Individual: Best single item created
+- Team Challenge: Collaborative masterpiece
+- Speed Crafting: Quality under time pressure
+- Innovation Prize: Most revolutionary technique/design
+- People's Choice: Community voting su preferenze
+
+PRIZE STRUCTURE:
+- Winner: $50k + exclusive materials + title recognition
+- Runner-up: $25k + rare recipes + guild opportunities
+- Top 10: $5k + materials package + industry recognition
+- Participation: Rare materials sample + networking access
+
+## GUILD VS GUILD CRAFTING WARS
+
+Themed Challenges: Creare equipaggiamento per specific scenarios
+Resource Limitations: Crafting con materials limited/unusual
+Cross-Discipline: Teams must include multiple specializations
+Real-World Stakes: Winner ottiene territorial advantages o resource access
+
+## MERCATO DEGLI ARTIGIANI
+
+### ECONOMIA CRAFTED GOODS
+
+PRICING FACTORS:
+- Base Material Cost: Costo components utilizzati
+- Skill Premium: Reputation e track record artigiano
+- Rarity Multiplier: Quanto comune/rare è il design
+- Quality Bonus: Enhancement based su final quality achieved
+- Innovation Factor: Completely new techniques/designs
+- Market Demand: Supply/demand dynamics per item type
+
+MARKETPLACE DYNAMICS:
+- Auction System: Bidding per masterwork e legendary items
+- Commission Work: Custom orders da high-end clients
+- Bulk Production: Volume orders per guild/organizational needs
+- Consignment Shops: Third-party vendors selling crafter goods
+- Direct Sales: Artigiani che vendono personally ai customers
+
+## INTEGRAZIONE CON PROGRESSIONE
+
+### MASTERY PATHS
+
+#### SKILL DEVELOPMENT
+
+NOVICE (Levels 1-99): Learning fundamentals, basic recipes
+- Focus su consistent quality production
+- Understanding materials e tools
+- Building foundation techniques
+- Developing workspace efficiency
+
+JOURNEYMAN (Levels 100-199): Specialization begins
+- Advanced recipes unlock
+- Custom modifications to standard designs
+- Cross-craft collaboration starts
+- Competition participation begins
+
+ARTISAN (Levels 200-299): Master level work
+- Innovation e original designs
+- Teaching apprentices
+- Complex multi-stage projects
+- Industry influence e recognition
+
+GRANDMASTER (Levels 300+): Legendary status
+- Defining new schools di technique
+- Creating artifacts che enter history
+- Mentoring next generation masters
+- Pushing boundaries di what's possible in crafting
+
+## TITLE INTEGRATION
+
+Le classi avanzate interagiscono con il crafting:
+
+"Fabbro Leggendario": Richiede creazione di almeno un oggetto Leggendario
+"Innovatore Arcano": Sviluppare technique mai viste prima
+"Maestro degli Elementi": Padroneggiare crafting con tutti e 4 elementi primordiali (le sfere elementali: Ignis, Aqua, Terra, Ventus)
+Il sistema di crafting in Statisfy trasforma la creazione di oggetti da meccanica accessoria a arte vera e propria, dove maestria, creatività e competizione si fondono per creare un ecosystem economico e sociale ricco e dinamico.

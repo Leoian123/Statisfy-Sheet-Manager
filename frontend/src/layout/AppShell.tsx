@@ -1,0 +1,134 @@
+import { useEffect, useRef, useState } from "react";
+import { NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { useAppData } from "../auth/AppData";
+import { ErrorBox, Loading } from "../components/Status";
+
+const LAST_KEY = "statisfy-last-char";
+
+type Theme = "dark" | "light";
+function currentTheme(): Theme {
+  const t = document.documentElement.dataset.theme;
+  if (t === "dark" || t === "light") return t;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function readLast(): number | null {
+  try { const v = Number(localStorage.getItem(LAST_KEY)); return Number.isFinite(v) && v > 0 ? v : null; } catch { return null; }
+}
+function writeLast(id: number) {
+  try { localStorage.setItem(LAST_KEY, String(id)); } catch { /* ignora */ }
+}
+
+/** Id del PG "corrente": quello nell'URL, altrimenti l'ultimo aperto, altrimenti il primo visibile. */
+export function useCurrentCharId(): number | null {
+  const { chars } = useAppData();
+  const m = useMatch("/personaggi/:id/*");
+  const fromUrl = m?.params.id ? Number(m.params.id) : null;
+  if (fromUrl) return fromUrl;
+  if (!chars || !chars.length) return null;
+  const last = readLast();
+  if (last && chars.some((c) => c.id === last)) return last;
+  return chars[0].id;
+}
+
+export function AppShell() {
+  const { user, logout } = useAuth();
+  const { chars, error, reload } = useAppData();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const [theme, setTheme] = useState<Theme>(currentTheme);
+  const currentId = useCurrentCharId();
+  const m = useMatch("/personaggi/:id/*");
+  const suffix = m ? (m.params["*"] ? `/${m.params["*"]}` : "") : "";
+
+  useEffect(() => { if (currentId) writeLast(currentId); }, [currentId]);
+
+  // Su mobile la nav è una riga scorrevole: porta in vista la voce attiva
+  useEffect(() => {
+    const nav = navRef.current;
+    const active = nav?.querySelector<HTMLElement>('a[aria-current="page"]');
+    if (nav && active && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = active.offsetLeft - 16;
+    mainRef.current?.focus({ preventScroll: true });
+  }, [location.pathname]);
+
+  function pickTheme(t: Theme) {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem("statisfy-theme", t); } catch { /* ignora */ }
+    setTheme(t);
+  }
+
+  function onPick(id: number) {
+    navigate(`/personaggi/${id}${suffix}`);
+  }
+
+  const isMaster = user?.role === "master";
+  const hasChar = currentId != null;
+  const charLink = (s: string, label: string) =>
+    hasChar
+      ? <NavLink to={`/personaggi/${currentId}${s}`} end>{label}</NavLink>
+      : <a aria-disabled="true" title="Crea prima un personaggio">{label}</a>;
+
+  return (
+    <>
+      <header className="topbar">
+        <div className="brand"><b>STATISFY</b><span>Gestionale schede</span></div>
+        {chars && chars.length > 0 && (
+          <label className="char-pick small" htmlFor="char-select">
+            <span className="label">Personaggio</span>
+            <select
+              className="input"
+              id="char-select"
+              value={currentId ?? ""}
+              onChange={(e) => onPick(Number(e.target.value))}
+            >
+              {currentId != null && !chars.some((c) => c.id === currentId) && <option value={currentId}>PG #{currentId}</option>}
+              {chars.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} · Lv {c.level}{isMaster ? ` · ${c.owner_name}` : ""}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <span className="user">
+          <span className="name">{user?.display_name}</span>
+          <span className="chip muted role">{isMaster ? "Master" : "Giocatore"}</span>
+          <button type="button" className="btn ghost" onClick={logout}>Esci</button>
+        </span>
+        <div className="seg" role="group" aria-label="Tema">
+          <button type="button" aria-pressed={theme === "dark"} title="Tema scuro" onClick={() => pickTheme("dark")}>Scuro</button>
+          <button type="button" aria-pressed={theme === "light"} title="Tema chiaro" onClick={() => pickTheme("light")}>Chiaro</button>
+        </div>
+      </header>
+
+      <div className="app">
+        <nav className="nav" aria-label="Sezioni" ref={navRef}>
+          {charLink("", "Scheda personaggio")}
+          <NavLink to="/crea">Creazione guidata</NavLink>
+          {charLink("/level-up", "Level up")}
+          {charLink("/combattimento", "Combattimento")}
+          {isMaster && (
+            <>
+              <div className="nav-sep" />
+              <NavLink to="/master">Area Master</NavLink>
+            </>
+          )}
+          <div className="nav-sep" />
+          <p className="nav-note footnote">
+            Le regole sono calcolate dal server: passa sopra un valore per vedere formula e origine dei punti.
+          </p>
+        </nav>
+        <main id="view" tabIndex={-1} ref={mainRef}>
+          {error ? (
+            <ErrorBox title="Connessione" message={error} action={<button type="button" className="btn" onClick={reload}>Riprova</button>} />
+          ) : !chars ? (
+            <Loading />
+          ) : (
+            <Outlet />
+          )}
+        </main>
+      </div>
+    </>
+  );
+}

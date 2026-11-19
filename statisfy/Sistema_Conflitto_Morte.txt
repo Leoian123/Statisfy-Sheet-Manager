@@ -1,0 +1,206 @@
+# SISTEMA CONFLITTO E MORTE - STATISFY
+## Morte, PvP, Duelli e Guerre
+
+---
+
+## SEZIONE 1: MORTE STANDARD
+
+### PROCESSO
+
+| Fase | Dettaglio |
+|------|-----------|
+| Morte | HP raggiunge 0 |
+| Respawn | Ultimo checkpoint (5-15 min) |
+| Penalità | -1,5 livelli esatti: un livello intero più il 50% dell'esperienza di un livello |
+| Malus | -10% tutte stats per 1 ora |
+| Equipaggiamento | Intatto |
+| Memoria | Completa della morte |
+
+### ESEMPI PENALITÀ
+
+| Prima | Dopo | Perdita |
+|-------|------|---------|
+| Lv 47 al 30% | Lv 45 all'80% | -1,5 |
+| Lv 50 al 60% | Lv 49 al 10% | -1,5 |
+| Lv 1-2 | Invariato | Protezione newbie |
+
+### SISTEMA CHECKPOINT
+
+| Tipo | Attivazione |
+|------|-------------|
+| **AUTOMATICI** | Zone sicure, completamento quest, rest in taverne, ogni 2h |
+| **MANUALI** | Templi (donazione), altari, accampamenti, servizi premium |
+
+### RECUPERO POST-MORTE
+- EXP bonus primi 30 min: +50%
+- Ritorno sul luogo morte: +25% aggiuntivo
+
+---
+
+## SEZIONE 2: MORTI NARRATIVE
+
+### CRITERI ATTIVAZIONE
+- Location con lore particolare
+- Creatura/PNG con agenda narrativa
+- Eventi/quest di importanza epica
+- Circostanze che colpiscono testimoni significativi
+
+### TRASFORMAZIONI POSSIBILI
+
+| Tipo | Trigger | Effetti |
+|------|---------|---------|
+| **VAMPIRISMO** | Morte in territorio vampirico con Domitor presente | Classe mantiene base, +stat Oscurità, abilità vampiriche, debolezze, legame sangue |
+| **BENEDIZIONE DIVINA** | Morte difendendo tempio/reliquia con sacrificio genuino | +stat Fede, marchio divino, resist magie oscure, quest dalla divinità |
+| **MALEDIZIONE ANCESTRALE** | Morte in rovine con discendenza riconosciuta | Memoria vite passate, tecniche perdute, nemici ancestrali, artefatti che si attivano |
+
+### CATEGORIZZAZIONE
+
+| Tipo Morte | Condizione | Effetto |
+|------------|------------|---------|
+| EROICA | Salvando innocenti | Respawn istantaneo + bonus temp + titoli |
+| SACRIFICALE | Volontaria per ritual/quest | Ricompense post-mortem, classi speciali |
+| PER HUBRIS | Content troppo avanzato | Doppia penalità (-3 invece di -1.5) |
+| RITUALE | Durante cerimonie | Variabili estremi |
+
+---
+
+## SEZIONE 3: PVP STRUTTURATO
+
+### FILOSOFIA
+
+| Tipo | Caratteristiche |
+|------|-----------------|
+| **INCENTIVATO** (Arene) | Ambiente controllato, rewards, nessuna penalità permanente |
+| **LIBERO** (Open World) | Permesso ovunque, fortemente disincentivato, conseguenze sociali |
+
+### ARENE UFFICIALI
+
+| Formato | Descrizione |
+|---------|-------------|
+| Duelli 1v1 | Ranking Ladder mensili, matchmaking |
+| Tornei 3v3 | Guild Teams, formation |
+| Tornei 5v5 | Mixed Teams, draft |
+| Battle Royale | 20+ partecipanti |
+| Siege Warfare | 10v10 con obiettivi |
+| Eventi Speciali | Championship $50M+, Nation vs Nation |
+
+### REWARDS ARENA
+- Arena Points per match
+- EXP bonus combattimento
+- Equipment/skills esclusive
+- Ranking rewards settimanali/stagionali
+- Titoli esclusivi
+- Sponsorship per top
+
+---
+
+## SEZIONE 4: PVP OPEN WORLD
+
+### SISTEMA FLAGGING
+
+| Status | Condizione | Effetti |
+|--------|------------|---------|
+| **BIANCO** | Mai ucciso innocente | Protezioni zone sicure, bonus rep |
+| **GRIGIO** | PvP recente | 2h durata, attaccabile senza conseguenze |
+| **ROSSO** | 3+ uccisioni in 48h | Bounty, drop 20-50%, ban città, guardie attaccano |
+
+### CONSEGUENZE PROGRESSIVE
+
+| Omicidi | Effetti |
+|---------|---------|
+| **1** | Grigio 2h, warning, -rep leggera |
+| **3-5** | Rosso 24h, bounty 10k+, drop 20%, prezzi +50% |
+| **10+** | Rosso permanente, bounty 100k+, drop 50%, ban città, bounty hunters PNG |
+
+### BOUNTY HUNTING
+
+**Meccaniche:**
+- Contratti caccia accettabili
+- Reward aumenta con vittime
+- Tracking: ultima posizione ogni 30 min
+- Bounty condiviso se gruppo
+
+**Anti-Abuse:**
+- No bounty su amici/guildmates
+- Cooldown tra bounty stesso target
+- Investigazione GM per sospette
+
+---
+
+## SEZIONE 5: GUERRE TRA GILDE
+
+### DICHIARAZIONE
+
+| Requisito | Dettaglio |
+|-----------|-----------|
+| Chi | Guild Master |
+| Approvazione | 51% membri |
+| Cauzione | 100k+ corone |
+| Risposta | 24h per target |
+| Mediazione | PNG neutrali obbligatoria |
+
+### CONDIZIONI
+
+| Parametro | Range |
+|-----------|-------|
+| Durata | 7-30 giorni |
+| Obiettivi | Territorio, risorse, honor (concordati) |
+| Regole | Orari, zone, restrizioni (definite) |
+| Vittoria/Sconfitta | Predeterminate |
+
+### MECCANICHE DURANTE GUERRA
+- Kill tra guild nemiche: NO status rosso
+- Drop rate ridotto: 10%
+- Contributi tracciati individualmente
+- Equipment/abilità speciali da guerra
+- Alleanze temporanee
+
+### CONSEGUENZE
+
+| Risultato | Vincitore | Sconfitto |
+|-----------|-----------|-----------|
+| Territorio | Controllo 3+ mesi | Perdita |
+| Risorse | Accesso privilegiato | Restrizioni |
+| Reputation | Titoli, bonus | Penalità, loss membri |
+| Economico | Premi da deposito | Costi ricostruzione |
+
+---
+
+## SEZIONE 6: ZONE SPECIALI
+
+### ZONE SICURE
+- **Capitali:** PvP disabilitato, safe logout, guards one-shot
+- **Neutre:** Templi maggiori, mercati internazionali, academie, zone tutorial
+
+### ZONE PVP INCENTIVATE
+- **Battlegrounds:** Obiettivi PvP, rewards aumentate, respawn rapido
+- **Territorio Conteso:** Risorse rare, guild wars concentrate, dynamic events
+
+### PROTEZIONI ANTI-GRIEFING
+- Immunità PvP fino livello 50
+- No target da giocatori rossi per newbie
+- Penalità severe per chi uccide protetti
+- Safe zones estese aree starter
+
+---
+
+## SEZIONE 7: TOOLS CLAUDE
+
+### CHECKLIST MORTE NARRATIVA
+```
+□ Contesto ha rilevanza narrativa?
+□ PNG/forze interessate al giocatore?
+□ Morte interrompe/completa archi?
+□ Giocatore ha dimostrato dedizione al ruolo?
+□ Conseguenze bilanciano opportunità/sfide?
+```
+
+### PRINCIPI
+- Morti narrative: max 1 ogni 6+ mesi
+- Conseguenze sempre bilanciate (potere = responsabilità)
+- Trasformazioni creano conflict, non solo vantaggi
+- Reversal solo con questline impegnative
+
+---
+
+*Sistema che trasforma ogni caduta in opportunità narrativa.*

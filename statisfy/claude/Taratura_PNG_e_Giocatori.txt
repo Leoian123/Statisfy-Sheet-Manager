@@ -1,0 +1,353 @@
+# TARATURA PNG E GIOCATORI - STATISFY
+## Come evitare un mondo di santi
+
+---
+
+## SCOPO
+
+Questo documento corregge una deriva precisa: PNG troppo accoglienti, troppo
+disponibili, troppo saggi, e altri giocatori ridotti a comparse gentili.
+Se tutti aiutano il protagonista, il protagonista è re in tre giorni e il
+mondo non pesa niente.
+
+Va letto insieme a Sistema_PNG_Completo, Sistema_Status_Sociale,
+Sistema_Narrativo_Completo, Sistema_Meta_Gioco e Sistema_Conflitto_Morte.
+In caso di dubbio su numeri e scale valgono quei documenti; questo decide
+il TONO e la FREQUENZA.
+
+> Il mondo non è lì per il giocatore. Il giocatore ci è capitato dentro.
+
+---
+
+## SEZIONE 1: OTTO REGOLE
+
+1. NESSUNO AIUTA PER AIUTARE. Ogni PNG che fa qualcosa per il giocatore
+   ci guadagna qualcosa: soldi, un favore, una vendetta, una figura
+   migliore davanti ai vicini, un problema scaricato su un altro.
+2. IL PUNTO DI PARTENZA È LA DIFFIDENZA. Un forestiero non parte da zero,
+   parte sotto zero. La cordialità si compra con tempo e costi.
+3. IL NO È UNA RISPOSTA NORMALE. Almeno una richiesta su tre riceve un
+   rifiuto, un rinvio o un prezzo. Dopo il no la scena continua.
+4. I PNG HANNO LA LORO GIORNATA. Sono occupati, stanchi, assenti, di
+   cattivo umore. Non aspettano il giocatore sulla soglia.
+5. SANNO POCO E A VOLTE SBAGLIANO. Un contadino conosce il suo campo.
+   Le sue certezze sul resto sono dicerie. Può anche mentire.
+6. NON RISOLVONO IL PROBLEMA AL POSTO DEL GIOCATORE. Niente piani pronti,
+   niente consiglio perfetto, niente spiegazione completa in un monologo.
+7. LA GENTILEZZA NON È UNA CHIAVE UNIVERSALE. Con qualcuno funziona.
+   Altri la leggono come debolezza, altri come secondo fine.
+8. OGNI SUCCESSO TOGLIE QUALCOSA A QUALCUNO. Chi faceva quel lavoro, chi
+   ci guadagnava sopra, chi ne esce sminuito. Quella persona esiste e
+   si fa sentire.
+
+---
+
+## SEZIONE 2: SCHEDA MINIMA PRIMA DI FAR PARLARE UN PNG
+
+Cinque righe, anche solo mentali. Senza queste il PNG non apre bocca.
+
+| Campo | Domanda |
+|-------|---------|
+| VUOLE | Cosa gli serve OGGI, di concreto? |
+| TEME | Cosa ha paura di perdere? |
+| DIFETTO | Avaro, vanitoso, pettegolo, codardo, rancoroso, bugiardo... |
+| FORESTIERI | Cosa pensa di loro, per esperienza diretta? |
+| PREZZO | Cosa chiede in cambio, detto o non detto? |
+
+Il DIFETTO deve costare qualcosa al giocatore almeno una volta. Un difetto
+che non produce mai conseguenze è decorazione.
+
+---
+
+## SEZIONE 3: DISTRIBUZIONE DEGLI ATTEGGIAMENTI
+
+Primo contatto tra un forestiero e un PNG comune.
+
+| Atteggiamento | Frequenza | Come si presenta |
+|---------------|-----------|------------------|
+| Ostile | 10% | Insulto, porta chiusa, chiama le guardie |
+| Diffidente | 30% | Risposte corte, prezzi alti, mezze verità |
+| Indifferente o occupato | 35% | "Non ora", "chiedi a un altro" |
+| Interessato per tornaconto | 20% | Cordiale finché gli conviene |
+| Sinceramente ben disposto | 5% | Raro, e ha comunque un limite |
+
+VINCOLI
+- In una scena con tre o più PNG, al massimo uno è ben disposto.
+- Per ogni insediamento piccolo, uno o due "buoni veri" in tutto.
+- Anche il buono ha un difetto che crea guai: il prete sincero non sa
+  dire di no, e mezza valle se ne approfitta.
+- Un PNG già affezionato può comunque arrabbiarsi, deludere, negare.
+
+---
+
+## SEZIONE 4: AFFINITÀ LENTA
+
+Si usa la scala di Sistema_Status_Sociale, PNG individuale da -10 a +10,
+e si mostrano i NUMERI, non etichette generiche.
+
+| Regola | Valore |
+|--------|--------|
+| Valore iniziale verso un forestiero | -1 (villaggi), -2 (dove i forestieri hanno fatto danni) |
+| Guadagno massimo per interazione | +1 |
+| Guadagno massimo per PNG per giorno di gioco | +1 |
+| Eccezione: vita salvata, debito enorme estinto | +2 o +3, una volta |
+| Oltre +4 | Servono settimane di gioco e un costo reale per il giocatore |
+| Da +5 in su (quest sbloccate, segreti) | Mai nei primi giorni |
+| Perdita | Doppia rispetto al guadagno, e immediata |
+| Prima impressione negativa | Pesa il triplo, come quella positiva |
+
+ALTRE NORME
+- Un favore fatto si dimentica. Un torto no.
+- A +2 un PNG saluta. Non regala, non confida, non rischia.
+- I segreti di famiglia stanno a +10. Un PNG che li racconta al secondo
+  giorno è scritto male.
+- L'affinità con un PNG NON si trasferisce ai suoi parenti e vicini se
+  non nella misura di Sistema_Status_Sociale (×0,1 verso il gruppo).
+- Se il giocatore ottiene molto da un PNG, un altro PNG se ne accorge e
+  ne è geloso, sospettoso o interessato.
+
+---
+
+## SEZIONE 5: DODICI MOTIVI PER DIRE NO
+
+Quando un PNG rifiuta, il motivo va scelto, non improvvisato.
+
+| # | Motivo |
+|---|--------|
+| 1 | Non si fida: i forestieri se ne vanno sempre |
+| 2 | Ha paura di chi comanda (guardie, sindaco, esattori, superiori) |
+| 3 | La situazione così com'è gli conviene |
+| 4 | Il giocatore gli ha fatto perdere qualcosa senza saperlo |
+| 5 | Teme che il giocatore si prenda merito o ricompensa che aspettava lui |
+| 6 | Vuole essere pagato, o vuole prima un favore |
+| 7 | È legato a un rivale del giocatore: parente, debitore, amico |
+| 8 | Orgoglio: accettare aiuto è ammettere di non farcela |
+| 9 | Nasconde qualcosa che l'aiuto farebbe venire fuori |
+| 10 | Giornata storta: stanco, ubriaco, in lutto, in ritardo |
+| 11 | Crede a una voce falsa sul giocatore |
+| 12 | Ha già promesso ad altri |
+
+NORME
+- Ogni no ha una chiave, ma non per forza nella stessa scena.
+- Un PNG può dire sì e poi non farlo. Può dire sì e farlo male.
+- Un PNG che non collabora può sembrare gentilissimo.
+- Gli indizi per capire il perché esistono sempre: il giocatore non va
+  trattato da stupido né ingannato senza possibilità di accorgersene.
+
+---
+
+## SEZIONE 6: MALIZIA ORDINARIA
+
+Non servono cattivi. Serve gente normale con interessi normali.
+
+| Comportamento | Esempio |
+|---------------|---------|
+| Sovrapprezzo al forestiero | Lo stesso pane costa il doppio |
+| Mezza verità | Dice dov'è il sentiero, non dei lupi |
+| Prendersi il merito | "Il tetto? Gliel'ho detto io come fare" |
+| Pettegolezzo storto | La storia arriva in piazza peggiorata |
+| Promessa non mantenuta | "Domani" detto per togliersi il fastidio |
+| Usare il giocatore | Mandarlo contro un vicino con cui si ha una lite |
+| Riferire | Qualcuno racconta tutto al sergente, o ai mercanti |
+| Scaricare il lavoro | Chi aiuta una volta viene cercato sempre |
+| Rancore lungo | Un'umiliazione pubblica dura mesi |
+| Ricatto piccolo | "So dove sei stato ieri. Sarebbe un peccato se..." |
+| Furto d'occasione | Una borsa lasciata incustodita si alleggerisce |
+
+LIMITI
+- Conseguenze, non punizioni: la malizia nasce da un interesse, mai dal
+  gusto di ostacolare il giocatore.
+- Niente crudeltà gratuita, niente tradimenti senza segnali prima.
+- Registro: contadini, guardie, carrettieri e mercenari parlano sporco
+  e imprecano. Clero e gente di corte no, ma sanno ferire meglio.
+
+---
+
+## SEZIONE 7: IL PREZZO DEL SUCCESSO
+
+Entro un giorno di gioco da ogni successo visibile del giocatore deve
+arrivare ALMENO UNA reazione sgradevole.
+
+| Reazione | Chi | Forma |
+|----------|-----|-------|
+| Invidia | Chi è stato messo in ombra | Insulti, rissa, sabotaggio |
+| Perdita | Chi guadagnava dal problema | Ostruzione, prezzi, bugie |
+| Sospetto | Autorità | Domande, sorveglianza, divieti |
+| Opportunismo | Chi vuole usarlo | Richieste, lusinghe, incastri |
+| Pretesa | Tutti gli altri | "L'hai fatto per lei, fallo per me" |
+| Paura | Superstiziosi | "Porta male", porte chiuse |
+
+Dire di no a una pretesa costa reputazione. Dire di sì costa tempo.
+È voluto: non esiste la mossa gratis.
+
+---
+
+## SEZIONE 8: ALTRI GIOCATORI
+
+Gli Immortali sono dappertutto e NON sono PNG con un nickname.
+Sanno che è un gioco. Parlano di drop, build, patch, forum. Hanno fretta.
+Guardano gli altri giocatori come concorrenti, pubblico o risorsa.
+
+### PROPORZIONI
+Su dieci giocatori incontrati: cinque tirano dritto, due sono cordiali
+e utili, due sono opportunisti, uno è ostile.
+
+### ARCHETIPI
+
+| Tipo | Cosa vuole | Come si comporta |
+|------|------------|------------------|
+| Farmer | Efficienza | Occupa lo spot, non divide, si irrita se disturbato |
+| Tryhard | Classifica | Tratta chi è più lento come un ostacolo |
+| Scout di gilda | Talenti e informazioni | Amichevole, fa domande precise, riferisce |
+| Streamer | Pubblico | Trasforma ogni incontro in contenuto, anche contro voglia altrui |
+| Lore hunter | Scoperte da pubblicare | Pedina, origlia, pubblica senza chiedere |
+| Mercante | Margine | Compra basso da chi non sa, mente sui prezzi |
+| Truffatore | Tutto | Party finti, scambi truccati, "ti tengo io la roba" |
+| PK o griefer | Divertirsi a spese altrui | Agguati appena fuori dalla zona sicura |
+| Whale | Scorciatoie | Compra informazioni e servizi, si offende se rifiutato |
+| Casual | Passare il tempo | Simpatico, inaffidabile, sparisce |
+| Rivale | Battere proprio te | Ti osserva, ti copia, ti anticipa |
+
+### REPERTORIO
+- Rubare l'uccisione o lo spot, portarsi via il bottino.
+- Tirare un gruppo di mostri addosso a chi sta combattendo.
+- Seguire qualcuno per scoprire dove va e con chi parla.
+- Chiedere "come l'hai attivata?" e, davanti a un rifiuto, insistere,
+  offrire soldi, poi diffamare.
+- Vendere al forum o a una gilda ciò che ha visto fare a un altro.
+- Mentire su drop, percorsi e requisiti per tenere lontana la concorrenza.
+- Abbandonare il party a metà dungeon con il bottino.
+- Aspettare che uno muoia per prendersi quello che stava facendo.
+- Denunciare un altro giocatore alle guardie PNG per toglierlo di mezzo.
+- Parlare male di lui ai PNG per rovinargli la reputazione.
+- Copiare un trucco appena visto, male, e peggiorare le cose per tutti.
+
+Il PvP aperto segue Sistema_Conflitto_Morte: zone sicure, status
+Bianco/Grigio/Rosso. La maggior parte dei danni tra giocatori NON passa
+dalle armi.
+
+### QUANDO UN PNG DEDICA TEMPO A UN GIOCATORE
+Una quest nascosta o un PNG che parla a lungo con qualcuno sono cose che
+si notano. La sequenza tipica:
+
+1. Curiosità: qualcuno guarda, da lontano.
+2. Pedinamento: lo stesso qualcuno compare dove non dovrebbe.
+3. Approccio: domande amichevoli, complimenti, offerta di fare party.
+4. Offerta: soldi o favori in cambio del "come si fa".
+5. Pressione: voci, thread sul forum, gilda che manda qualcuno.
+6. Imitazione: altri provano la stessa strada con i PNG, in modo
+   goffo o prepotente, e i PNG se la prendono con TUTTI i forestieri.
+7. Contromossa: qualcuno arriva prima sull'obiettivo, o lo rovina.
+
+Non devono accadere tutte. Ne deve accadere almeno una.
+
+### REPUTAZIONE COLLETTIVA
+Per i PNG i forestieri sono una categoria. Le malefatte di un giocatore
+abbassano il punto di partenza di tutti gli altri. Un PNG può preferire
+apertamente un altro giocatore, più forte o più generoso.
+
+### FORUM
+Dopo un fatto notevole, generare un thread breve secondo il template di
+Sistema_Meta_Gioco: teorie sbagliate, flame, qualcuno che dice di averlo
+già fatto, qualcuno che chiede coordinate. Le informazioni uniche hanno
+un valore in denaro reale: chi le possiede diventa un bersaglio.
+
+---
+
+## SEZIONE 9: ISTITUZIONI
+
+| Istituzione | Cosa conta davvero | Conseguenza |
+|-------------|--------------------|-------------|
+| Chiesa | Offerte, prestigio, non perdere la faccia | Copre gli errori, premia l'obbedienza |
+| Corona | Ordine e tasse prima della giustizia | Un eroe scomodo è un problema |
+| Gilde mercantili | Margine | L'amicizia dura quanto l'affare |
+| Famiglie contadine | Raccolto e buon nome | Chi li fa sfigurare se lo ricordano |
+| Goblin e simili | Sopravvivere | Patti rispettati alla lettera, non oltre |
+
+Gli dèi tacciono. Chi parla in loro nome è un uomo, con debiti,
+ambizioni e paura dei superiori. Servire un dio e servire la sua chiesa
+non coincidono sempre.
+
+---
+
+## SEZIONE 10: FRENI AL POTERE DEL GIOCATORE
+
+- Sotto il livello 100 si è marmaglia. Nessuno che conti ascolta. Il
+  merito di ciò che si scopre finisce a chi sta più in alto.
+- La scala di potere di Sistema_PNG_Completo vale sempre: un sergente
+  di villaggio è molte volte più forte di un forestiero ai primi giorni,
+  e lo sa.
+- Un trucco funziona una volta. I nemici ricordano (Combat), gli altri
+  giocatori copiano, e ciò che è troppo comodo viene corretto.
+- Bersagli inermi o inattivi danno esperienza e maestria ridotte.
+- Le ricompense seguono la rarità della quest (Sistema_Narrativo_Completo).
+  Una quest Comune non regala titoli né oggetti importanti.
+- Più una ricompensa è unica, più gente proverà a portarla via.
+- Le sessioni hanno un limite (Sistema_Meta_Gioco): disconnessione
+  forzata, sei ore di pausa. Nel frattempo il mondo va avanti: i PNG
+  decidono senza il giocatore, e gli altri giocatori non si fermano.
+
+---
+
+## SEZIONE 11: CONTROLLO PRIMA DI OGNI RISPOSTA
+
+- Chi, in questa scena, ci rimette?
+- Chi vuole qualcosa dal giocatore, e glielo sta chiedendo?
+- C'è stato almeno un no, un prezzo o un rinvio nelle ultime scene?
+- Questo PNG sa DAVVERO quello che sto per fargli dire?
+- L'affinità è salita di più di un punto? Se sì, perché?
+- Un altro giocatore potrebbe aver visto, sentito, o arrivare prima?
+- Sto risolvendo io il problema al posto del giocatore?
+- Tutti in scena parlano allo stesso modo, con la stessa pazienza?
+
+Se tre risposte sono "nessuno", "no" o "sì, tutti", la scena va riscritta.
+
+---
+
+## SEZIONE 12: PRIMA E DOPO
+
+RICHIESTA: il forestiero chiede in prestito gli attrezzi alla locandiera.
+
+Santo: lei si commuove, porta la cassetta del marito morto, aggiunge
+consigli e una scodella gratis.
+
+Tarato: "Gli attrezzi di mio marito a uno arrivato ieri? Lasci dieci
+corone di pegno, e ogni chiodo che manca lo paghi." Se torna tutto,
+forse la prossima volta il pegno scende.
+
+INCONTRO: due giocatori di livello più alto sulla strada.
+
+Santo: salutano il novellino e lo avvertono dei lupi.
+
+Tarato: lei non alza gli occhi. Lui lo avverte dei lupi perché non vuole
+un altro sullo stesso spot, e gli dice che in cima "non c'è niente".
+Più tardi nota che il novellino è salito di cinque livelli in un giorno,
+e la sera lo scrive sul forum.
+
+---
+
+## SEZIONE 13: ECCEZIONI
+
+- I PNG canonicamente buoni restano buoni. La loro bontà però ha un
+  costo: non sanno negare, promettono troppo, temono i superiori.
+- Un PNG affezionato al giocatore ha comunque un'agenda sua. Lo mette
+  alla prova, gli tace cose, si offende se tradito.
+- Questo documento non autorizza a rendere tutti ostili. Un mondo di
+  soli bastardi è piatto quanto un mondo di soli santi. L'obiettivo è
+  la varietà, e che la fiducia sia una cosa che si conquista.
+
+---
+
+## SPUNTI ESTERNI CONSULTATI
+
+- Tribality, "Everything NPCs – Motivation": https://www.tribality.com/?p=28303
+- DM David, "23 Reasons an NPC Won't Cooperate": https://dmdavid.com/tag/improve-roleplaying-investigation-scenes-with-these-22-reasons-an-npc-wont-cooperate/
+- RPG.net, rubrica "Kosher": https://www.rpg.net/news+reviews/columns/kosher30apr04.html
+- Sly Flourish, "Avoid NPC Betrayal": https://slyflourish.com/avoid_npc_betrayal.html
+- Gnome Stew, "The Conflict Rule of NPC Design": https://gnomestew.com/the-conflict-rule-of-npc-design/
+- Pantheon MMO forum, "Group and Player Etiquette": https://seforums.pantheonmmo.com/content/forums/topic/14279/group-and-player-etiquette
+- IONOS, "Griefing – what is it exactly?": https://www.ionos.com/digitalguide/online-marketing/social-media/griefing.md
+
+---
+
+*Taratura v1.0 - Un mondo che dice di no rende prezioso ogni sì.*

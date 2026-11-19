@@ -1,0 +1,33 @@
+# PUNTI ANCORA APERTI - STATISFY
+## Registro in attesa delle decisioni dell'autore
+
+Aggiornato il 18 novembre 2026. Contiene solo ciò che non è ancora deciso o
+non è ancora stato fatto. Quando una voce si chiude va tolta da qui; quando
+l'elenco è vuoto, questo file va cancellato.
+
+---
+
+## DA FARE
+
+- Tradurre in italiano `Magic.txt.txt`, `Crafting and Equip system.txt` e `Guild System.txt`, tenendo in inglese solo il gergo da giocatore e i nomi propri. Nella stessa riscrittura, togliere da `Magic.txt.txt` i tiri di dado e le competenze in percentuale, già superati dalla sezione "Come leggere questo documento", e integrarvi `claude/Magia_Creazione_Incantesimi.txt`.
+- Allineare `claude/Zona_Alba_Chiara.txt` alla correzione del 18 novembre 2026: nella tabella dell'equipaggiamento iniziale il Grimorio Basilare del Mago è ancora indicato con "3 incantesimi". Vale `Creazione personaggio.txt`: contiene solo il Dardo e ha 2 slot liberi.
+- Aggiungere alla mappa di `Master_System_v4.txt`: `claude/Campagna_Kyle.txt`, `claude/Magia_Creazione_Incantesimi.txt` e la scheda di zona di Valheim quando sarà scritta. Portare nella sezione "Come si scrive la narrazione" le correzioni di stile annotate in testa a `claude/Campagna_Kyle.txt`.
+- Aggiungere a `Combat.txt`, "Numeri del danno", la formula del danno magico decisa il 18 novembre 2026.
+
+## DA CONFERMARE
+
+- Restano nomi del mondo reale non toccati: "Atlantide", "acciaio damasceno", oltre alle Tre Vie e a Shaolin tenuti per scelta.
+- `Combat.txt`, "Rarità dell'incontro": la scala cubica (×1, ×8, ×27, ×64, ×125, ×216) è decisa. Restano da assegnare le rarità alle specie fuori dalla Valle di Lumengarde; per ora sono fissati solo goblin e bestie ordinarie (Comune) e draghi (Leggendario).
+- Cambio tra le valute: deciso 1 aurum di Valheim = 1 corona di Valeria. Da confermare se la parità vale anche per le valute degli altri regni, come le Perle di Corrente di Abyssos.
+- Nome dell'incantesimo iniziale del Mago: "Dardo Magico" in `Creazione personaggio.txt`, "Dardo arcano" nelle parole dell'autore. Per ora sono trattati come lo stesso incantesimo.
+- Ogni Mago parte con Vis al Grado I perché conosce il Dardo arcano: è una deduzione del narratore.
+
+## REGOLE ANCORA MANCANTI
+
+- Bottino: cosa lasciano le creature e con quale frequenza, fuori dalla zona iniziale.
+- Esperienza e bottino in rapporto alla rarità dell'incontro: oggi l'esperienza dipende solo dal livello.
+- Livelli consigliati delle zone del mondo oltre la Valle di Lumengarde.
+- Zona iniziale di Valheim: esiste solo il profilo della città. Luoghi, PNG e creature si scrivono in partita (campagna di Kyle) e vanno poi raccolti in una scheda di zona.
+- Creazione di incantesimi: come si acquisisce il Grado I in una sfera nuova; come si consolida un incantesimo quando gli slot del grimorio sono finiti; come si calcolano costo in Mana e livello di un incantesimo composto (per ora li valuta il narratore caso per caso).
+- Dotazione comune e checkpoint iniziale per chi parte fuori da Valeria: per Kyle si usa per analogia quella di Alba Chiara, con 20 aurum.
+- Vie di accesso alle singole classi avanzate e di produzione: si definiscono caso per caso quando un giocatore le cerca. Quella del Paladino servirà presto.

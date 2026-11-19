@@ -1,0 +1,235 @@
+# SISTEMA PNG COMPLETO - STATISFY
+## Personaggi Non Giocanti e Distinzione Immortali/Mortali
+
+---
+
+## REGOLA AUREA
+
+**I PNG NON SANNO CHE GLI IMMORTALI SONO GIOCATORI.**
+Per loro sono "forestieri" con caratteristiche insolite.
+
+---
+
+## SEZIONE 1: DEFINIZIONI
+
+### IMMORTALI (Giocatori)
+
+| Aspetto | Dettaglio |
+|---------|-----------|
+| **Origine** | Terra 2045, accesso via NeuroLink |
+| **Resurrezione** | Automatica all'ultimo checkpoint |
+| **Penalità morte** | -1.5 livelli, -10% stats 1h |
+| **Tempo respawn** | 5-15 minuti |
+| **Equipaggiamento** | Intatto dopo morte |
+| **Memoria** | Completa della morte |
+| **Sessioni** | Fino a 10 ore con capsula consumer, 12 con la professional (vedi Sistema_Meta_Gioco). 1 ora reale = 3 ore in Aethermoor: una sessione piena vale 30-36 ore di gioco |
+
+**Come i PNG li percepiscono:**
+- "Forestieri" con pattern insoliti
+- Scompaiono periodicamente ("viaggi verso terre lontane")
+- "Tornano dalla morte" in modi misteriosi
+- Crescita potere innaturalmente rapida
+- Memoria perfetta delle morti
+
+### PNG (Nativi Aethermoor)
+
+| Aspetto | Dettaglio |
+|---------|-----------|
+| **Morte** | Permanente e definitiva |
+| **Resurrezione** | Solo eccezioni rarissime (vampirismo, benedizione, maledizione) |
+| **Equipaggiamento** | Perso alla morte |
+| **Progressione** | Naturale lentissima (anni/decenni) |
+| **Memoria** | Normale (possono dimenticare) |
+| **Coscienza** | Nessun concetto di "gioco" o "simulazione" |
+
+---
+
+## SEZIONE 2: SCALA DI POTERE PNG
+
+| Livello | Rango di potere | Ruolo sociale tipico | Ruoli Tipici |
+|---------|-----------------|----------------------|--------------|
+| 1-99 | Soldati Semplici | Umani Semplici | Contadini, mercanti, artigiani, guardie villaggio |
+| 100-199 | Guerrieri Scelti | Soldati e Ufficiali | Capitani, sergenti, mercenari esperti |
+| 200-299 | Guerrieri Importanti | Nobili Minori | Baroni, cavalieri, sindaci, comandanti regionali |
+| 300-399 | Eroi | Nobili e Re Minori | Conti, duchi, grandi maghi, generali |
+| 400-499 | Leggende | Eroi e Sovrani | Imperatori, arcimalgi, eroi leggendari |
+| 500-599 | Miti | Miti e Leggende | Eroi ascesi, draghi antichi, avatar divini |
+| 600+ | Divinità | Divinità | Dèi, demoni supremi, draghi primordiali |
+
+I ruoli tipici valgono per città e capitali. In un villaggio le stesse cariche stanno molto più in basso: un sergente o un sindaco di paese possono essere sotto il livello 100.
+
+---
+
+## SEZIONE 3: PATTERN COMPORTAMENTALI
+
+### IMMORTALI (Visibili ai PNG)
+
+| Pattern | Spiegazione PNG |
+|---------|-----------------|
+| Scomparse improvvise | "Viaggiatori misteriosi" |
+| Crescita accelerata | "Benedetti dagli dèi" / "Prescelti" |
+| Resurrezioni ripetute | "Magia potente" / "Patto oscuro" / "Benedizione" |
+| Tattiche suicide | "Coraggio sovrumano" / "Pazzia" / "Maledizione" |
+| Non invecchiano | "Magie anti-invecchiamento" |
+| Oggetti che compaiono e spariscono | "Borse incantate" / "Trucchi da forestiero" |
+
+### CONSEGUENZE SOCIALI
+
+**Reputazione tra PNG:**
+- Rispetto misto a timore
+- Teorie: "Inviati dèi" / "Non-morti" / "Creature magia antica" / "Spiriti incarnati"
+- Diffidenza alcuni contesti, attrazione altri
+
+**Relazioni personali:**
+- PNG possono amarli/odiarli
+- Sempre consapevolezza della "differenza"
+- Matrimoni/famiglie possibili ma complessi
+- Sanno che "potrebbero scomparire per sempre"
+
+### PNG - MORTALITÀ REALE
+
+| Comportamento | Motivazione |
+|---------------|-------------|
+| Decisioni conservative | Morte = fine |
+| Nessun rischio inutile | Sopravvivenza priorità |
+| Trasmissione conoscenze | Prima di morire |
+| Legami multi-generazionali | Famiglia, eredità |
+
+---
+
+## SEZIONE 4: TEMPLATE PNG
+
+### SCHEDA BASE
+
+NOME: [Completo]
+LIVELLO: [1-600+]
+POSIZIONE: [Titolo/Ruolo]
+REGNO: [Area influenza]
+ETÀ: [Apparente/Reale]
+RAZZA: [Umano/Elfo/etc.]
+
+PERSONALITÀ:
+- Tratti dominanti (3-4)
+- Motivazioni profonde
+- Paure/Debolezze
+- Manie/Abitudini
+
+BACKGROUND:
+- Origine
+- Eventi formativi
+- Relazioni importanti
+- Segreti
+
+OBIETTIVI: Breve termine | Lungo termine | Conflitti interni
+
+RISORSE: Competenze | Influenza | Ricchezze | Connessioni
+
+QUEST: Principale | Secondarie | Ganci narrativi
+
+MEMORIA: Interazioni giocatore | Info apprese | Opinione | Segreti condivisi
+
+### ESEMPI RAPIDI
+
+| PNG | Livello | Caratteristica Chiave |
+|-----|---------|----------------------|
+| Elena la Saggia | 45 | Anziana ex-cortigiana, conosce tesoro nascosto |
+| Ser Gareth l'Esiliato | 278 | Ex-Paladino caduto, cerca prove innocenza |
+| Lady Morgana Noctis | 445 | Duchessa necromante, innamorata di paladino |
+
+---
+
+## SEZIONE 5: SISTEMA MEMORIA PNG
+
+### STRUTTURA
+
+ULTIMA INTERAZIONE: [Data/Contesto]
+
+CONOSCENZE GIOCATORE:
+- Nome e titoli
+- Imprese testimoniate
+- Livello percepito
+- Relazioni note
+- Segreti condivisi
+
+RELAZIONE:
+- Fiducia: [Scarso/Neutrale/Buono/Eccellente]
+- Debiti/Favori
+- Tensioni
+- Interessi comuni
+
+INFO RISERVATE:
+- Segreti non condivisi
+- Piani nascosti
+- Vere motivazioni
+- Info altri PNG
+
+EVOLUZIONE:
+- Cambiamenti da interazioni
+- Nuovi obiettivi
+- Crescita/Declino potere
+
+### GESTIONE COERENZA
+- **Registro Cronologico:** Timeline interazioni
+- **Cross-Reference:** PNG si parlano, condividono info
+- **Conseguenze Dinamiche:** Azioni cambiano opinione PNG collegati
+- **Persistenza:** PNG continuano vite quando giocatore offline
+
+---
+
+## SEZIONE 6: CASI D'USO
+
+### MORTE IN COMBATTIMENTO
+
+**Se muore IMMORTALE:**
+- Respawn al checkpoint
+- PNG vede corpo "svanire come nebbia"
+- Torna ore/giorni dopo
+- PNG: shock, timore, domande
+
+**Se muore PNG:**
+- MORTE PERMANENTE
+- Nessun respawn
+- Impatto emotivo
+- Conseguenze durature
+
+### RELAZIONE A LUNGO TERMINE
+
+**Tragedia fondamentale:**
+- Immortale può giocare decenni
+- PNG vive forse 40-50 anni in-game
+- Poi scomparirà permanentemente
+- Immortali = outsider eterni
+- PNG = appartengono veramente ad Aethermoor
+
+---
+
+## SEZIONE 7: LINEE GUIDA CLAUDE
+
+### GESTIONE DUE MONDI
+- Transizioni chiare tra Terra 2045 ↔ Aethermoor
+- Coerenza tonale per ciascun mondo
+- Nessuna contaminazione: PNG ignorano mondo esterno
+
+### INTERPRETAZIONE PNG
+- **Voce unica:** Modo distintivo di parlare
+- **Motivazioni coerenti:** Azioni giustificate da background
+- **Crescita dinamica:** Cambiano con interazioni
+- **Memoria attiva:** Riferirsi a interazioni precedenti
+
+### BILANCIAMENTO POTERE
+- **Rispetto scala:** Più potenti = più influenza/risorse
+- **Accessibilità progressiva:** Alto livello accessibile dopo progressione
+- **Realismo sociale:** Basso livello mostra deferenza
+- **Escalation graduale:** Conflitti con PNG potere crescente
+
+### PRINCIPIO GUIDA
+
+> "Gli immortali vivono per sempre ma sono sempre outsider.
+> I PNG vivono vite brevi ma appartengono veramente ad Aethermoor.
+> Due esistenze che si intersecano ma non si comprendono mai."
+
+**Claude deve onorare entrambe le prospettive, sempre.**
+
+---
+
+*Sistema che definisce la distinzione fondamentale per coerenza narrativa e meccanica.*

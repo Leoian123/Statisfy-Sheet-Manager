@@ -1,0 +1,319 @@
+# ZONA DI PARTENZA: ALBA CHIARA E LA VALLE DI LUMENGARDE
+## Scheda di zona per il narratore
+
+Canone locale della zona iniziale di Valeria. La prima parte è il documento scritto il 18 ottobre 2026; seguono le aggiunte nate in partita e i segreti riservati al narratore. Per regole e numeri generali valgono i documenti di sistema.
+
+### Aggiornamenti rispetto al testo di ottobre
+
+- L'anno corrente è il 1844.
+- Il regno di partenza si sceglie alla creazione: questa zona vale per chi sceglie Valeria.
+- Tono e disponibilità dei PNG seguono `claude/Taratura_PNG_e_Giocatori.txt`: un forestiero parte da affinità -1, e la cordialità descritta qui sotto va guadagnata.
+- Esperienza, danno, recupero e ricomparsa seguono le regole aggiornate di `Progressione_Personaggio_Completo.txt` e `Combat.txt`.
+- Livelli, Vita e danno delle creature sono stati ricalibrati il 14 novembre 2026 sulla formula di `Combat.txt` (rarità dell'incontro e taglia) e sui livelli usati in partita.
+
+---
+
+File canonici per la prima slice giocabile: arrivo silenzioso in capsula ad Alba Chiara, tutorial di Elena, un piccolo problema locale. Personaggio, premessa e modalità di gioco restano scelte del giocatore; qui c'è tutto ciò che il mondo deve sapere prima.
+
+## Regione di partenza e posizione sulla mappa
+
+La Valle di Lumengarde è la terra d'inizio degli Immortali che scelgono Valeria: una conca fertile nel cuore di Valeria, a mezza giornata di cammino a sud-ovest della capitale Lumengarde (500.000 abitanti). La magia qui scorre gentile, le colline sono dorate e i ruscelli cristallini; è la regione più sicura del continente e per questo la più noiosa per chi resta troppo.
+
+**Posizione sulla mappa**
+
+| Direzione da Alba Chiara | Luogo | Distanza | Note |
+|---|---|---|---|
+| Nord-est | Lumengarde (capitale) | 1 giorno a piedi, 4 ore a cavallo | Strada Reale lastricata; carovane due volte a settimana |
+| Nord | Pianure Dorate | Iniziano subito oltre le fattorie | Villaggi tranquilli, grano, nessun pericolo serio |
+| Ovest | Foresta di Silverleaf | Mezza giornata | Creature fatate; la magia qui è più forte, i primi veri pericoli |
+| Sud | Colline di Ambra | 2 giorni | Miniere di ferro e gemme; banditi lungo la via |
+| Est | Paludi di Mistral | 3 giorni | Spiriti maligni, creature acquatiche; vietate ai nuovi |
+| Nord-ovest, 2 ore | Rovine del Tempio Antico | Dentro la Valle | Primo dungeon; sotterranei con i primi segreti |
+
+**Clima e calendario.** Anno 1844 dell'Era dei Regni. La Valle ha quattro stagioni miti; l'apertura è a inizio autunno, tempo di raccolto: giornate calde, sere fresche, luna piena fra sei giorni (il grano magico brilla di notte, dettaglio che il narratore usa nella prima scena). La magia segue cicli di sette anni e il prossimo picco è fra due anni.
+
+**Confini della prima slice.** Il giocatore può muoversi liberamente in tutta la Valle: villaggio, fattorie, bosco ai margini, Rovine del Tempio Antico. Silverleaf e la strada per Lumengarde esistono e si possono tentare, ma il narratore avvisa tramite PNG che "non è posto per chi è appena arrivato". Oltre, il mondo non è ancora scritto in dettaglio e il narratore improvvisa su Ambientazione.
+
+**Regola per il narratore:** la Valle è sicura, non vuota. Ogni luogo ha qualcuno che ci lavora e qualcosa che non torna.
+
+## Alba Chiara: luogo e aree
+
+Alba Chiara è un villaggio di 2.000 anime che vive di agricoltura e piccolo commercio: case con tetti di paglia su strade acciottolate, odore di pane fresco e di incenso dal piccolo tempio di Luxor. È zona sicura: PvP disabilitato, logout immediato, guardie che risolvono qualsiasi rissa. È anche il posto dove ogni Immortale è stato un giorno un forestiero confuso, e gli abitanti lo sanno.
+
+**Aree del villaggio**
+
+| Area | Cosa c'è | Chi si incontra | Uso nel tutorial |
+|---|---|---|---|
+| Piazza dell'Alba | Pozzo, bacheca delle richieste, mercato il martedì e il sabato | Tutti; Elena vi siede la mattina | Punto di arrivo, bacheca quest |
+| Tempio di Luxor | Piccolo tempio alla divinità della luce; altare per checkpoint manuale (donazione 5 corone) | Fratello Tobia (chierico, Lv 38) | Checkpoint, cure, spiegazione della morte "per chi torna" |
+| Locanda del Grano Dorato | Sei stanze, cucina, sala comune; stanza 2 corone a notte | Marta (locandiera, Lv 22), viaggiatori | Checkpoint automatico, voci, primo pasto |
+| Fucina di Bram | Forgia, riparazioni, affilatura; vende armi Comuni | Bram (fabbro, Lv 61) | Riparazione, intro al crafting, quest consegna |
+| Bottega di Nessa | Spezie, pozioni base, erbe; compra pelli e piante | Nessa (erborista, Lv 29) | Intro commercio, quest raccolta |
+| Posto di guardia | Due guardie di giorno, tre di notte; registro dei forestieri | Sergente Hald (Lv 72) | Intro legge e reputazione, quest pattuglia |
+| Casa di Elena | Casetta al limite est del villaggio, orto, molti libri | Elena la Saggia | Tutorial, segreti |
+| Mulino sul ruscello | Mulino ad acqua, magazzino del grano | Famiglia Orso (mugnai) | Luogo del "piccolo problema locale" |
+
+**Fuori dal villaggio (entro un'ora di cammino)**
+
+Fattorie circostanti: campi di grano magico che brilla sotto la luna piena; prime creature selvagge (lupi di prateria, cinghiali, topi giganti nei granai).
+
+Bosco dei Noccioli: margine orientale di Silverleaf; legna, erbe, qualche goblin esploratore.
+
+Rovine del Tempio Antico: due ore a nord-ovest; tempio pre-guerra a un dio dimenticato, sotterranei chiusi da una porta che "sussurra".
+
+Strada Reale: a nord, verso Lumengarde; pietra miliare con il segno della Corona.
+
+**Economia locale.** Valuta: corone di Valeria. Un pasto 1 corona, una notte 2, una pozione minore 15, una spada di ferro 80, una riparazione 5-20. Un contadino guadagna 3-5 corone al giorno; una quest tutorial ne paga 10-30.
+
+**Regola per il narratore:** usa i nomi delle aree come li userebbero gli abitanti ("alla Piazza", "da Bram", "su al mulino"). Il villaggio è piccolo: tutti sanno tutto entro sera.
+
+## Elena la Saggia e PNG essenziali
+
+Elena la Saggia è l'ancora del tutorial e il primo PNG con cui ogni Immortale parla. Non è una guida di gioco: è una vecchia che ha visto arrivare decine di forestieri e ha deciso di aiutarli, per ragioni sue.
+
+**Elena la Saggia**
+
+**Come i PNG vedono i forestieri.** Elena sostiene la teoria dei "viaggiatori da un altro piano" e la tiene per sé. Tobia crede agli Inviati degli dèi. Hald li considera un problema di ordine pubblico. Nessuno sa la verità e nessuno la saprà.
+
+**PNG essenziali della prima slice**
+
+| Nome | Lv | Ruolo | Tratto chiave | Teoria sui forestieri | Cosa può dare |
+|---|---|---|---|---|---|
+| Fratello Tobia | 38 | Chierico di Luxor | Gentile, parla troppo, sinceramente devoto | Inviati degli dèi | Checkpoint, cure, spiegazione del "tornare" |
+| Marta Orsini | 22 | Locandiera | Pratica, diffidente coi debitori, sa tutto | Viaggiatori | Stanza, voci, lavoro in cucina |
+| Bram Ferraguto | 61 | Fabbro | Burbero, onesto, ex soldato della Corona | Non-morti (tocca ferro quando li vede) | Riparazioni, prima lezione di crafting |
+| Nessa | 29 | Erborista | Curiosa, un po' strega, vende caro ai forestieri | Creature della magia antica | Pozioni, compra erbe, quest raccolta |
+| Sergente Hald | 72 | Capo delle guardie | Rigido, giusto, stanco | Problema di ordine pubblico | Registro forestieri, quest pattuglia, legge |
+| Sindaco Alderico | 55 | Sindaco | Mite, indeciso, dipende da Elena | Quello che dice Elena | Permessi, ricompense ufficiali |
+| Piero Orso | 34 | Mugnaio | Ansioso, orgoglioso, nasconde qualcosa | Nessuna, ha altro a cui pensare | Il piccolo problema locale |
+| Lia Orso | 11 | Figlia del mugnaio | Sveglia, segue il forestiero ovunque | Eroi delle fiabe | Indizi sul problema; mai in pericolo reale |
+
+**Regola per il narratore:** ogni PNG ha una voce diversa e ricorda la precedente interazione. Nessuno spiega le meccaniche: Elena insegna come insegnerebbe a un nipote, non come un manuale.
+
+## Tipi di PNG e creature locali
+
+La Valle ha quattro tipi di PNG generici e sei creature; bastano per riempire ogni scena della prima slice senza inventare altro. Tutti i PNG generici sono livello 1-99 (Umani Semplici) e si comportano da mortali: niente rischi inutili, morte definitiva.
+
+**Tipi di PNG generici**
+
+| Tipo | Lv | Dove | Comportamento | Atteggiamento verso il forestiero |
+|---|---|---|---|---|
+| Contadino | 3-12 | Fattorie, Piazza il giorno di mercato | Lavora dall'alba, parla del tempo e del grano, sa dove sono le bestie | Cauto, poi cordiale se aiutato |
+| Guardia del villaggio | 20-45 | Posto di guardia, ronda serale | Ferma i forestieri la prima volta, chiede il nome, lo registra | Formale; one-shot contro chi attacca in zona sicura |
+| Mercante ambulante | 15-30 | Piazza martedì e sabato, Strada Reale | Compra basso, vende alto, porta notizie da Lumengarde | Interessato: i forestieri pagano |
+| Viaggiatore | 10-60 | Locanda, Strada Reale | Di passaggio; può essere pellegrino, disertore, apprendista mago | Variabile; un altro forestiero possibile |
+
+**Creature della Valle (PvE della prima slice)**
+
+Tutte le creature della Valle sono incontri di rarità Comune. Vita e danno base seguono `Combat.txt`: danno 10 + livello × 6, Vita 40 + livello × 20, corretta per la taglia.
+
+| Creatura | Lv | Taglia | Vita | Danno base | Dove | Comportamento | Drop |
+|---|---|---|---|---|---|---|---|
+| Topo gigante | 1-2 | Fragile | 30-40 | 16-22 | Granai, mulino | Branchi di 3-5, mordono e fuggono | Pelle di topo (1 corona), raro: dente |
+| Lupo di prateria | 3-5 | Normale | 100-140 | 28-40 | Fattorie di notte, Sentiero delle Rovine | Caccia in coppia o a branchi di tre o quattro, attacca il più debole, fugge al 30% della Vita | Pelle di lupo (8 corone), carne |
+| Lupo capobranco | 5 | Robusta | 210 | 40 | Sentiero delle Rovine | Guida il branco, risponde agli ululati | Pelle di lupo (8 corone), carne |
+| Cinghiale | 5-7 | Robusta | 210-270 | 40-52 | Bosco dei Noccioli | Solitario, carica se disturbato, poi si Sbilancia | Carne, zanna (5 corone) |
+| Goblin esploratore | 4-9 | Fragile | 60-110 | 34-64 | Margine di Silverleaf | Arciere, resta a distanza, cauto, segnala agli altri | 2-6 corone, frecce, mappa grezza |
+| Spirito del grano | 8 | Fragile | 100 | 58 | Campi sotto la luna piena | Non ostile; confonde e fa smarrire; parla per enigmi | Spiga lucente (reagente, 20 corone) |
+| Guardiano di pietra | 15 | Robusta | 510 | 100 | Sotterranei delle Rovine | Immobile finché non si tocca la porta; lento, colpisce forte | Frammento runico (quest) |
+
+**Scala di sfida per un personaggio Lv 1 (equipaggiamento iniziale)**
+
+Topi: tutorial di combattimento, nessun rischio reale.
+
+Lupo singolo: scontro vero; a coppie richiede ambiente o aiuto.
+
+Cinghiale e goblin: primi scontri da pianificare; usano posture leggibili.
+
+Spirito del grano: scena sociale e magica, non combattimento.
+
+Guardiano di pietra: fuori portata a Lv 1; è il muro che chiude la slice e il gancio per la prossima.
+
+**Regola per il narratore:** le creature usano Enemy Adaptation al livello Istinto, i goblin al livello Apprendimento. Nessuna creatura della Valle insegue dentro il villaggio.
+
+## L'arrivo: ingresso silenzioso
+
+L'arrivo è silenzioso: nessuna crisi, nessun evento, solo un corpo nuovo in un posto che funziona da secoli senza di lui. La scena d'apertura dura tre battute e porta il giocatore da Elena entro i primi cinque minuti di gioco.
+
+**Scena 0, Terra 2045 (una sola schermata).** La capsula si chiude. Il narratore dà due righe di contesto reale (modello di capsula, ora, un dettaglio della stanza) e mostra il riepilogo personaggio con il tasto [CONFERMA]. Dopo la conferma, buio e il rapporto 1:3 parte.
+
+**Scena 1, Materializzazione.** Il giocatore apre gli occhi in piedi al centro della Piazza dell'Alba, all'alba del primo giorno di raccolto. Sensazioni prima delle informazioni: freddo dell'acciottolato sotto i piedi, odore di pane, campana del tempio. Nessun PNG grida: ad Alba Chiara hanno visto comparire forestieri decine di volte. Un contadino alza la testa, torna al carro. Una bambina (Lia Orso) fissa il nuovo arrivato e non smette.
+
+**Scena 2, Il primo contatto.** Elena è seduta sulla panca accanto al pozzo con una tazza di tè. Dice, senza alzarsi: "Un altro. Siediti, ragazzo, hai la faccia di chi non sa ancora dove mettere le mani." Non chiede da dove viene; chiede come si chiama e cosa sa fare. Da questa risposta il narratore ricava playstyle e classe senza mai nominare la parola "classe".
+
+**Scena 3, Il villaggio in una passeggiata.** Elena accompagna il giocatore in un giro di dieci minuti: Tempio (Tobia, checkpoint), Locanda (Marta, stanza pagata da Elena per tre notti), Fucina (Bram, che tocca ferro), Posto di guardia (Hald, che registra il nome). A ogni tappa un'informazione del mondo e nessuna del sistema. Alla fine Elena indica la bacheca: "Lì c'è il lavoro. Il resto lo impari sbagliando."
+
+**Il piccolo problema locale.** Durante il giro, Piero Orso il mugnaio arriva di corsa in piazza: qualcosa nel magazzino del grano ha rotto tre sacchi durante la notte, e non sono topi normali, sono troppo grandi e troppo organizzati. Hald non ha uomini da mandare prima di sera. Elena guarda il forestiero. Questo è il primo test del modello di azione: il giocatore può andare subito, indagare prima, chiedere una ricompensa, ignorare la cosa. Ogni scelta ha conseguenze (Tutorial Quests).
+
+**Cosa resta vero per qualsiasi premessa.** Il giocatore non ha memoria di Aethermoor ma ha tutta la sua memoria di Terra 2045; i PNG non sanno nulla di Terra 2045; il corpo è umano di Valeria, pulito, con l'equipaggiamento della classe già addosso e 20 corone in una borsa che Elena dice essere "il benvenuto del sindaco".
+
+**Regola per il narratore:** le prime tre scene non hanno blocchi di stato né numeri. Il primo blocco di stato appare al primo combattimento (i topi del mulino) ed è il momento in cui il giocatore capisce che è un gioco con regole.
+
+## Quest tutorial
+
+Sei quest, tutte di rarità Comune, pensate per insegnare una meccanica ciascuna senza mai dirlo. La prima è obbligatoria per la storia; le altre sono sulla bacheca e il giocatore le prende nell'ordine che vuole. Ricompense secondo Sistema_Narrativo: Comune = livello × 10-25 corone, EXP 10% del livello (+50% la prima volta).
+
+| # | Quest | Chi la dà | Cosa insegna | Obiettivo | Ricompensa | Fallimento |
+|---|---|---|---|---|---|---|
+| 1 | I topi del mulino | Piero Orso | Combattimento, blocco di stato, posture | Eliminare 5 topi giganti nel magazzino; scoprire perché sono organizzati | 15 corone, EXP, fiducia Orso | Topi tornano la notte dopo; Piero ingaggia qualcun altro, -1 rep |
+| 2 | Il carro di Bram | Bram | Commercio, peso, riparazioni | Portare 3 lingotti (pesanti) alla fattoria Rossi e tornare con l'aratro rotto | 10 corone + prima riparazione gratis | Nessuno; Bram brontola |
+| 3 | Erbe per Nessa | Nessa | Esplorazione, raccolta, identificazione | Raccogliere 10 foglie di salvia selvatica e 1 spiga lucente (solo di notte, campo con lo spirito) | 20 corone o 2 pozioni minori | Spirito del grano fa smarrire; si torna all'alba senza spiga |
+| 4 | La ronda di Hald | Sergente Hald | Reputazione, legge, posture dei PNG | Affiancare una guardia nella ronda serale; gestire una rissa alla locanda senza colpire nessuno | 12 corone, +2 rep locale, accesso al registro | Colpire qualcuno = status Grigio 2h e sermone |
+| 5 | La lettera da corte | Elena | Dialogo, memoria dei PNG, segreti | Leggere a Elena una lettera (lei dice che la vista le manca); capire che contiene un avvertimento; non dirlo a nessuno | Fiducia Elena → Buono; 5 corone "per il disturbo" | Dirlo in giro = Elena lo sa entro sera; fiducia Scarso |
+| 6 | Il sussurro delle Rovine | Bacheca (anonimo, scritto da Elena) | Dungeon, limiti, checkpoint manuale | Raggiungere le Rovine, trovare la porta che sussurra, tornare con la frase che dice. Il Guardiano di pietra non va affrontato | 25 corone lasciate sulla bacheca; gancio per la slice 2 | Toccare la porta sveglia il Guardiano: fuga o prima morte (respawn al Tempio) |
+
+**Quest 1 nel dettaglio (il piccolo problema locale).** Nel magazzino ci sono 5 topi giganti (Lv 1-2, 30-40 di Vita) ma si muovono in formazione e uno porta un pezzo di stoffa rossa legato al collo. Sotto un sacco rotto c'è un buco scavato di recente che porta sotto la macina. Verità: Piero ha comprato grano magico di contrabbando da un mercante ambulante e lo ha nascosto; i topi lo sentono e lo cercano. Esiti possibili: uccidere i topi e tacere (15 corone, Piero riconoscente, segreto intatto); scoprire il grano e dirlo a Hald (Piero multato, -3 rep con gli Orso, +2 con le guardie, Lia smette di seguire il forestiero); scoprire il grano e tacere (Piero diventa un contatto, Elena lo capisce e approva in silenzio). Nessun esito è quello giusto.
+
+**Ordine consigliato per un giocatore nuovo.** 1 → 2 → 4 → 3 → 5 → 6. Il narratore non lo impone: se il giocatore va subito alle Rovine, va.
+
+**Regola per il narratore:** una quest tutorial non si rivela mai come tutorial. Nessun PNG dice "così impari a combattere"; dice "ho bisogno di qualcuno che tenga la spada in mano".
+
+## Oggetti iniziali e checkpoint
+
+Ogni Immortale parte con l'equipaggiamento della sua classe (da Creazione_personaggio), 20 corone del sindaco e un checkpoint già attivo al Tempio di Luxor. Stat base 10 in STR, DEX, VIT, INT con 20 punti da distribuire; sotto 10 in una stat ci sono penalità.
+
+**Equipaggiamento iniziale per classe**
+
+| Classe | Arma | Protezione | Terzo oggetto | Abilità iniziale |
+|---|---|---|---|---|
+| Guerriero | Spada di Ferro (Req 15 STR) | Armatura di Cuoio Rinforzato (+5 Difesa) | Scudo di Legno (Blocco 20%) | Attacco Possente: 15 SP, +50% danno fisico, cooldown 3 turni |
+| Mago | Bastone di Frassino (Req 15 INT, +10% Mana) | Vesti di Stoffa (+3 Rigenerazione Mana) | Grimorio Basilare (3 incantesimi) | Dardo Magico: 20 MP, danno magico puro, colpisce sempre, cooldown 1 |
+| Ladro | Daga Affilata (Req 15 DEX, +5% Critico) | Armatura di Cuoio Morbido (+10% Evasione) | Kit da Scasso | Colpo Furtivo: 10 SP, +100% critico se non visto, cooldown 2 |
+| Chierico | Mazza Benedetta (Req 12 STR, +10% vs Non-morti) | Vesti Sacre (+5 Difesa Magica) | Simbolo Sacro | Cura Minore: 25 MP, ripristina 40-60 HP, cooldown 1 |
+
+**Scheda di esempio (formato Statisfy, mostrata alla prima identificazione)**
+
+**Dotazione comune a tutti**
+
+20 corone di Valeria
+
+Borsa da cintura, borraccia, 2 razioni
+
+Vestiti di Valeria (tunica, brache, stivali)
+
+3 notti pagate alla Locanda del Grano Dorato (regalo di Elena, non trasferibile)
+
+**Checkpoint**
+
+| Tipo | Dove | Come |
+|---|---|---|
+| Iniziale | Tempio di Luxor | Attivo dalla materializzazione; respawn di default |
+| Automatico | Locanda (riposo), zona sicura del villaggio, ogni 2 ore, completamento quest | Silenzioso; il narratore lo segnala con [Checkpoint] |
+| Manuale | Altare di Luxor (donazione 5 corone), accampamento con fuoco acceso 1 ora | Il giocatore lo chiede |
+
+Una morte nella prima slice riporta al Tempio con Tobia accanto; a Lv 1-2 nessuna perdita di livello (protezione newbie), ma il malus -10% per 1 ora e la memoria della morte restano, e Tobia chiede cosa ha visto.
+
+**Regola per il narratore:** l'equipaggiamento iniziale è Comune e si rompe: durabilità 60 significa circa quindici scontri prima di una riparazione da Bram.
+
+## Fazioni e autorità locali
+
+Alba Chiara risponde alla Corona di Valeria tramite il sindaco e le guardie; le altre forze in gioco sono piccole, locali e abbastanza concrete da reagire a ciò che il giocatore fa fin dal primo giorno. La reputazione si misura sulle scale di Sistema_Status_Sociale: PNG individuale -10/+10, gruppo -100/+100, regionale -1000/+1000.
+
+**Fazioni e autorità della prima slice**
+
+| Fazione | Chi la rappresenta | Cosa vuole | Cosa offre al giocatore | Cosa punisce |
+|---|---|---|---|---|
+| Corona di Valeria (autorità) | Sindaco Alderico, Sergente Hald | Ordine, tasse del raccolto, nessun guaio con i forestieri | Permessi, ricompense ufficiali, accesso alla Strada Reale | Rissa in zona sicura, furto, mancata registrazione |
+| Tempio di Luxor | Fratello Tobia | Fedeli, donazioni, capire se i forestieri sono inviati divini | Checkpoint, cure, benedizione minore (+5% vs non-morti per un giorno) | Profanazione, bugie a un chierico |
+| Famiglie contadine | Famiglia Orso, famiglia Rossi | Raccolto al sicuro, bestie lontane, nessun contrabbando scoperto | Cibo, lavoro, voci, un posto a tavola | Chi denuncia un vicino alla Corona |
+| Gilda dei Mercanti (ramo di Lumengarde) | Mercanti ambulanti del martedì | Comprare basso, trovare chi porta merci rischiose | Prezzi migliori con rep Buono, incarichi di trasporto | Chi rovina un affare o parla con le guardie |
+| Goblin di Silverleaf | Esploratori al margine del bosco | Grano, ferro, non essere cacciati | Nulla finché nemici; a rep neutra, scambio di mappe | Chi entra nel bosco armato |
+| Elena (rete personale) | Elena, il contatto a corte | Un erede per il suo segreto; sapere cosa sono i forestieri | Il tesoro delle Rovine, una lettera di presentazione per Lumengarde | Chi tradisce una confidenza |
+
+**Legge in vigore ad Alba Chiara**
+
+Il villaggio è zona sicura: nessun PvP, nessuna arma sguainata in piazza. Le guardie sono livello 20-45 e colpiscono per uccidere un aggressore; un Immortale ucciso dalle guardie riparte dal Tempio con status Grigio.
+
+Ogni forestiero si registra al Posto di guardia entro il primo giorno. Chi non lo fa non può affittare né vendere.
+
+Furto: restituzione doppia e un giorno alla gogna; seconda volta, espulsione dalla Valle.
+
+Contrabbando di grano magico: multa di 100 corone e confisca (il tema della Quest 1).
+
+Le dispute si portano al sindaco; il sindaco chiede a Elena.
+
+**Conseguenze a cascata già pronte**
+
+Rep con la Corona ≥ +5: Hald propone un incarico pagato; a +10 arriva una lettera da Lumengarde.
+
+Rep con i contadini ≥ +5: inviti a cena, informazioni sulle Rovine; a +10 un contadino regala una cavalcatura vecchia.
+
+Rep con qualunque gruppo ≤ -5: porte chiuse, prezzi raddoppiati; a -10 il gruppo manda qualcuno.
+
+Status Rosso: le guardie attaccano a vista; la slice diventa una fuga verso Silverleaf.
+
+**Regola per il narratore:** ogni fazione ricorda e parla con le altre entro un giorno di gioco. Nessuna fazione della prima slice è malvagia: sono persone con poco e paura di perderlo.
+
+---
+
+## Aggiunte nate in partita
+
+### Luoghi
+
+- Via del lavatoio: scende dalla Piazza al ruscello; in fondo la bottega di Duilio e le vasche dove si lavano i panni.
+- Casa di Elena: porta verde scrostata, orto, un ceppo per la legna, il gatto Barone che morde. Sotto la grondaia la botte del marito Oreste, bottaio, morto sette inverni fa.
+- Tempio di Luxor: muri di pietra chiara, tetto di lastre. Dietro, la sacrestia a una falda di scandole di larice, addossata al muro del tempio. Dentro, la fonte dell'altare, che non si è mai seccata.
+- Sentiero delle Rovine: si stacca a sinistra dalla strada delle fattorie dopo l'ultimo campo dei Rossi (palo con una R). Livello consigliato 3-8, lupi a branchi.
+- Rovine del Tempio Antico: cortile lastricato con una vasca al centro, muri verdastri senza tetto coperti di anelli incisi. Un arco in fondo scende con trenta gradini a una sala con sei nicchie e un solco al centro, chiusa da una grande porta che sussurra. Livello consigliato 8-15 in superficie, 12-18 sotto.
+- La frana: sul lato del bosco, di due anni fa. Tra due blocchi c'è uno squarcio con una corda di corteccia; porta alla stanza rotonda dietro la porta.
+- Margine di Silverleaf: dove i noccioli finiscono e cominciano le querce c'è una pietra piatta con il muschio. Battendo tre colpi, pausa, due colpi, di giorno, un goblin risponde. Senza ferro.
+
+### PNG
+
+| Nome | Ruolo | Tratti |
+|------|-------|--------|
+| Duilio | Carpentiere, via del lavatoio | Vecchio, brontolone, parla poco. Coprì il tetto della sacrestia trent'anni fa e allora propose di togliere la pietra scura |
+| Berto Rossi | Bracciante, livello 9 | Vent'anni, rancoroso, beve. Umiliato dal padre perché un forestiero ha fatto in una mattina la legna che lui rimandava da mesi |
+| Nina Rossi | Sorella di Berto | Vede tutto e lo racconta a tutti |
+| Vedova Rossi | Nonna | Superstiziosa: per lei il forestiero porta male |
+| Padre Anselmo | Predecessore di Tobia, morto | Sapeva qualcosa della pietra scura. Usò acqua della fonte e zeppe di piombo benedette per tenerne salda la calce. Portò Tobia alle Rovine una volta sola, a mezzogiorno in punto, e gli fece giurare di non tornarci |
+| Tek | Goblin di Silverleaf, livello 4 | Curioso, furbo, tiene i conti. Parla la lingua comune a pezzi. Rispetta i patti alla lettera |
+| La goblin con un occhio solo | Goblin di Silverleaf, livello 6 | Diffidente verso ogni umano, armata di fionda |
+| Kovacs_77 | Giocatore, Guerriero livello 7 | Cordiale e chiacchierone; caccia cinghiali sulla strada delle fattorie |
+| mielefritto | Giocatrice, Maga livello 6 | Sveglia, taglia corto; compagna di Kovacs_77 |
+
+Tobia, nel testo di ottobre "Fratello", in paese è chiamato "padre". Il muratore del paese è "dei Fabbri". Il figlio dei Fabbri, quindici anni, è già salito alle Rovine.
+
+### Usanze
+
+- La notte si conta a orecchio: ora dei pipistrelli (subito dopo il buio), ora dei gufi (notte fonda), ora del gallo (prima dell'alba).
+- I goblin segnano i loro morti con tacche: sulla pietra della frana, tre tacche, un cerchio, due tacche. Giurano "su radice".
+
+### Creature incontrate
+
+| Creatura | Livello | Vita | Danno base | Dove | Note |
+|----------|---------|------|------------|------|------|
+| Lupo di prateria | 3-5, capobranco 5 | 100-140, capobranco 210 | 28-40 | Sentiero delle Rovine | A branchi di tre o quattro; rispondono agli ululati |
+| Custode d'ossa | 10 nel cortile, 12 nella sala | 240 nel cortile, 280 nella sala | 70 nel cortile, 82 nella sala | Rovine | Comune, taglia normale. Armati di lancia, falcetto o mazza di pietra. La luce del sole li danneggia e rende fragili le ossa. Deboli ai colpi contundenti e alle giunture, quasi immuni ai colpi di punta. Di giorno camminano solo all'ombra o restano inattivi nelle nicchie; si rialzano ogni notte |
+
+---
+
+## Segreti del narratore
+
+Nessun abitante della Valle conosce ciò che segue. Lo sanno soltanto alcuni paladini molto eruditi, lontano da qui.
+
+### Cosa c'è sotto le Rovine
+
+Non è il tempio di un dio dimenticato. Sotto le Rovine fu sigillata, durante le Guerre Divine, una ninfa protettrice della valle, di livello 210, una delle creazioni dei crociati di Umbranis. Come Umbranis è neutrale, tendente al malinconico. I popoli antichi le versavano acqua e le parlavano: non era un culto, era il modo di tenerla quieta. In cambio la sua fonte dava acqua nei tempi di siccità.
+
+In epoca più recente un ordine di zelanti di Luxor scoprì il luogo, ne ebbe paura, rinforzò il sigillo e cancellò i segni della sua storia, credendo di fare del bene: a loro si devono il volto scalpellato nella cupola e i dischi raggiati graffiati sulla pietra.
+
+La pietra centrale della fonte, invece, fu portata via per interesse. Era l'unica cosa di valore: murata nel tempio di Alba Chiara, quell'acqua divenne un dono di Luxor, e chi teneva il tempio tenne i raccolti, le offerte e la gratitudine della valle. La fama di "valle benedetta" poggia in parte su quel furto. Luxor non c'entra: gli dèi tacciono, a parlare per loro sono uomini.
+
+### Cosa è cambiato
+
+La frana di due anni fa ha rotto il sigillo. Della ninfa non resta una forma fisica: resta una banshee che infesta la fonte. È lei il bisbiglio dietro la porta, l'acqua nera che sale ogni notte un po' di più, le ossa dei custodi che si rialzano al buio. Trattiene e ripete le voci di chi le ha parlato e di chi è entrato nell'acqua; ha già preso due goblin.
+
+La pietra murata sopra la sacrestia ha ricominciato a trasudare dopo la frana. L'acqua benedetta la placa per qualche ora, e la pietra la consuma.
+
+### Cosa sanno i PNG
+
+- Tobia: ora sa che la pietra viene dalle Rovine, che furono seguaci di Luxor a portarla via, e che la fonte dell'altare sta sotto di essa. Non sa cosa sia la creatura. La fonte è anche il reddito del tempio, e lui ha dei superiori a Lumengarde.
+- Elena: conosce un "tesoro" legato alle Rovine e cerca un erede per i suoi segreti. Dei maghi di corte ha colto solo che parlavano di gratitudine e di debiti.
+- Duilio: sa che la calce non fa presa su quella pietra e che un tempo era asciutta.
+- Tek e i goblin: chiamano il posto "Orecchio-di-sotto" e la figura nella cupola "Madre-lunga". Sanno che l'acqua tiene le voci e che chi la beve o la tocca finisce per tornarci.
+- Nel tempio c'è un "libro delle fondazioni" in scrittura antica, che Tobia non sa leggere bene ed Elena sì.
+
+### Come si risolve
+
+Con un livello 210 non si combatte. La via passa per capire, parlare con lei, restituire la pietra o ricostruire un sigillo. Ciò che il giocatore sceglie di fare dice anche che genere di servitore della Luce vuole essere.

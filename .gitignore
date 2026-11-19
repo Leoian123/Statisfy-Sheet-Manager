@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Database locale
+*.db
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+*.local
+
+# Excel aperto (file di lock)
+~$*.xlsx
+
+# Impostazioni locali di Claude Code
+.claude/settings.local.json

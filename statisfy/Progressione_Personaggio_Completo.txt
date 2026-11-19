@@ -1,0 +1,213 @@
+# PROGRESSIONE PERSONAGGIO - STATISFY
+## Statistiche, Abilità e Sistema Maestria
+
+---
+
+## SEZIONE 1: STATISTICHE BASE
+
+### STATS PRIMARIE (Disponibili dalla creazione, partono da 10)
+
+| STAT | EFFETTI PRINCIPALI | FORMULA DANNO/EFFETTO |
+|------|--------------------|-----------------------|
+| **STR** (Forza) | Danno fisico, carico, intimidazione | Danno = Base × (1 + STR/100) |
+| **DEX** (Destrezza) | Velocità attacco, precisione, evasione | Evasione = DEX/20% |
+| **VIT** (Vitalità) | HP, resistenze, rigenerazione | HP = 100 + (VIT × 15) |
+| **INT** (Intelligenza) | Mana, potenza magica, apprendimento | Mana = 50 + (INT × 10) |
+
+### STATS AVANZATE (Sbloccabili con azioni specifiche)
+
+| Categoria | Stats | Sblocco Tipico |
+|-----------|-------|----------------|
+| **SOCIALI** | Carisma, Oratoria, Diplomazia, Intimidazione | Interazioni sociali, leadership |
+| **DIVINE** | Fede, Benedizione, Santità, Devozione | Servizio religioso, miracoli |
+| **OSCURE** | Oscurità, Corruzione, Necromanzia, Maledizione | Patti oscuri, magia proibita |
+| **NATURALI** | Natura, Armonia, Selvatichezza, Elementi | Vita nella natura, comunione animali |
+| **ARTIGIANALI** | Forgia, Alchimia, Incantamento, Ingegneria | Maestria craft, creazioni leggendarie |
+| **MENTALI** | Saggezza, Memoria, Concentrazione, Volontà | Studio, meditazione, resistenza mentale |
+
+---
+
+## SEZIONE 2: MECCANICA LEVEL UP
+
+### CREAZIONE PERSONAGGIO
+- Tutte stats base: 10
+- Punti bonus: 20 da distribuire
+- Classe base: Guerriero/Mago/Ladro/Chierico
+
+### OGNI LEVEL UP
+- +1 automatico a ogni stat base
+- +10 punti liberi da assegnare
+- +1 abilità di classe ogni 5 livelli
+
+### ABILITÀ DI CLASSE
+
+Non esiste un elenco fisso. A ogni soglia di cinque livelli il sistema offre un'abilità coerente con ciò che il personaggio ha fatto di più nei cinque livelli precedenti. Un Guerriero che ha combattuto dietro lo scudo riceve un'abilità di scudo; uno che ha caricato a testa bassa, un'abilità di carica. Lo stesso vale per Mago, Ladro e Chierico.
+
+### ESPERIENZA
+
+- Ogni livello vale 100%.
+- Un nemico di pari livello dà il 2%. Ogni livello di differenza aggiunge o toglie un punto percentuale, con minimo 0 e massimo 10%.
+- Bersagli inermi o inattivi danno la metà.
+- Le quest seguono `Sistema_Narrativo_Completo.txt` (standard 10% del livello).
+- Dal livello 10 ogni guadagno vale la metà. Dal livello 50 vale un quarto.
+
+### CLASSI AVANZATE E DI PRODUZIONE
+
+Alla creazione esistono solo le quattro classi base. Le altre si sbloccano giocando, e la via dipende dalla classe: non c'è uno schema unico. Un Paladino lo diventa dopo aver completato un addestramento presso chi può darlo; un domatore di draghi o una maid hanno strade del tutto diverse. Il narratore definisce la via caso per caso, coerente con la classe e con il mondo.
+
+### ESEMPIO LIVELLO 50
+- Stats Base Minime: 60 (10 + 50 livelli)
+- Punti Liberi Totali: 520 (20 creazione + 500 livelli)
+
+---
+
+## SEZIONE 3: SISTEMA ABILITÀ
+
+### METODI DI ACQUISIZIONE
+
+| Metodo | Descrizione | Frequenza |
+|--------|-------------|-----------|
+| **LEVEL UP** | Abilità di classe automatiche | Ogni 5 livelli |
+| **LIBRI** | Tomi rari con abilità specifiche | Molto rari |
+| **QUEST TRAINING** | PNG Maestro richiede prove | Media |
+| **TITOLI** | Abilità incluse col titolo | Per titolo |
+| **SVILUPPO ORGANICO** | Uso prolungato in situazioni estreme | Rarissimo |
+
+### PRIMO GRADO DI UNA NUOVA ABILITÀ
+
+- Armi: il Grado I arriva al primo uso vero in combattimento.
+- Mestieri: il Grado I arriva solo dopo un lavoro completo fatto sotto la guida di un PNG che pratica quel mestiere.
+- Da lì in poi valgono i guadagni di maestria della Sezione 4.
+
+### EVOLUZIONE DINAMICA
+
+Le abilità evolvono in base al contesto d'uso:
+
+| Abilità Base | Contesto | Evoluzione |
+|--------------|----------|------------|
+| Attacco Possente | Dall'alto | "Schiacciata Celeste" |
+| Attacco Possente | In carica | "Ariete Devastante" |
+| Attacco Possente | Vs draghi | "Spezzadraghi" |
+| Palla di Fuoco | Luoghi freddi | "Fiamma dell'Inverno" |
+| Palla di Fuoco | Vs non-morti | "Fuoco Sacro" |
+| Palla di Fuoco | Con vento | "Tornado Infuocato" |
+
+---
+
+## SEZIONE 4: SISTEMA MAESTRIA (GRADI I-X)
+
+### FILOSOFIA
+> "La vera maestria è comprendere che si è sempre studenti."
+
+### STRUTTURA
+```
+SKILL BASE → GRADI I-X → STILI SPECIALIZZATI I-X → TRASCENDENZA
+```
+
+### SCALA COMPETENZA
+
+| Grado | Nome | Comprensione |
+|-------|------|--------------|
+| I | Assoluto Novizio | "Cosa sto facendo?" |
+| II | Novizio | "Come sto facendo questo?" |
+| III | Praticante | "Perché funziona così?" |
+| IV | Amatore | "Come migliorare?" |
+| V | Dilettante | "Cosa manca alla mia tecnica?" |
+| VI | Specializzando | "Quale direzione prendere?" |
+| VII | Abile | "Come integrare tutto?" |
+| VIII | Esperto | "Cosa posso creare di nuovo?" |
+| IX | Professionista | "Come perfezionare l'arte?" |
+| X | Maestro | "Dove vanno i confini dell'arte?" |
+
+### GUADAGNO ESPERIENZA MAESTRIA
+
+| Attività | Guadagno |
+|----------|----------|
+| Uso in combattimento | +0.3% per uso |
+| Training con sparring | +0.15% per ora |
+| Solo practice | +0.1% per ora |
+| Vittoria vs superiore | +1-3% |
+| Nuova tecnica sviluppata | +2-5% |
+| Quest specifica completata | +3-8% |
+| Certificazione Master | +10-25% |
+
+### VANTAGGI PER GRADO
+- +2% accuracy
+- +1% damage
+- 1-2 nuove tecniche
+- Reduced stamina costs
+- Enhanced teaching ability
+
+---
+
+## SEZIONE 5: STILI SPECIALIZZATI (Post Grado X)
+
+### ESEMPI SPADA
+
+| Stile | Filosofia | Prerequisiti | Effetti |
+|-------|-----------|--------------|---------|
+| **DIVINA** | Giustizia divina | Spada X, Rep+ Luce, Benedizione | Magia sacra, resist male |
+| **DEMONIACA** | Potere assoluto | Spada X, 100+ kill, Patto demone | Life drain, fear, crescita uccisioni |
+| **ORIENTALE** | Estensione spirito | Spada X, Master orientale, 50+ duelli non letali | Ki, balance, enlightenment |
+| **CORONA** | Leadership | Spada X, Titolo nobiliare, Comando truppe | Inspiration, political power |
+
+---
+
+### OLTRE IL GRADO X
+
+La maestria non si ferma al Grado X: evolve nella propria sofisticazione. Spada X diventa una scuola personale, e anche le abilità si specializzano attorno al modo di giocare di chi le usa. La scuola ha a sua volta i suoi gradi fino al X, e poi si specializza ancora. Il modello è quello dei percorsi accademici: ogni livello restringe il campo e lo approfondisce.
+
+Al Grado X di una sfera o di un'abilità il giocatore crea la propria sfera o abilità, con una passiva propria.
+
+Il grado Celestiale è una forma di potere che rasenta la conoscenza enciclopedica di una materia. È un concetto, non una meccanica con numeri. Chi lo raggiunge in una competenza è degno dell'ascensione (vedi `Ambientazione.txt`, "Natura degli dèi").
+
+---
+
+## SEZIONE 6: FORMULE RAPIDE
+
+### STATISTICHE DERIVATE
+
+| Derivata | Formula |
+|----------|---------|
+| HP Massimi | 100 + (VIT × 15) |
+| Mana Massimo | 50 + (INT × 10) |
+| Carico Massimo | 50 + (STR × 2) kg |
+| Evasione Base | DEX / 20 % |
+| Precisione Base | 70% + (DEX / 10) % |
+| Stamina Massima | 50 + (STR + DEX) × 5 |
+| Regen HP | VIT / 10 HP/min |
+| Bonus EXP | INT / 20 % |
+
+### RECUPERO
+
+| Situazione | Effetto |
+|------------|---------|
+| In movimento | Metà della rigenerazione |
+| Fermi | Rigenerazione piena |
+| Dopo un pasto vero | +50% per un'ora |
+| Una notte in un letto | Vita, Mana e Stamina al massimo |
+| In combattimento | Nessuna rigenerazione di Vita |
+
+Perk e abilità possono aumentare l'efficacia del recupero.
+
+### INVENTARIO
+
+Gli Immortali hanno un inventario a griglia: gli oggetti riposti scompaiono e ricompaiono a richiesta. Il limite è il Carico Massimo, e il peso si sente anche quando l'oggetto non è in mano. I PNG vedono gli oggetti comparire e sparire, e lo contano tra le stranezze dei forestieri.
+
+### ETICHETTE
+
+Fissando un giocatore, un PNG o un mostro se ne leggono nome e livello. Abilità di furtività o sociali possono mascherare identità e dettagli, e incantesimi di Mens rendono difficile leggere la mente o la scheda.
+
+### PROGRESSIONE TIPICA
+
+| Periodo | Focus Consigliato |
+|---------|-------------------|
+| Mesi 1-3 | Grado I-III, fondamentali |
+| Mesi 4-8 | Grado IV-VI, intermediate |
+| Mesi 9-15 | Grado VII-IX, advanced |
+| Mesi 16-24 | Grado X, mastery |
+| Mese 24+ | Stile Specializzato |
+
+---
+
+*Sistema che trasforma ogni sessione in un passo verso la maestria.*

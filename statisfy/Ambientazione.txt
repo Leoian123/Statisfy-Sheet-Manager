@@ -1,0 +1,282 @@
+# STATISFY - AMBIENTAZIONE FANTASY MMORPG
+
+## IL MONDO REALE - TERRA 2045
+
+### La Corporazione Morpheus
+
+Morpheus Corporation è diventata il gigante tecnologico dominante dopo la rivoluzione delle interfacce neurali nel 2040. Fondata dal visionario Dr. Elena Vasquez e dal genio dell'AI Marcus Chen, l'azienda ha sviluppato la prima tecnologia di immersione neurale completa, permettendo esperienze virtuali indistinguibili dalla realtà.
+
+### Statisfy - Il Rivoluzionario MMIRPG
+
+Statisfy (acronimo di "Statistical Satisfaction") rappresenta l'evoluzione definitiva dei giochi di ruolo online. Utilizzando la tecnologia NeuroLink di Morpheus, i giocatori si collegano direttamente al mondo virtuale attraverso capsule di immersione che stimolano direttamente il sistema nervoso.
+
+Il gioco è progettato per una progressione estremamente lunga e punitiva, dove emergere dalla massa richiede anni di dedizione. Solo i più determinati raggiungeranno i vertici del potere, mentre la maggioranza rimarrà nella "marmaglia" per lungo tempo.
+
+## IL MONDO DI AETHERMOOR - AMBIENTAZIONE FANTASY
+
+### Cosmologia e Geografia Generale
+
+Aethermoor è un continente principale circondato da arcipelaghi misteriosi e terre inesplorate. Il mondo è governato da leggi magiche immutabili e da un complesso equilibrio tra diverse forze divine.
+
+### I Regni Principali
+
+#### 1. REGNO DI VALERIA (Centro-Sud)
+
+- Governo: Monarchia feudale con sistema di casate nobiliari
+- Capitale: Lumengarde (500.000 abitanti)
+- Popolazione: Prevalentemente umana (85%)
+- Economia: Agricoltura, commercio, artigianato
+- Caratteristiche: Regno più civilizzato e prospero, punto di partenza più comune per i nuovi arrivati
+Regioni di Valeria:
+
+- Pianure Dorate: Vaste distese agricole punteggiate da villaggi tranquilli e fattorie prospere
+- Foresta di Silverleaf: Boschi incantati dove la magia fluisce naturalmente, popolati da creature fatate
+- Colline di Ambra: Regione mineraria ricca di ferro, gemme e metalli preziosi
+- Paludi di Mistral: Terre paludose e insidiose dove creature acquatiche e spiriti maligni si annidano
+
+#### 2. REGNO DEL NORD - FROSTLAND
+
+- Governo: Confederazione di clan guerrieri
+- Capitale: Ironhold (200.000 abitanti)
+- Popolazione: Umani nordici (70%), Nani (25%), altre razze (5%)
+- Economia: Caccia, pesca, estrazione mineraria, commercio di pellicce
+- Caratteristiche: Territorio aspro e freddo, patria di guerrieri leggendari
+Regioni di Frostland:
+
+- Tundra Ghiacciata: Pianure gelate battute da venti feroci, dimora di bestie artiche feroci
+- Montagne di Ghiaccio Eterno: Vette innevate dove si dice dimorino i draghi di ghiaccio più antichi
+- Fjordi del Crepuscolo: Coste frastagliate costellate da villaggi di guerrieri del mare
+
+#### 3. IMPERO DELLE SABBIE DORATE - QADESH
+
+- Governo: Impero teocratico guidato dal Sole Divino
+- Religione: culto di Luxor attraverso Solaria. Il sovrano di Qadesh è un dio-imperatore; identificarlo con Luxor sarebbe stato blasfemo, così i teologi di Qadesh hanno derivato la figura di Solaria, figlia di Luxor e meno pura del padre. "Sole Divino" è il titolo del sovrano
+- Capitale: Solaris Magna (800.000 abitanti)
+- Popolazione: Umani del deserto (80%), Elementali minori (15%), altre razze (5%)
+- Economia: Magia, alchimia, commercio di spezie e gemme rare
+- Caratteristiche: Deserto mistico ricco di magia antica e segreti sepolti
+Regioni di Qadesh:
+
+- Oasi Cristalline: Centri di civilizzazione costruiti attorno a sorgenti magiche che mai si prosciugano
+- Dune Cantanti: Vastità desertiche dove le tempeste di sabbia sussurrano antichi incantesimi
+- Tombe dei Re Perduti: Antiche piramidi e necropoli custodi di tesori inimmaginabili e maledizioni millenarie
+
+#### 4. CONFEDERAZIONE SILVANA - ELDERMOOR
+
+- Governo: Consiglio degli Alberi Antichi guidato dai Druidi supremi
+- Capitale: Heartwood (150.000 abitanti)
+- Popolazione: Elfi (60%), Umani (30%), Halfling (10%)
+- Economia: Magia naturale, erboristeria, artigianato elfico di qualità suprema
+- Caratteristiche: Foreste millenarie dove la magia primordiale scorre ancora pura
+Regioni di Eldermoor:
+
+- Foresta del Primo Alba: Boschi sacri dove gli spiriti della natura vegliano su ogni creatura
+- Radure Sussurranti: Radura magiche che nascondono portali verso altre dimensioni
+- Albero Mondo: Il gigantesco albero sacro che tocca le nuvole, cuore pulsante del potere druidico
+
+### Le Terre Selvagge e Zone Leggendarie
+
+#### ARCIPELAGO DELLE TEMPESTE
+
+È lo stesso luogo di Raijin (vedi `Supplemento.txt`). Quella che segue è la descrizione che ne danno gli occidentali; la descrizione vera è quella del supplemento.
+
+Isole vulcaniche battute da tempeste eterne, dimora di Giganti delle Tempeste, Titani elementali e creature marine ancestrali. Le isole galleggiano letteralmente nell'aria durante le tempeste più violente, rendendo il viaggio un'impresa quasi suicida.
+
+#### SHADOWLANDS - TERRE DELL'OMBRA
+
+Dimensione parallela dove il sole non sorge mai e regnano non-morti intelligenti e demoni raffinati. Una società aristocratica dell'orrore dove la morte è solo l'inizio di una nuova esistenza. L'accesso è possibile solo attraverso portali nascosti o rituali proibiti.
+
+#### CITTADELLE VOLANTI
+
+Antiche città magiche sospese tra le nuvole, eredità di una civiltà perduta di maghi supremi. Ogni cittadella è governata da un Arcimago immortale e popolata da creature celestiali e costrutti magici senzienti.
+
+#### ABISSI MARINI
+
+Le profondità oceaniche nascondono metropoli sottomarine governate da Leviatani filosofi e Kraken poeti. Queste civiltà acquatiche possiedono una cultura raffinata e antica, con biblioteche di corallo che custodiscono i segreti del mondo.
+
+#### REGNO DIVINO
+
+Dimensioni divine accessibili solo a chi ha trasceso la mortalità, dove divinità minori e maggiori conducono guerre cosmiche che determinano il destino del multiverso. Ogni passo in questi reami può alterare la realtà stessa.
+
+## GERARCHIA SOCIALE E POTERE
+
+### La Dura Realtà della Progressione
+
+- Il mondo di Aethermoor riflette una realtà brutale: la stragrande maggioranza degli abitanti rimane per tutta la vita nella classe dei Soldati Semplici - la carne da cannone delle guerre, gli avventurieri sacrificabili, coloro che muoiono per permettere ad altri di brillare.
+
+La Scala del Potere:
+
+- Soldati Semplici: La moltitudine, il 99% della popolazione. Contadini armati, guardie cittadine, mercenari di basso rango
+- Guerrieri Scelti: Veterani che hanno dimostrato il proprio valore, ufficiali minori, cavalieri di provincia
+- Guerrieri Importanti: Comandanti regionali, campioni di torneo, eroi locali le cui gesta si raccontano nelle taverne
+- Eroi: Figure leggendarie i cui nomi risuonano attraverso i regni, protagonisti di ballate epiche
+- Leggende: Esseri il cui solo nome può cambiare il corso di una battaglia, influencer di nazioni intere
+- Miti/Ascesi: Individui che hanno trasceso i limiti mortali, quasi-divinità temute e venerate
+- Divinità: Coloro che hanno raggiunto l'apoteosi, fondatori di religioni, plasmatori della realtà
+
+### Influenza e Riconoscimento
+
+Solo raggiungendo lo status di Guerriero Importante si inizia ad avere una vera voce negli affari del mondo. Prima di allora, si è semplicemente parte del grande ingranaggio, sostituibili e dimenticabili.
+
+Gli Eroi iniziano a plasmare la storia, le Leggende possono fondare regni e comandare eserciti, i Miti trascendono le limitazioni fisiche e temporali. Le Divinità creano culti, alterano le leggi naturali e determinano il destino di intere civiltazioni.
+
+## RAZZE E POPOLAZIONI
+
+### L'Umanità di Aethermoor
+
+Tutti coloro che giungono in Aethermoor si manifestano come umani del regno di partenza scelto (di Valeria per chi parte dalla Valle di Lumengarde), senza memoria di altre origini. Tuttavia, nel corso del tempo, è possibile acquisire caratteristiche di altre razze attraverso benedizioni divine, trasformazioni magiche, o rituali ancestrali.
+
+### Le Razze Native
+
+#### ELFI DI ELDERMOOR
+
+Esseri longevi dalla bellezza eterea, custodi della magia naturale. Vivono in armonia con la foresta da millenni, sviluppando una saggezza profonda ma anche un distacco dalle preoccupazioni degli esseri mortali. I loro occhi brillano di una luce verde-dorata che riflette la loro connessione con l'Albero Mondo.
+
+#### NANI DELLE MONTAGNE
+
+Maestri artigiani dalla resistenza leggendaria, organizzati in clan patriarcali basati sull'onore e l'abilità nella forgia. Ogni nano porta con sé la storia della propria stirpe incisa negli ornamenti della barba e nelle rune sui propri strumenti. Sono alleati tradizionali degli umani, rispettando chi dimostra valore in battaglia.
+
+#### DRAGONBORN DEI VULCANI
+
+Discendenti diretti degli antichi draghi, con scaglie che riflettono il proprio elemento di appartenenza. Vivono in società tribali nelle regioni vulcaniche, dove il potere magico determina la gerarchia sociale. Ogni Dragonborn può respirare l'elemento del proprio lignaggio e possiede una saggezza ancestrale trammandata attraverso i sogni.
+
+#### ABITANTI DELLE PROFONDITÀ
+
+Drow: Elfi corrotti dall'oscurità, esiliati nelle caverne sotterranee dove hanno sviluppato una società crudele e raffinata
+Svirfneblin: Gnomi delle profondità, maestri minatori che comunicano attraverso vibrazioni nella roccia
+Duergar: Nani grigi con poteri psionici, forgiano metalli impossibili nelle fucine illuminate da funghi bioluminescenti
+
+## ECONOMIA E SOCIETÀ
+
+### Sistema Monetario
+
+- Corone d'Oro di Valeria: La valuta più accettata, simbolo di stabilità
+- Valute Regionali: Ogni regno mantiene la propria moneta con tassi di cambio fluttuanti
+- Gemme Magiche: Usate per transazioni di alto valore e come componenti per incantesimi
+- Baratto Specializzato: Nelle zone remote si commercia ancora con servizi e beni specifici
+
+### Le Professioni del Mondo
+
+Il mondo di Aethermoor offre innumerevoli percorsi di vita, dalla spada alla penna, dalla magia all'artigianato. Tuttavia, solo i più talentuosi e determinati riescono a emergere dalla massa e diventare maestri riconosciuti nei propri campi.
+
+Percorsi di Combattimento: Guerrieri, Maghi da battaglia, Assassini, Paladini sacri Arti Arcane: Alchimisti, Incantatori, Evocatori, studiosi delle arti proibite Artigianato Superiore: Maestri forgiai, Sarti incantatori, Architetti di cattedrali magiche Influenza Sociale: Mercanti principeschi, Diplomatici, Spie di corte, Studiosi delle antichità
+
+Nella società futura, alcuni individui dedicano la propria esistenza interamente al perfezionamento in Aethermoor, diventando professionisti riconosciuti anche nel mondo esterno. Questi "Proplayer" rappresentano l'elite assoluta, coloro che trasformano l'eccellenza virtuale in sostentamento reale.
+
+## LORE E MITOLOGIA
+
+### La Genesi di Aethermoor
+
+Secondo le cronache più antiche, il mondo nacque dal Grande Scontro tra Luxor, Signore della Luce Eterna, e Umbranis, Regina delle Tenebre Primordiali. Il loro conflitto cosmico generò scintille che divennero stelle, e dalle loro lacrime nacquero gli oceani. Dove il loro sangue si mescolò, sorsero i Cinque Elementi Primordiali che ancora oggi governano la magia del mondo. (È il mito popolare della creazione: la struttura reale della magia sono le dieci sfere arcane e i due domini divini.)
+
+### Il Pantheon Divino
+
+#### SIGNORI DELLA LUCE
+
+- Luxor: Il Padre Luminoso, creatore dell'ordine e della giustizia. I suoi templi sono fatti di cristallo puro
+- Solaria: La Madre Solare, protettrice dei giusti e dei valorosi. I suoi paladini brillano di luce propria
+- Verdania: La Nutrice Verde, signora di tutte le cose che crescono e fioriscono
+- Ferrum: Il Fabbro Divino, che forgiò le prime armi e insegnò l'arte agli umani
+
+#### SIGNORI DELL'OMBRA
+
+- Umbranis: L'Imperatrice del Vuoto, tessitrice del destino e del caos
+- Morteus: Il Giudice Finale, che pesa le anime e decide il loro destino ultraterreno
+- Tempestus: Il Distruttore, signore delle tempeste e della furia della natura
+- Venenum: Il Sussurratore, maestro dell'inganno e dei veleni sottili
+
+### Natura degli dèi
+
+Luxor e Umbranis non hanno raggiunto l'ascensione: sono, da sempre, entità che ne erano degne. A differenza dei progenitori delle sfere arcane, un dio non si astrae: continua a coltivare il proprio potere e lo concede ai mortali che credono in lui. Per questo credere è una forma di studio personale, più vicina alle comunità della magia arcana. È ciò che usa un chierico quando opera un prodigio.
+
+I domini divini sono due, Luce e Ombra. Gli altri dèi sono sofisticazioni di questi domini che hanno preso forma; la tradizione li umanizza dicendo che "sono nati da" Luxor o da Umbranis. Gli dèi non hanno sesso: Umbranis è chiamata anche Umbris, al maschile.
+
+Ne segue che una forza primordiale abbastanza potente, se ottenesse coscienza, potrebbe diventare un terzo dominio e contendere la sfera divina. Allo stesso modo un mortale che raggiunge il grado Celestiale in una competenza è degno dell'ascensione, oppure può coltivare il proprio potere fino a essere riconosciuto come dio.
+
+### Eventi che Plasmarono la Storia
+
+#### L'Era della Genesi (Anno 0-500)
+
+Nascita del mondo e prime civiltà. Gli dèi camminavano ancora tra i mortali, insegnando le arti e fondando le prime città. Un'età dell'oro dove la magia fluiva liberamente e le razze vivevano in armonia.
+
+#### Le Guerre Divine (Anno 500-800)
+
+Conflitto apocalittico tra le forze della Luce e dell'Ombra che sconvolse la geografia del mondo. Intere catene montuose si formarono in singole battaglie, oceani si prosciugarono per alimentare incantesimi colossali. Gli dèi si ritirarono in dimensioni separate, lasciando solo echi del loro potere.
+
+#### La Grande Alleanza (Anno 1200-1250)
+
+Quando legioni demoniache invasero il mondo attraverso squarci dimensionali, tutte le razze si unirono sotto il vessillo dell'Alleanza Sacra. La guerra durò cinquant'anni e si concluse con il Sigillo Eterno, una barriera magica che protegge ancora oggi Aethermoor dalle invasioni planari.
+
+#### L'Era dei Regni (Anno 1250-1847)
+
+L'anno corrente è il 1844. L'era si chiuderà nel 1847 con la Guerra della Primavera: è un evento futuro, che nessun abitante di Aethermoor conosce.
+
+Periodo attuale caratterizzato dalla formazione dei moderni regni e dall'equilibrio di potere tra le nazioni. Un'epoca di pace relativa, ma le tensioni crescono e si sussurrano profezie di un nuovo grande conflitto all'orizzonte.
+
+## LEGGI IMMUTABILI DI AETHERMOOR
+
+### Principi Magici Fondamentali
+
+- Conservazione dell'Energia Arcana: Ogni magia ha un costo, nulla può essere creato dal nulla
+- Legge dell'Equilibrio Cosmico: Ogni azione magica genera una reazione compensatoria
+- Vincolo Divino: Certi poteri rimangono prerogativa esclusiva delle divinità
+
+### Cicli Naturali e Soprannaturali
+
+- Morte e Rinascita: La morte non è permanente per coloro con forte volontà, ma ogni ritorno costa parte della propria essenza
+- Stagioni Magiche: Il potere magico fluctua seguendo cicli cosmici di sette anni
+- Eclissi del Destino: Durante le eclissi, le barriere tra dimensioni si assottigliano permettendo eventi impossibili
+
+### Limitazioni Tecnologiche
+
+Aethermoor rimane ancorato a un'era medievale-rinascimentale arricchita dalla magia. La polvere da sparo non funziona a causa dell'influenza magica ambientale, sostituita da armi incantate e costrutti magici. Le comunicazioni avvengono attraverso cristalli risonanti e specchi parlanti.
+
+## LA VALLE DI LUMENGARDE - TERRA D'INIZIO
+
+### Il Luogo dell'Arrivo
+
+Il regno di partenza si sceglie liberamente alla creazione del personaggio. Quanto segue vale per chi sceglie Valeria.
+
+Tutti coloro che giungono in Aethermoor si risvegliano nella Valle di Lumengarde, una regione benedetta nel cuore di Valeria dove la magia scorre gentile e la terra è fertile. Qui, circondati da colline dorate e ruscelli cristallini, iniziano il proprio cammino verso il destino.
+
+### Luoghi Significativi della Valle
+
+#### VILLAGGIO DI ALBA CHIARA
+
+Una comunità di 2000 anime che vive di agricoltura e piccolo commercio. Le case dai tetti di paglia si affacciano su strade acciottolate, mentre il profumo del pane fresco si mescola all'incenso proveniente dal piccolo tempio di Luxor. È qui che i nuovi arrivati apprendono i primi rudimenti della vita in Aethermoor.
+
+#### FATTORIE CIRCOSTANTI
+
+Distese di campi dorati punteggiate da fattorie prosperose, dove i contadini coltivano grano magico che brilla di luce propria sotto la luna piena. È un luogo perfetto per imparare le basi della sopravvivenza, incontrare le prime creature selvagge e comprendere il valore del duro lavoro.
+
+#### ROVINE DEL TEMPIO ANTICO
+
+I resti di un tempio pre-guerra dedicato a un dio dimenticato. Le pietre logore sussurrano ancora frammenti di preghiere antiche, e nei sotterranei si nascondono i primi segreti del mondo. Molti avventurieri fanno qui le loro prime scoperte significative.
+
+#### CAMPI DI BATTAGLIA DIMENTICATI
+
+Distese erbose dove un tempo si svolsero scaramucce tra regni vicini. Ora pacifiche e verdeggianti, conservano ancora gli echi di antichi scontri. Gli spiriti benevoli dei guerrieri caduti a volte appaiono per offrire consigli ai giovani combattenti.
+
+### Lasciare la Valle
+
+Quando un individuo ha dimostrato di aver compreso le basi della vita in Aethermoor e ha sviluppato le proprie abilità iniziali, riceve la Benedizione del Viaggiatore dal Saggio del villaggio. Questo rito di passaggio apre le porte del mondo più vasto, fornendo una cavalcatura e una lettera di raccomandazione per la Gilda degli Avventurieri della capitale.
+
+## FILOSOFIA DEL MONDO
+
+### Separazione Assoluta dalle Origini
+
+Gli abitanti di Aethermoor non possiedono alcuna consapevolezza dell'esistenza di altri mondi o realtà. Per loro, l'universo si limita al proprio cosmo magico con le sue leggi, i suoi dèi e la sua storia millenaria. I nuovi arrivati sono semplicemente "forestieri da terre lontane" la cui origine esatta rimane misteriosa anche a loro stessi.
+
+### La Crescita Attraverso la Lotta
+
+Aethermoor è un mondo dove il potere si guadagna millimetro dopo millimetro, dove ogni vittoria ha il sapore del sangue e ogni sconfitta insegna una lezione preziosa. Non esistono scorciatoie verso la grandezza: solo dedizione assoluta, sacrificio costante e una volontà di ferro possono elevare un individuo dalla marmaglia alle vette del potere.
+
+### Il Destino è Nelle Proprie Mani
+
+Mentre gli dèi osservano e a volte intervengono, il destino di ogni essere senziente rimane nelle proprie mani. Le profezie esistono, ma possono essere infrante. I fati possono essere sfidati. In Aethermoor, anche il più umile contadino può aspirare a scalare i cieli, se possiede il coraggio e la determinazione necessari.
+
+### L'Eternità dell'Ambizione
+
+Il mondo continua a evolvere e crescere indipendentemente dalle azioni di singoli individui. Regni sorgono e cadono, nuove terre emergono dagli oceani, antichi segreti vengono scoperti. Aethermoor è un organismo vivente in costante trasformazione, che offre infinite opportunità a chi sa coglierle.
+
+Aethermoor attende coloro che hanno il coraggio di abbandonare la sicurezza del noto per abbracciare l'infinito potenziale dell'ignoto. In questo mondo dove ogni alba porta nuove sfide e ogni tramonto nuove possibilità, solo una cosa è certa: il destino appartiene a chi ha la forza di reclamarlo.

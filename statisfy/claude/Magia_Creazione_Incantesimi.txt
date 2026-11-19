@@ -1,0 +1,58 @@
+# MAGIA: CREAZIONE DEGLI INCANTESIMI - STATISFY
+## Decisioni dell'autore del 18 e 19 novembre 2026
+
+Queste regole prevalgono su `Magic.txt.txt` dove i due testi divergono, e vanno integrate in quel documento alla prossima riscrittura.
+
+---
+
+## Come nasce un incantesimo
+
+La magia arcana funziona per composizione di sfere, come una teoria degli insiemi (il riferimento di comodo è Mage: The Ascension).
+
+1. Il mago decide l'effetto che vuole ottenere. Esempio: una Palla di Fuoco.
+2. Il mago decide il come, cioè quali sfere usa e a che cosa serve ciascuna. Esempio: "uso Vis per darle forma e Ignis per accenderla".
+3. Il come determina l'incantesimo e le sue peculiarità.
+
+È il giocatore a descrivere l'effetto atteso. Il narratore non lo sceglie al suo posto: ne valuta costo, livello, rischi e conseguenze in base alle sfere dichiarate. Il giocatore può contrattare su questa valutazione, e una composizione più complessa non è per forza migliore.
+
+### Stesso effetto, sfere diverse
+
+| Composizione | Risultato |
+|--------------|-----------|
+| Palla di Fuoco di solo Ignis | Fa più danno, ma è fuoco vero e incontrollabile |
+| Palla di Fuoco di Ignis + Vis | Fa meno danno, ma è più facile da maneggiare |
+
+Ogni sfera aggiunta o tolta cambia il carattere dell'incantesimo, non solo i numeri.
+
+## Le sfere servono
+
+- Per mettere una sfera in una composizione il mago deve possederla, cioè avere maestria in quella sfera.
+- Il narratore può stabilire che un certo incantesimo richiede una determinata sfera per funzionare, e chiederla al giocatore.
+- Una sfera può ottenere per vie traverse un effetto che appartiene a un'altra, ma con più complessità. Accendere un fuoco con Vis è più difficile che con Ignis, però non è impossibile: l'attrito genera calore. Muovere un oggetto con Ignis è molto più complesso che farlo con Vis.
+- Più l'effetto è lontano dal campo naturale della sfera, più salgono difficoltà, costo e rischio.
+
+Deduzione del narratore, da confermare: ogni Mago parte con Vis al Grado I, perché conosce il Dardo arcano.
+
+## Improvvisazione e incantesimi consolidati
+
+- Un incantesimo improvvisato si compone sul momento.
+- Un incantesimo consolidato equivale a un'abilità (skill): è lo standard del mago, distinto dall'improvvisazione.
+- A oggi ogni mago di Aethermoor ha un solo incantesimo standard: il Dardo arcano (il "Dardo Magico" di `Creazione personaggio.txt`, sfera Vis).
+
+### Consolidare con la pratica
+
+Senza uno slot di grimorio, un incantesimo improvvisato si consolida con la pratica. Appena il mago lo usa con continuità entra "in pratica" come incantesimo di Grado I all'1%, e la percentuale sale con il tempo e con l'uso, come ogni altra maestria.
+
+## Grimorio Basilare
+
+Contiene il Dardo arcano e due slot vuoti. Gli slot sono il regalo d'inizio build e fanno da tutorial alla creazione di incantesimi: il mago vi consolida subito, senza pratica, i primi due incantesimi che sceglie di scriverci.
+
+## Danno magico
+
+Danno = base 15-30 × (1 + INT/100). Il danno magico puro non sottrae la Difesa del bersaglio.
+
+Esempio: con INT 30 il Dardo arcano infligge 19-39 danni.
+
+## Punti ancora da decidere
+
+Sono riportati in `claude/Discrepanze_da_risolvere.txt`.
