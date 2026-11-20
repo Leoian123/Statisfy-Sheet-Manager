@@ -20,6 +20,13 @@ Variabili d'ambiente (facoltative):
 - `STATISFY_SECRET` — segreto JWT (default di sviluppo: cambiarlo in produzione)
 - `STATISFY_DB_URL` — URL SQLAlchemy del DB (default `sqlite:///backend/statisfy.db`)
 
+## Import delle schede Excel
+```
+.venv\Scripts\python -m app.excel_import ..\Scheda_Personaggio_STATISFY.xlsx ..\Scheda_Personaggio_STATISFY_Kelvin.xlsx --dry-run
+```
+Senza `--dry-run` scrive nel DB (aggiorna i PG con lo stesso nome, crea gli altri) e apre una questione per ogni PG con incoerenze.
+Lo stesso import è disponibile per il Master come `POST /api/import/excel` (vedi `docs/API.md`).
+
 Documentazione interattiva: http://127.0.0.1:8000/docs
 
 ## Test

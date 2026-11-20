@@ -180,6 +180,43 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
   `Npc = {id, name, level, race, place, role, trust: "Scarso"|"Neutrale"|"Buono"|"Eccellente", knows, debts, last, secret, history: {session, text, at}[]}`
 - `GET /api/issues` → `{id, title, text, sev: "bad"|"warn", resolved: bool, decision: str|null}[]`; `PATCH /api/issues/{id}` `{resolved?, decision?}`
 
+## Import schede Excel (solo master)
+- `POST /api/import/excel` — `multipart/form-data`:
+  - `file` (obbligatorio): `.xlsx`, massimo 5 MB (413 oltre, 422 se non è un `.xlsx` leggibile)
+  - `dry_run` (facoltativo, default `false`): `true` = solo report, nessuna modifica al DB
+  - `owners` (facoltativo): JSON `{"NomePG": "username"}` per i PG **nuovi**; senza, il PG nuovo va al Master che importa. 422 se lo username non esiste.
+  - `create_issues` (facoltativo, default `true`): crea/aggiorna le questioni del Master con le incoerenze
+  - 403 per i player.
+
+Cosa legge (solo valori delle celle; per le celle con formula il valore calcolato salvato da Excel — le formule non vengono portate, le derivate le ricalcola il backend):
+- ogni foglio con `A4 = "Nome Personaggio:"` è una scheda: nome `B4`, classe `D4`, livello `B5`, EXP `D5`;
+- righe 9–24 = statistiche (sigla tra parentesi o in fondo all'etichetta, es. `Forza (STR)`, `Carisma CHA`); le colonne
+  Valore Iniziale / Punti Creazione / Investiti / Level Up / Altro / Titoli sono trovate per intestazione (riga 8).
+  Colonne extra `Punti …` (es. «Punti Imprese Diplomatiche» di Eric) sono sommate in `altro` con nota sulla riga e segnalate;
+- tabella titoli (colonna F `Nome`, G `Rarità`, da H un bonus per statistica nell'ordine delle righe 9…) oppure tabella talenti (F `Talento`);
+- colonna `Bonus Item` delle derivate → `item_bonus`;
+- se il file ha una sola scheda, i fogli `Skills`, `Skill Attive`, `Inventario`, `Talenti`, `Pets`, `Maledizioni`, `Quest`
+  riempiono le liste omonime (le monete `Corone`/`Scellini` dell'inventario aggiornano `corone`/`scellini`).
+
+Scrittura: il PG si cerca per nome (senza distinzione di maiuscole). Se esiste viene **aggiornato** (classe, livello, EXP, statistiche
+e solo le liste presenti nel file; proprietario, regno, PvP, gilda, equip, magia, combattimento restano; le risorse attuali sono
+limitate ai nuovi massimi); altrimenti viene **creato** (regno «—», PvP Bianco, risorse al massimo).
+
+Risposta:
+```json
+{"file": "Scheda.xlsx", "dry_run": false,
+ "characters": [{"name": "Corax", "sheet": "Corax", "action": "updated"|"created", "id": 3, "owner": "giocatore3",
+                 "level": 181, "classe": "Monaco", "stats": 7, "sections": {"titles": 12}}],
+ "issues": [{"severity": "bad"|"warn"|"info", "sheet": "Corax", "character": "Corax",
+             "message": "Livello 181: «Punti Level Up» = 185 su STR, DEX, VIT, INT, attesi 180 (…)"}],
+ "summary": {"bad": 0, "warn": 3, "info": 6}, "issue_ids": [7]}
+```
+Le incoerenze (`warn`) **non vengono corrette**: i dati sono importati come sono nell'Excel e segnalati. `bad` = foglio o file non importato
+(nome non valido, livello non intero, nessuna scheda). `info` = note (derivate dell'Excel con formula diversa da quella dell'app, campi assenti, ecc.).
+Con `create_issues` ogni PG con incoerenze ha una questione `"Import Excel — Nome"` (testo = elenco); reimportando si aggiorna quella aperta.
+
+Stesso import da riga di comando (cartella `backend`): `.venv\Scripts\python -m app.excel_import FILE.xlsx [...] [--dry-run] [--owner Nome=username] [--no-issues]`.
+
 ## Seed
 All'avvio, se il DB è vuoto: utenti sopra, campagna "Campagna di Alba Chiara" (sessione 15), i 6 PG di `mockup/data.js`
 (Kelvin completo con inventario MMORPG: Thanatos a due mani e Spalla del Simbionte equipaggiati → giocatore1, Eric → giocatore2, Corax → 3, Deniel → 4, Connor → 5, Dante → 6), i 3 PNG, quest aperte e questioni (con le decisioni già prese).
