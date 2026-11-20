@@ -11,7 +11,7 @@ from ..auth import current_user
 from ..db import get_db
 from ..errors import validate
 from ..models import Character, User
-from ..schemas import (LOCKED_FIELDS, MASTER_FIELDS, PLAYER_FIELDS, CharacterCreate, CharacterPatch,
+from ..schemas import (LOCKED_FIELDS, MASTER_FIELDS, MAX_LEVEL, PLAYER_FIELDS, CharacterCreate, CharacterPatch,
                        DistributeIn)
 from ..serialize import character_out, maxes, maxes_of, summary_out
 
@@ -216,6 +216,8 @@ def delete_character(char_id: int, user: User = Depends(current_user), db: Sessi
 def level_up(char_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     c = get_char(char_id, user, db)
     old = c.level
+    if old >= MAX_LEVEL:
+        raise HTTPException(422, f"Livello massimo raggiunto ({rules.fmt_n(MAX_LEVEL)}).")
     c.level = old + 1
     c.exp_pct = 0
     stats = copy.deepcopy(c.stats or [])

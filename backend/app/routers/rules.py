@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from .. import rules
+from ..auth import current_user
 from ..schemas import PreviewIn
 from .characters import starting_inventory  # stessa logica della creazione del PG
 
@@ -12,7 +13,7 @@ def get_rules():
     return rules.rules_config()
 
 
-@router.post("/preview")
+@router.post("/preview", dependencies=[Depends(current_user)])  # calcolo non banale: solo utenti autenticati
 def preview(data: PreviewIn):
     c = {"stats": [r.model_dump() for r in data.stats], "item_bonus": data.item_bonus or {},
          "equip": data.equip or {}, "magia": data.magia or {}}

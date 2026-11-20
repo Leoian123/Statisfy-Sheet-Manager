@@ -168,3 +168,20 @@ def test_parallel_logins(client, n):
     tokens = {r.json()["token"] for r in res}
     for t in tokens:
         assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {t}"}).status_code == 200
+
+
+def test_version_column_added_to_existing_db(tmp_path):
+    """I DB creati prima del blocco ottimistico ricevono la colonna `version` all'avvio, senza perdere dati."""
+    from sqlalchemy import create_engine, inspect, text
+
+    from app.db import Base, ensure_columns
+    eng = create_engine(f"sqlite:///{(tmp_path / 'old.db').as_posix()}")
+    Base.metadata.create_all(eng)
+    with eng.begin() as conn:
+        conn.execute(text("ALTER TABLE characters DROP COLUMN version"))
+        conn.execute(text("ALTER TABLE forge_entries DROP COLUMN version"))
+    assert "version" not in {c["name"] for c in inspect(eng).get_columns("characters")}
+    assert sorted(ensure_columns(eng)) == ["characters.version", "forge_entries.version"]
+    assert "version" in {c["name"] for c in inspect(eng).get_columns("characters")}
+    assert ensure_columns(eng) == []  # idempotente
+    eng.dispose()

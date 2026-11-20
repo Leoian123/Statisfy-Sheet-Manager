@@ -55,6 +55,10 @@ class Character(Base):
     reputation: Mapped[list] = mapped_column(JSON, default=list)
     combat: Mapped[dict] = mapped_column(JSON, default=dict)
     death: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
+    # Blocco ottimistico: ogni UPDATE richiede la versione letta, così due sessioni contemporanee non si
+    # sovrascrivono in silenzio (la seconda riceve 409 e ricarica). Vedi main.py e db.ensure_columns.
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version}
 
 
 class Npc(Base):
@@ -97,6 +101,8 @@ class ForgeEntry(Base):
     closed: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
     session: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[str] = mapped_column(String(40), default="")
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version}
 
 
 class Roll(Base):

@@ -106,10 +106,10 @@ def test_migration_fills_ki(client, master):
         assert migrate(db) == 0
 
 
-def test_preview_counts_starting_equipment(client):
+def test_preview_counts_starting_equipment(client, p1):
     stats = [{"code": c, "iniziale": 10, "creazione": v} for c, v in (("STR", 10), ("DEX", 5), ("VIT", 5), ("INT", 0))]
-    base = {d["key"]: d["value"] for d in client.post("/api/rules/preview", json={"stats": stats}).json()["derived"]}
-    r = client.post("/api/rules/preview", json={"stats": stats, "classe_id": "guerriero"})
+    base = {d["key"]: d["value"] for d in client.post("/api/rules/preview", headers=p1, json={"stats": stats}).json()["derived"]}
+    r = client.post("/api/rules/preview", headers=p1, json={"stats": stats, "classe_id": "guerriero"})
     d = {x["key"]: x["value"] for x in r.json()["derived"]}
     assert base["blocco"] == 0 and d["blocco"] == 20.5  # Scudo di Legno 20 + STR 20/40
     assert d["difesa"] == rules.clean(15 / 10 + 5 * (1 + 15 / 100))  # Armatura di Cuoio Rinforzato: Difesa 5
@@ -119,7 +119,7 @@ def test_preview_counts_starting_equipment(client):
             "regno_id": "valeria"}
     c = client.post("/api/characters", json=body, headers=h).json()
     assert {x["key"]: x["value"] for x in c["derived"]} == d
-    assert client.post("/api/rules/preview", json={"stats": stats, "classe_id": "boh"}).status_code == 422
+    assert client.post("/api/rules/preview", headers=p1, json={"stats": stats, "classe_id": "boh"}).status_code == 422
 
 
 def test_spend_ki(client):

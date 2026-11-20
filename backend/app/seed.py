@@ -7,7 +7,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from . import rules
 from .auth import hash_password
-from .db import Base, SessionLocal, engine
+from .db import Base, SessionLocal, engine, ensure_columns
 from .models import Campaign, Character, Issue, Npc, User
 from .serialize import maxes
 
@@ -373,6 +373,7 @@ def migrate(db: Session) -> int:
 
 
 def seed_if_empty(db: Session) -> bool:
+    ensure_columns(db.get_bind())  # aggiorna le tabelle già esistenti (es. colonna version)
     Base.metadata.create_all(bind=db.get_bind())
     if db.scalar(select(User).limit(1)) is not None:
         migrate(db)

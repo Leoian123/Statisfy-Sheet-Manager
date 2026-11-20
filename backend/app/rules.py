@@ -101,11 +101,13 @@ def js_round(x: float) -> int:
 
 
 def num(v: Any) -> float:
+    """Numero finito o 0: NaN, ±infinito e interi troppo grandi per un float non entrano nei calcoli
+    (né nelle risposte JSON, dove farebbero fallire la serializzazione)."""
     try:
         n = float(v)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return 0
-    return 0 if math.isnan(n) else n
+    return n if math.isfinite(n) else 0
 
 
 def clean(n: float) -> float | int:

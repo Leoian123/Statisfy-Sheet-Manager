@@ -266,7 +266,7 @@ def test_preview_with_inventory(client, p1):
     c = client.get(f"/api/characters/{kid}", headers=p1).json()
     body = {"stats": c["stats"], "item_bonus": c["item_bonus"], "equip": c["equip"], "magia": c["magia"],
             "inventory": c["inventory"]}
-    d = {x["key"]: x for x in client.post("/api/rules/preview", json=body).json()["derived"]}
+    d = {x["key"]: x for x in client.post("/api/rules/preview", headers=p1, json=body).json()["derived"]}
     assert d["critico"]["bonus"] == 12 and d["difesa"]["explain"] == "186/10 + 85 × (1 + 186/100)"
 
 

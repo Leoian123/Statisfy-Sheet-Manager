@@ -7,7 +7,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from .. import rules
@@ -131,8 +131,11 @@ def roll_for_character(char_id: int, data: CharRollIn, user: User = Depends(curr
     db.add(r)
     db.flush()
     if req is not None:
-        req.status = "risolta"
-        req.roll_id = r.id
+        # UPDATE condizionato: con due risposte contemporanee solo la prima trova la richiesta ancora aperta
+        done = db.execute(update(RollRequest).where(RollRequest.id == req.id, RollRequest.status == "aperta")
+                          .values(status="risolta", roll_id=r.id).execution_options(synchronize_session=False))
+        if done.rowcount != 1:
+            r.request_id = None  # già risolta da un'altra sessione: il tiro resta, non collegato
     db.commit()
     db.refresh(r)
     return roll_out(r, {c.id: c.name}, {user.id: user.display_name})

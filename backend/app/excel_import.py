@@ -581,14 +581,43 @@ AUX_SHEETS = {"skills": ("skills", _skills), "skill attive": ("active_skills", _
 
 # ---------------------------------------------------------------- parsing del file
 
+# Limiti anti-abuso dell'import (le schede reali: ~1,3 MB espansi, al massimo ~1000 righe × 29 colonne).
+MAX_UNZIPPED = 50 * 1024 * 1024   # zip bomb: dimensione totale espansa
+MAX_ENTRIES = 1000
+MAX_ROWS, MAX_COLS = 10_000, 200  # i cicli del parser scorrono righe × colonne
+
+
+def check_archive(content: bytes, filename: str) -> None:
+    """Controlla l'archivio .xlsx prima di darlo a openpyxl: deve essere uno zip con il contenuto di una cartella
+    di lavoro e non espandersi oltre MAX_UNZIPPED (zip bomb)."""
+    import zipfile
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
+            infos = z.infolist()
+    except (zipfile.BadZipFile, ValueError, OSError) as exc:
+        raise ValueError(f"Il file «{filename}» non è un Excel .xlsx leggibile ({type(exc).__name__}).") from exc
+    if len(infos) > MAX_ENTRIES:
+        raise ValueError(f"Il file «{filename}» contiene troppi elementi ({len(infos)}).")
+    if not any(i.filename == "xl/workbook.xml" for i in infos):
+        raise ValueError(f"Il file «{filename}» non è un Excel .xlsx leggibile (manca la cartella di lavoro).")
+    if sum(i.file_size for i in infos) > MAX_UNZIPPED:
+        raise ValueError(f"Il file «{filename}» si espande oltre {MAX_UNZIPPED // (1024 * 1024)} MB: non importato.")
+
+
 def parse_workbook(content: bytes, filename: str = "file.xlsx") -> tuple[list[dict], Report]:
     """Legge un file .xlsx e restituisce (personaggi, report). Non tocca il DB."""
     report = Report(filename)
+    check_archive(content, filename)
     try:
         wb_v = load_workbook(io.BytesIO(content), data_only=True, read_only=False)
         wb_f = load_workbook(io.BytesIO(content), data_only=False, read_only=False)
     except Exception as exc:  # file corrotto o non xlsx
         raise ValueError(f"Il file «{filename}» non è un Excel .xlsx leggibile ({type(exc).__name__}).") from exc
+    for ws in wb_v.worksheets:
+        if ws.max_row > MAX_ROWS or ws.max_column > MAX_COLS:
+            raise ValueError(f"Foglio «{ws.title}» troppo esteso ({ws.max_row} righe × {ws.max_column} colonne; "
+                             f"massimo {MAX_ROWS} × {MAX_COLS}): elimina le celle usate oltre la scheda.")
     chars: list[dict] = []
     aux: list[_Sheet] = []
     for ws in wb_v.worksheets:
