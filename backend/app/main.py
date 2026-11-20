@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from . import config
 from .db import SessionLocal
 from .errors import message
-from .routers import auth, characters, combat, master, rules
+from .routers import auth, characters, combat, imports, master, rules
 from .seed import seed_if_empty
 
 
@@ -29,5 +29,5 @@ async def validation_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(status_code=422, content={"detail": message(exc.errors())})
 
 
-for r in (auth.router, rules.router, characters.router, combat.router, master.router):
+for r in (auth.router, rules.router, characters.router, combat.router, master.router, imports.router):
     app.include_router(r)
