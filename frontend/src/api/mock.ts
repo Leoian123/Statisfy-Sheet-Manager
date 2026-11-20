@@ -2,7 +2,7 @@
 // Simula il server: qui (e solo qui) le regole sono replicate dal mockup per poter sviluppare senza backend.
 import type {
   Campaign, Character, CharacterSummary, Derived, DerivedFmt, Effect, EquipTypeDef, InventoryItem, ItemPreview, Issue, Npc,
-  Resources, RulesConfig, SlotDef, SlotKey, StatRow, User,
+  Resources, Roll, RollMod, RollRequest, RulesConfig, SlotDef, SlotKey, StatRow, User,
 } from "./types";
 
 type Res = { status: number; data: unknown };
@@ -588,6 +588,49 @@ function log(c: Stored, text: string) {
   if (c.combat.log.length > 20) c.combat.log = c.combat.log.slice(-20);
 }
 
+/* ---------- Tavolo: tiri d100 (come backend/app/routers/table.py) ---------- */
+const table = { rolls: [] as (Roll & { secret: boolean })[], requests: [] as Omit<RollRequest, "char_name" | "roll_total" | "roll_natural">[], seq: 1 };
+const MOD_KINDS = ["Skill", "Skill attiva", "Titolo", "Talento", "Fortuna"] as const;
+function d10(): number {
+  const a = new Uint32Array(1);
+  for (;;) { crypto.getRandomValues(a); if (a[0] < 4294967290) return a[0] % 10; }
+}
+const charName = (id: number) => db.chars.find((c) => c.id === id)?.name ?? "PG eliminato";
+function requestOut(q: (typeof table.requests)[number]): RollRequest {
+  const r = q.roll_id ? table.rolls.find((x) => x.id === q.roll_id) : undefined;
+  return { ...q, char_name: charName(q.char_id), roll_total: r ? r.total : null, roll_natural: r ? r.natural : null };
+}
+function checkMods(c: Stored, raw: unknown): RollMod[] | string {
+  if (raw == null) return [];
+  if (!Array.isArray(raw) || raw.length > 30) return "Dati non validi — mods: deve essere una lista (max 30).";
+  const hasLuck = derivedFor(c).some((d) => d.key === "bonusFortuna");
+  const names: Record<string, string[]> = {
+    Skill: c.skills.map((x) => x.name), "Skill attiva": c.active_skills.map((x) => x.name), Titolo: c.titles.map((x) => x.name),
+    Talento: c.talents.map((x) => x.name), Fortuna: hasLuck ? ["Bonus Fortuna sui tiri"] : [],
+  };
+  const out: RollMod[] = [];
+  for (const m of raw as Record<string, unknown>[]) {
+    const kind = m?.kind as RollMod["kind"];
+    if (!MOD_KINDS.includes(kind)) return "Dati non validi — mods.kind: valore non ammesso.";
+    if (!Number.isInteger(m.mod) || Math.abs(m.mod as number) > 999) return "Dati non validi — mods.mod: deve essere un intero tra −999 e 999.";
+    const name = String(m.name ?? "");
+    if (!names[kind].includes(name)) return `«${name}» non è tra le voci di tipo ${kind} nella scheda di ${c.name}.`;
+    out.push({ kind, name, mod: m.mod as number, text: String(m.text ?? "").slice(0, 300).trim() });
+  }
+  return out;
+}
+function newRoll(charId: number | null, me: User, reason: string, mods: RollMod[], secret: boolean, requestId: number | null) {
+  const tens = d10(), units = d10();
+  const natural = tens * 10 + units || 100;
+  const r = {
+    id: table.seq++, char_id: charId, char_name: charId == null ? "Master" : charName(charId), by: charId == null ? "master" as const : "giocatore" as const,
+    author_id: me.id, author_name: me.display_name, reason: reason.trim().slice(0, 120), tens, units, natural, mods,
+    total: natural + mods.reduce((s, m) => s + m.mod, 0), secret, request_id: requestId, created_at: new Date().toISOString(),
+  };
+  table.rolls.push(r);
+  return r;
+}
+
 /* ---------- Router ---------- */
 export async function handle(method: string, path: string, body: unknown, token: string | null): Promise<Res> {
   await new Promise((r) => setTimeout(r, 120));
@@ -840,6 +883,59 @@ export async function handle(method: string, path: string, body: unknown, token:
       return ok(res);
     }
     return err(404, "Rotta non trovata.");
+  }
+
+  /* Tavolo */
+  m = /^\/table\/characters\/(\d+)\/rolls$/.exec(path);
+  if (m && method === "POST") {
+    const c = db.chars.find((x) => x.id === Number(m![1]));
+    if (!c || (!isMaster && c.owner_id !== me.id)) return err(404, "Personaggio non trovato.");
+    const mods = checkMods(c, b.mods);
+    if (typeof mods === "string") return err(422, mods);
+    const q = typeof b.request_id === "number" ? table.requests.find((x) => x.id === b.request_id && x.char_id === c.id && x.status === "aperta") : undefined;
+    const r = newRoll(c.id, me, String(b.reason ?? ""), mods, false, q ? q.id : null);
+    if (q) { q.status = "risolta"; q.roll_id = r.id; }
+    return ok(r, 201);
+  }
+  const mine = () => db.chars.filter((c) => c.owner_id === me.id).map((c) => c.id);
+  if (path.startsWith("/table/rolls")) {
+    const qs = new URLSearchParams(path.split("?")[1] || "");
+    if (method === "POST" && path === "/table/rolls") {
+      if (!isMaster) return err(403, "Operazione riservata al Master.");
+      return ok(newRoll(null, me, String(b.reason ?? ""), [], !!b.secret, null), 201);
+    }
+    if (method === "GET") {
+      const ids = mine();
+      const cid = qs.get("char_id");
+      const lim = Math.max(1, Math.min(200, Number(qs.get("limit")) || 50));
+      return ok(table.rolls.filter((r) => (isMaster || (r.char_id != null && ids.includes(r.char_id) && !r.secret)) && (cid == null || r.char_id === Number(cid)))
+        .slice().reverse().slice(0, lim));
+    }
+  }
+  if (path.startsWith("/table/requests")) {
+    const qs = new URLSearchParams(path.split("?")[1] || "");
+    if (method === "GET") {
+      const ids = mine();
+      const stt = qs.get("status");
+      return ok(table.requests.filter((q) => (isMaster || ids.includes(q.char_id)) && (!stt || q.status === stt)).slice().reverse().map(requestOut));
+    }
+    if (!isMaster) return err(403, "Operazione riservata al Master.");
+    if (method === "POST" && path === "/table/requests") {
+      const c = db.chars.find((x) => x.id === b.char_id);
+      if (!c) return err(404, "Personaggio non trovato.");
+      const what = String(b.what ?? "").trim();
+      if (what.length < 2 || what.length > 80) return err(422, "Dati non validi — what: da 2 a 80 caratteri.");
+      const q = { id: table.seq++, char_id: c.id, what, note: String(b.note ?? "").trim().slice(0, 200), status: "aperta" as const, roll_id: null, created_at: new Date().toISOString() };
+      table.requests.push(q);
+      return ok(requestOut(q), 201);
+    }
+    m = /^\/table\/requests\/(\d+)$/.exec(path);
+    if (m && method === "DELETE") {
+      const i = table.requests.findIndex((x) => x.id === Number(m![1]));
+      if (i < 0) return err(404, "Richiesta di tiro non trovata.");
+      table.requests.splice(i, 1);
+      return { status: 204, data: null };
+    }
   }
 
   if (!isMaster && (path.startsWith("/campaign") || path.startsWith("/npcs") || path.startsWith("/issues"))) {

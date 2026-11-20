@@ -97,3 +97,33 @@ class ForgeEntry(Base):
     closed: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
     session: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[str] = mapped_column(String(40), default="")
+
+
+class Roll(Base):
+    """Tiro d100 al tavolo (plancia). Il risultato lo genera il server: tens/units dai d10, natural 1–100
+    (00 + 0 = 100), total = natural + somma dei `mods` allegati. `char_id` None = tiro del Master (anche segreto)."""
+    __tablename__ = "rolls"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    char_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True, default=None)  # id del PG, senza FK
+    author_id: Mapped[int] = mapped_column(Integer)  # utente che ha tirato
+    reason: Mapped[str] = mapped_column(String(120), default="")
+    tens: Mapped[int] = mapped_column(Integer)
+    units: Mapped[int] = mapped_column(Integer)
+    natural: Mapped[int] = mapped_column(Integer)
+    mods: Mapped[list] = mapped_column(JSON, default=list)  # [{kind, name, mod, text}]
+    total: Mapped[int] = mapped_column(Integer)
+    secret: Mapped[bool] = mapped_column(Boolean, default=False)
+    request_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    created_at: Mapped[str] = mapped_column(String(40), default="")
+
+
+class RollRequest(Base):
+    """Richiesta di tiro del Master a un PG: `aperta` finché il giocatore non risponde con un tiro (`risolta`, `roll_id`)."""
+    __tablename__ = "roll_requests"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    char_id: Mapped[int] = mapped_column(Integer, index=True)
+    what: Mapped[str] = mapped_column(String(80))
+    note: Mapped[str] = mapped_column(String(200), default="")
+    status: Mapped[str] = mapped_column(String(10), default="aperta")
+    roll_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    created_at: Mapped[str] = mapped_column(String(40), default="")

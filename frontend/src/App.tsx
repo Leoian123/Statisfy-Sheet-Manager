@@ -14,6 +14,7 @@ import { Combattimento } from "./pages/Combattimento";
 import { Master } from "./pages/Master";
 import { Forgia } from "./pages/Forgia";
 import { Plancia } from "./pages/Plancia";
+import { PlanciaGiocatore } from "./pages/PlanciaGiocatore";
 
 export function App() {
   return (
@@ -43,6 +44,7 @@ function Gate() {
         <Route element={<AppShell />}>
           <Route index element={<Home />} />
           <Route path="/personaggi/:id" element={<Scheda />} />
+          <Route path="/personaggi/:id/plancia" element={<PlanciaGiocatore />} />
           <Route path="/personaggi/:id/level-up" element={<LevelUp />} />
           <Route path="/personaggi/:id/combattimento" element={<Combattimento />} />
           <Route path="/crea" element={<Crea />} />

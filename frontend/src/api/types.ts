@@ -282,3 +282,40 @@ export interface Issue {
   resolved: boolean;
   decision: string | null;
 }
+
+/* ---------- Tavolo: tiri d100 e richieste del Master (/api/table) ---------- */
+export type RollModKind = "Skill" | "Skill attiva" | "Titolo" | "Talento" | "Fortuna";
+/** Allegato a un tiro: modificatore intero tra −999 e 999, `name` presente nella scheda del PG. */
+export interface RollMod { kind: RollModKind; name: string; mod: number; text: string }
+/** Tiro d100 generato dal server: decine 0–9 (00–90), unità 0–9, naturale 1–100 (00 + 0 = 100). */
+export interface Roll {
+  id: number;
+  char_id: number | null;
+  char_name: string;
+  by: "giocatore" | "master";
+  author_id: number;
+  author_name: string;
+  reason: string;
+  tens: number;
+  units: number;
+  natural: number;
+  mods: RollMod[];
+  total: number;
+  secret: boolean;
+  request_id: number | null;
+  created_at: string;
+}
+export type RollRequestStatus = "aperta" | "risolta";
+export interface RollRequest {
+  id: number;
+  char_id: number;
+  char_name: string;
+  what: string;
+  note: string;
+  status: RollRequestStatus;
+  roll_id: number | null;
+  roll_total: number | null;
+  roll_natural: number | null;
+  created_at: string;
+}
+export interface CharRollRequest { reason?: string; mods?: RollMod[]; request_id?: number | null }

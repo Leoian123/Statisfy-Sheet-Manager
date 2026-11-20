@@ -178,6 +178,7 @@ export function AppShell() {
       <div className="app">
         <nav className="nav" aria-label="Sezioni" ref={navRef}>
           {charLink("", "Scheda personaggio")}
+          {charLink("/plancia", "Plancia di gioco")}
           {charLink("/level-up", "Level up")}
           {charLink("/combattimento", "Combattimento")}
           {isMaster && (

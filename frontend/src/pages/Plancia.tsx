@@ -1,20 +1,27 @@
 /* Plancia di comando del Master (design: artifact «Plancia del Master»).
    PC: tutto in una pagina. Telefono (≤ 760px): una sezione alla volta, con la barra in basso
-   Gruppo · Incontro · Forgia · Assegna · Altro. Tutti i numeri vengono dal server (GET /api/forge/board). */
+   Gruppo · Tiri · Incontro · Forgia · Assegna · Altro. Tutti i numeri vengono dal server (GET /api/forge/board).
+   Tavolo (porting di mockup/screens/plancia.js, vista Master): tiro del Master con il vassoio d100 (anche segreto),
+   richieste di tiro ai PG, registro di tutti i tiri e ultimo tiro di ogni PG; tiri e richieste si aggiornano ogni 5 s. */
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api, errorText } from "../api/client";
+import type { Roll, RollRequest } from "../api/types";
 import { forgeApi, type AssignPreview, type Board, type BoardEncounter, type BoardPc, type ForgeEntry, type ForgeKind, type ForgeMeta } from "../api/forge";
 import { useAppData } from "../auth/AppData";
 import { RarityChip } from "../components/RarityChip";
 import { ErrorBox, InlineError, Loading } from "../components/Status";
 import { TipRow } from "../components/TipRow";
 import { useToast } from "../components/Toast";
+import { DiceTray, useDiceSound, type DiceTrayHandle, type ThrowOpts } from "../components/DiceTray";
+import { RollLog, RollResult } from "../components/RollViews";
+import { usePolling } from "../lib/usePolling";
 import { CloseEncounter, WIZARDS } from "./Forgia";
 import "../styles/forge.css";
 import "../styles/plancia.css";
+import "../styles/tavolo.css";
 
-type Tab = "gruppo" | "incontro" | "forgia" | "assegna" | "altro";
+type Tab = "gruppo" | "tiri" | "incontro" | "forgia" | "assegna" | "altro";
 const nf = (n: unknown) => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString("it-IT");
 const ni = (n: unknown) => Math.round(Number(n) || 0).toLocaleString("it-IT");
 const pct = (a: number, b: number) => (b > 0 ? Math.max(0, Math.min(100, (a / b) * 100)) : 0);
@@ -31,6 +38,21 @@ export function Plancia() {
   const [tab, setTab] = useState<Tab>("gruppo");
   const [assignPc, setAssignPc] = useState<number | null>(null);
   const assignRef = useRef<HTMLElement>(null);
+  const [rolls, setRolls] = useState<Roll[] | null>(null);
+  const [reqs, setReqs] = useState<RollRequest[]>([]);
+  const [tableErr, setTableErr] = useState<string | null>(null);
+  const [askPc, setAskPc] = useState<{ id: number; n: number } | null>(null);
+
+  // Tavolo: tiri e richieste di tutti, aggiornati ogni 5 s con la pagina visibile
+  const refreshTable = useCallback(async () => {
+    try {
+      const [rs, qs] = await Promise.all([api.rolls({ limit: 100 }), api.rollRequests()]);
+      setRolls(rs);
+      setReqs(qs);
+      setTableErr(null);
+    } catch (e) { setTableErr(errorText(e)); }
+  }, []);
+  usePolling(refreshTable, 5000, [refreshTable]);
 
   const reload = useCallback(async () => {
     const [b, m] = await Promise.all([forgeApi.board(), forgeApi.meta()]);
@@ -50,6 +72,10 @@ export function Plancia() {
   const avg = board.party.length ? Math.round(board.party.reduce((s, p) => s + p.level, 0) / board.party.length) : 0;
   const active = board.encounters.find((e) => e.id === board.active_encounter_id) ?? null;
 
+  function goAsk(id: number) {
+    setAskPc((a) => ({ id, n: (a?.n ?? 0) + 1 }));
+    setTab("tiri");
+  }
   function goAssign(id: number) {
     setAssignPc(id);
     setTab("assegna");
@@ -93,10 +119,19 @@ export function Plancia() {
       <div className="pl-cols">
         <div className="pl-main">
           {active && <EncounterBanner enc={active} onOpen={() => setTab("incontro")} />}
-          <Party board={board} onAssign={goAssign} onChanged={refresh} />
+          <Party board={board} rolls={rolls ?? []} reqs={reqs} onAsk={goAsk} onAssign={goAssign} onChanged={refresh} />
+          <MasterRoll onRolled={refreshTable} />
           <AssignPanel ref={assignRef} board={board} meta={meta} pc={assignPc} setPc={setAssignPc} onDone={refresh} />
         </div>
         <div className="pl-side">
+          <AskPanel board={board} reqs={reqs} ask={askPc} onChanged={refreshTable} />
+          <section className="win pl-sec" data-sec="tiri" aria-labelledby="pl-rl">
+            <header className="win-h" id="pl-rl">Registro dei tiri<span className="spacer" /><span className="chip muted">{rolls?.length ?? 0}</span></header>
+            <div className="win-b">
+              <InlineError message={tableErr} />
+              {rolls == null ? <Loading /> : <RollLog rolls={rolls.slice(0, 30)} showWho empty="Nessun tiro." />}
+            </div>
+          </section>
           <EncounterPanel board={board} active={active} onChanged={refresh} />
           <NpcPanel board={board} onChanged={refresh} />
           <section className="win pl-sec" data-sec="altro" aria-labelledby="pl-q">
@@ -119,7 +154,7 @@ export function Plancia() {
       </div>
 
       <nav className="pl-tabbar" aria-label="Sezioni della plancia">
-        {([["gruppo", "Gruppo", ICONS.gruppo], ["incontro", "Incontro", ICONS.incontro], ["forgia", "Forgia", ICONS.forgia], ["assegna", "Assegna", ICONS.assegna], ["altro", "Altro", ICONS.altro]] as [Tab, string, ReactNode][])
+        {([["gruppo", "Gruppo", ICONS.gruppo], ["tiri", "Tiri", ICONS.tiri], ["incontro", "Incontro", ICONS.incontro], ["forgia", "Forgia", ICONS.forgia], ["assegna", "Assegna", ICONS.assegna], ["altro", "Altro", ICONS.altro]] as [Tab, string, ReactNode][])
           .map(([k, label, icon]) => (
             <button key={k} type="button" aria-current={tab === k ? "page" : undefined} onClick={() => { setTab(k); window.scrollTo({ top: 0 }); }}>
               {icon}<span>{label}</span>{k === "incontro" && active && <span className="pl-dot" aria-label="incontro in corso" />}
@@ -132,6 +167,7 @@ export function Plancia() {
 
 const svg = (d: ReactNode) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
 const ICONS = {
+  tiri: svg(<><path d="M12 2l9 7-3.5 11h-11L3 9z" /><path d="M3 9h18M12 9l-5.5 11M12 9l5.5 11M12 2v7" /></>),
   gruppo: svg(<><circle cx="9" cy="8" r="3" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M16 5a3 3 0 010 6M21 20c0-2.6-1.6-4.8-4-5.6" /></>),
   incontro: svg(<path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" />),
   forgia: svg(<path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5" />),
@@ -149,7 +185,8 @@ function Bar({ label, cur, max, cls }: { label: string; cur: number; max: number
   );
 }
 
-function Party({ board, onAssign, onChanged }: { board: Board; onAssign: (id: number) => void; onChanged: () => void }) {
+interface PartyProps { board: Board; rolls: Roll[]; reqs: RollRequest[]; onAsk: (id: number) => void; onAssign: (id: number) => void; onChanged: () => void }
+function Party({ board, rolls, reqs, onAsk, onAssign, onChanged }: PartyProps) {
   const [sortBy, setSortBy] = useState<"level" | "hp">("level");
   const list = useMemo(() => board.party.slice().sort((a, b) => (sortBy === "hp"
     ? pct(a.resources.hp, a.maxes.hp) - pct(b.resources.hp, b.maxes.hp)
@@ -163,14 +200,16 @@ function Party({ board, onAssign, onChanged }: { board: Board; onAssign: (id: nu
           </select></label>
       </header>
       <div className="win-b">
-        <div className="pl-party">{list.map((p) => <PcCard key={p.id} p={p} onAssign={onAssign} onChanged={onChanged} />)}</div>
+        <div className="pl-party">{list.map((p) => <PcCard key={p.id} p={p} last={rolls.find((r) => r.char_id === p.id) ?? null}
+          open={reqs.filter((q) => q.char_id === p.id && q.status === "aperta").length} onAsk={onAsk} onAssign={onAssign} onChanged={onChanged} />)}</div>
         <span className="xs muted">Bordo rosso sotto il 30% di HP. Passa sopra a un PG (o toccalo) per MP, SP, KI e stati attivi.</span>
       </div>
     </section>
   );
 }
 
-function PcCard({ p, onAssign, onChanged }: { p: BoardPc; onAssign: (id: number) => void; onChanged: () => void }) {
+interface PcProps { p: BoardPc; last: Roll | null; open: number; onAsk: (id: number) => void; onAssign: (id: number) => void; onChanged: () => void }
+function PcCard({ p, last, open: openReqs, onAsk, onAssign, onChanged }: PcProps) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -204,6 +243,11 @@ function PcCard({ p, onAssign, onChanged }: { p: BoardPc; onAssign: (id: number)
           <div className="bar-track pl-thin"><div className="pl-fill pl-gold-bg" style={{ width: `${pct(p.exp_pct, 100)}%` }} /></div>
         </div>
       </TipRow>
+      <div className="pl-pc-roll xs">
+        <span className="muted" title={last ? `${last.reason || "Tiro libero"}: d100 ${last.natural} → ${nf(last.total)}` : undefined}>
+          Ultimo tiro: {last ? <b className={`num${last.natural === 100 ? " pl-gold" : last.natural === 1 ? " pl-bad" : " pl-fg"}`}>{nf(last.total)}</b> : "—"}</span>
+        <button type="button" className="btn" onClick={() => onAsk(p.id)}>{openReqs ? `Richiesta aperta (${openReqs})` : "Chiedi un tiro"}</button>
+      </div>
       {open ? (
         <div className="pl-dmg">
           <label className="pl-sr" htmlFor={`pl-amt-${p.id}`}>Quantità per {p.name}</label>
@@ -440,6 +484,134 @@ function NpcPanel({ board, onChanged }: { board: Board; onChanged: () => void })
             )}
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Tavolo: tiro del Master ---------------- */
+function MasterRoll({ onRolled }: { onRolled: () => void }) {
+  const toast = useToast();
+  const [reason, setReason] = useState("");
+  const [secret, setSecret] = useState(false);
+  const [last, setLast] = useState<Roll | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [sound, toggleSound] = useDiceSound();
+  const tray = useRef<DiceTrayHandle>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+
+  async function doRoll(opts?: ThrowOpts) {
+    if (busy || tray.current?.isRolling()) return;
+    setBusy(true); setErr(null);
+    try {
+      const r = await api.masterRoll(reason.trim().slice(0, 120), secret);
+      setLast(null);
+      await tray.current?.throwTo(r.tens, r.units, opts);
+      setLast(r);
+      toast("TIRO", [`Master${r.secret ? " (segreto)" : ""}: d100 ${r.natural}${r.reason ? ` · ${r.reason}` : ""}`], { gold: r.natural === 100 });
+      onRolled();
+      btn.current?.focus({ preventScroll: true });
+    } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="win gold pl-sec" data-sec="tiri" aria-labelledby="pl-mr">
+      <header className="win-h" id="pl-mr">Tiro del Master</header>
+      <div className="win-b">
+        <div className="field">
+          <label className="label" htmlFor="pl-mr-reason">Per cosa tiri</label>
+          <input className="input" id="pl-mr-reason" maxLength={80} placeholder="es. La guardia nota il furto?" value={reason} onChange={(e) => setReason(e.target.value)} />
+        </div>
+        <DiceTray ref={tray} hint={!last} disabled={busy} onFling={(o) => doRoll(o)} />
+        <div className="row tv-actions">
+          <button type="button" ref={btn} className="btn primary tv-roll" disabled={busy} onClick={() => doRoll()}>{busy ? "I dadi rotolano…" : "Lancia d100"}</button>
+          <label className="row small tv-secret"><input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> Tiro segreto</label>
+          <button type="button" className="btn ghost tv-mini" aria-pressed={sound} onClick={toggleSound}>{sound ? "Suono: sì" : "Suono: no"}</button>
+        </div>
+        <InlineError message={err} />
+        <div aria-live="polite">
+          {busy && !last ? <p className="small muted dt-res-empty">I dadi rotolano…</p>
+            : <RollResult r={last} empty="Scrivi per cosa tiri e lancia. Un tiro segreto lo vedi solo tu." />}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Tavolo: richieste di tiro ai PG ---------------- */
+function AskPanel({ board, reqs, ask, onChanged }: { board: Board; reqs: RollRequest[]; ask: { id: number; n: number } | null; onChanged: () => void }) {
+  const toast = useToast();
+  const [pc, setPc] = useState<number | null>(null);
+  const [what, setWhat] = useState("");
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const whatRef = useRef<HTMLInputElement>(null);
+  const charId = pc ?? board.party[0]?.id ?? null;
+
+  // "Chiedi un tiro" da una card del gruppo: sceglie il PG e porta il cursore su "Cosa"
+  useEffect(() => {
+    if (!ask) return;
+    setPc(ask.id);
+    requestAnimationFrame(() => {
+      whatRef.current?.focus({ preventScroll: true });
+      whatRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  }, [ask]);
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    const w = what.trim();
+    if (w.length < 2) { setMsg("Scrivi cosa deve tirare."); whatRef.current?.focus(); return; }
+    if (charId == null) return;
+    setBusy(true); setMsg("");
+    try {
+      const q = await api.createRollRequest(charId, w, note.trim());
+      toast("SISTEMA", [`Richiesta inviata a ${q.char_name}: ${q.what}.`, "La vede sulla sua plancia."], { gold: true });
+      setWhat(""); setNote("");
+      onChanged();
+    } catch (er) { setMsg(errorText(er)); } finally { setBusy(false); }
+  }
+  async function cancel(q: RollRequest) {
+    try {
+      await api.cancelRollRequest(q.id);
+      toast("SISTEMA", [`Richiesta a ${q.char_name} annullata: ${q.what}.`]);
+      onChanged();
+    } catch (er) { toast("SISTEMA", [errorText(er)], { bad: true }); }
+  }
+  const open = reqs.filter((q) => q.status === "aperta").length;
+
+  return (
+    <section className="win pl-sec" data-sec="tiri" aria-labelledby="pl-ask">
+      <header className="win-h" id="pl-ask">Chiedi un tiro<span className="spacer" />{open > 0 && <span className="chip warn">{open} in attesa</span>}</header>
+      <div className="win-b">
+        <form className="stack" onSubmit={send}>
+          <div className="tv-ask-row">
+            <div className="field"><label className="label" htmlFor="pl-ask-pc">A chi</label>
+              <select className="input" id="pl-ask-pc" value={charId ?? ""} onChange={(e) => setPc(Number(e.target.value))}>
+                {board.party.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select></div>
+            <div className="field"><label className="label" htmlFor="pl-ask-what">Cosa</label>
+              <input ref={whatRef} className="input" id="pl-ask-what" maxLength={60} placeholder="es. Furtività nel corridoio" value={what} onChange={(e) => setWhat(e.target.value)} /></div>
+          </div>
+          <div className="field"><label className="label" htmlFor="pl-ask-note">Nota per il giocatore (facoltativa)</label>
+            <input className="input" id="pl-ask-note" maxLength={120} value={note} onChange={(e) => setNote(e.target.value)} /></div>
+          <div className="row"><button type="submit" className="btn" disabled={busy || charId == null}>Invia richiesta</button><span className="xs muted" aria-live="polite">{msg}</span></div>
+        </form>
+        {reqs.length > 0 && (
+          <div className="tv-reqs">
+            {reqs.slice(0, 12).map((q) => (
+              <div key={q.id} className="tv-req-row" title={`${q.char_name} · ${q.what}${q.note ? `\n${q.note}` : ""}${q.roll_total != null ? `\nd100 ${q.roll_natural} → ${nf(q.roll_total)}` : ""}`}>
+                <span className="tv-req-t"><b>{q.char_name}</b> · {q.what}</span>
+                {q.status === "risolta"
+                  ? <span className="chip good">{q.roll_total != null ? nf(q.roll_total) : "risolta"}</span>
+                  : <><span className="chip warn">in attesa</span>
+                    <button type="button" className="btn ghost icon" aria-label={`Annulla la richiesta a ${q.char_name}: ${q.what}`} title="Annulla richiesta" onClick={() => cancel(q)}>✕</button></>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

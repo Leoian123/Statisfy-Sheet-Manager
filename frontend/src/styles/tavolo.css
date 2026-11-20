@@ -1,0 +1,114 @@
+/* Tavolo: vassoio del d100 (dt-*), plancia del giocatore e parte tiri della plancia del Master (tv-*).
+   Porting degli stili di mockup/screens/plancia.js, con i prefissi per non scontrarsi con plancia.css (pl-*). */
+
+/* ---------- Vassoio ---------- */
+.dt-tray {
+  position: relative; height: 240px; border-radius: 10px; overflow: hidden; touch-action: none; cursor: grab;
+  border: 1px solid var(--line-strong); background: radial-gradient(120% 90% at 50% 40%, #2b1f4a, #120e22 75%);
+  box-shadow: inset 0 0 0 6px #0b0916, inset 0 0 40px #000a; user-select: none; -webkit-user-select: none;
+}
+:root[data-theme="light"] .dt-tray { background: radial-gradient(120% 90% at 50% 40%, #3a2a62, #1a1432 75%); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .dt-tray { background: radial-gradient(120% 90% at 50% 40%, #3a2a62, #1a1432 75%); }
+}
+.dt-tray.is-aiming { cursor: grabbing; box-shadow: inset 0 0 0 6px #0b0916, inset 0 0 40px #000a, 0 0 0 2px var(--gold); }
+.dt-felt { position: absolute; inset: 0; opacity: 0.22; pointer-events: none; background-image: radial-gradient(#ffffff22 1px, transparent 1px); background-size: 6px 6px; }
+.dt-die, .dt-shadow { position: absolute; left: 0; top: 0; width: 64px; height: 64px; will-change: transform; pointer-events: none; }
+.dt-shadow { border-radius: 50%; background: radial-gradient(closest-side, #000c, transparent); transform-origin: center; }
+.dt-die svg { display: block; filter: drop-shadow(0 2px 2px #0008); overflow: visible; }
+.dt-tens .dt-side, .dt-tens .dt-facet { fill: #a87a22; } .dt-tens .dt-facet-d { fill: #7d5914; }
+.dt-tens .dt-g1 { stop-color: #ffe7a6; } .dt-tens .dt-g2 { stop-color: #d9a43c; }
+.dt-units .dt-side, .dt-units .dt-facet { fill: #5a3fb8; } .dt-units .dt-facet-d { fill: #3e2a86; }
+.dt-units .dt-g1 { stop-color: #c9b6ff; } .dt-units .dt-g2 { stop-color: #7c5ce6; }
+.dt-num { font-family: var(--font-display); font-weight: 700; font-size: 26px; }
+.dt-tens .dt-num { fill: #2a1c03; font-size: 23px; } .dt-units .dt-num { fill: #ffffff; }
+.dt-ul { stroke-width: 3; stroke-linecap: round; } .dt-tens .dt-ul { stroke: #2a1c03; } .dt-units .dt-ul { stroke: #fff; }
+.dt-land svg { animation: dt-land .35s ease-out; }
+@keyframes dt-land { 0% { transform: scale(1.12); } 60% { transform: scale(0.97); } 100% { transform: none; } }
+.dt-hint { position: absolute; left: 8px; right: 8px; bottom: 8px; text-align: center; color: #ffffff70; pointer-events: none; }
+.dt-tray.is-rolling .dt-hint { opacity: 0; }
+
+/* ---------- Risultato ---------- */
+.dt-res {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--panel-2); animation: sys-in .25s ease-out;
+}
+.dt-res-main { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.dt-res-nat, .dt-res-tot { display: flex; flex-direction: column; }
+.dt-res-nat b { font-size: 1.6rem; } .dt-res-tot b { font-size: 2.2rem; color: var(--gold); }
+.dt-res-op { font-family: var(--font-mono); color: var(--muted); font-size: 1.1rem; }
+.dt-res-main .chip { align-self: center; }
+.dt-res-why { overflow-wrap: anywhere; }
+.dt-res.is-crit-hi { border-color: var(--gold); box-shadow: 0 0 22px var(--gold-soft); }
+.dt-res.is-crit-lo { border-color: var(--bad); }
+.dt-res-empty { padding: 4px 2px; margin: 0; }
+
+/* ---------- Registro ---------- */
+.dt-log { display: flex; flex-direction: column; }
+.dt-log-row {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 36px 56px; gap: 8px; align-items: center;
+  padding: 6px 4px; border-bottom: 1px solid var(--line);
+}
+.dt-log-row:last-child { border-bottom: 0; }
+.dt-log-row.has-who { grid-template-columns: 44px minmax(0, 0.8fr) minmax(0, 2fr) 36px 56px; }
+.dt-log-who { font-weight: 600; font-size: var(--fs-sm); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-log-who .chip { margin-left: 4px; }
+.dt-log-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-log-nat { text-align: right; color: var(--muted); font-size: var(--fs-sm); }
+.dt-log-tot { text-align: right; }
+.dt-log-row.is-crit-hi .dt-log-tot { color: var(--gold); } .dt-log-row.is-crit-lo .dt-log-tot { color: var(--bad); }
+.dt-log-row.tip-up > .tip { top: auto; bottom: calc(100% + 4px); }
+
+/* ---------- Plancia del giocatore ---------- */
+.tv-root { gap: 20px; }
+.tv-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 960px) { .tv-grid { grid-template-columns: minmax(0, 1fr); } }
+.tv-side { gap: 20px; }
+.tv-mini { padding: 4px 10px; font-size: var(--fs-xs); }
+.tv-actions { justify-content: space-between; }
+.tv-roll { font-size: var(--fs-md); padding: 10px 22px; letter-spacing: 0.08em; }
+.tv-req .btn { margin-top: 6px; }
+.tv-gold { color: var(--gold); }
+.tv-link { background: none; border: 0; padding: 0 0 0 6px; color: var(--violet); text-decoration: underline; cursor: pointer; font: inherit; }
+
+.tv-att { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tv-att-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 76px auto; gap: 8px; align-items: center;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2);
+}
+.tv-att-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); }
+.tv-att-mod { padding: 4px 6px; text-align: right; }
+.tv-picker { display: flex; flex-direction: column; gap: 10px; }
+.tv-pk-group { display: flex; flex-direction: column; gap: 3px; }
+.tv-pk {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n m" "s m"; gap: 0 10px; text-align: left;
+  padding: 5px 8px; border: 1px solid transparent; border-radius: var(--radius); background: transparent; cursor: pointer; color: inherit; font: inherit;
+}
+.tv-pk:hover { background: var(--panel-2); border-color: var(--line); }
+.tv-pk.is-on { border-color: var(--gold); background: var(--gold-soft); }
+.tv-pk-name { grid-area: n; font-size: var(--fs-sm); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-pk-name:not([data-rarity]) { color: var(--fg); }
+.tv-pk-sub { grid-area: s; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-pk-mod { grid-area: m; align-self: center; color: var(--gold); }
+
+/* ---------- Plancia del Master: tiri ---------- */
+.tv-ask-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 10px; }
+@media (max-width: 480px) { .tv-ask-row { grid-template-columns: minmax(0, 1fr); } }
+.tv-secret { gap: 6px; }
+.tv-reqs { display: flex; flex-direction: column; }
+.tv-req-row { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-bottom: 1px solid var(--line); min-width: 0; font-size: var(--fs-sm); }
+.tv-req-row:last-child { border-bottom: 0; }
+.tv-req-t { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-pc-roll { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pl-pc-roll .btn { padding: 4px 10px; font-size: var(--fs-xs); }
+
+@media (max-width: 560px) {
+  .dt-tray { height: 200px; }
+  .dt-log-row.has-who { grid-template-columns: 40px minmax(0, 0.9fr) minmax(0, 1.4fr) 30px 46px; }
+  .tv-roll { flex: 1 1 100%; }
+}
+/* Telefono: la sezione "Tiri" della barra in basso della plancia del Master (le altre sono in plancia.css) */
+@media (max-width: 760px) {
+  .pl-root[data-tab="tiri"] .pl-sec:not([data-sec="tiri"]) { display: none; }
+  .pl-pc-roll .btn, .tv-roll, .tv-req-row .btn { min-height: 44px; }
+}

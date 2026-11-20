@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from . import config
 from .db import SessionLocal
 from .errors import message
-from .routers import auth, characters, combat, equipment, forge, imports, master, rules
+from .routers import auth, characters, combat, equipment, forge, imports, master, rules, table
 from .seed import seed_if_empty
 
 
@@ -30,5 +30,5 @@ async def validation_handler(request: Request, exc: RequestValidationError):
 
 
 for r in (auth.router, rules.router, characters.router, combat.router, equipment.router, master.router, imports.router,
-          forge.router):
+          forge.router, table.router):
     app.include_router(r)

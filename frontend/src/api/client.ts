@@ -1,7 +1,7 @@
 // Client HTTP: token da localStorage, 401 -> logout, errori `detail` leggibili.
 import type {
   Campaign, Character, CharacterSummary, CombatActionType, CreateCharacterRequest, Issue, LoginResponse,
-  NewEffect, Npc, PreviewRequest, PreviewResponse, RulesConfig, SlotKey, User,
+  CharRollRequest, NewEffect, Npc, PreviewRequest, PreviewResponse, Roll, RollRequest, RollRequestStatus, RulesConfig, SlotKey, User,
 } from "./types";
 
 const TOKEN_KEY = "statisfy-token";
@@ -129,4 +129,19 @@ export const api = {
   addInteraction: (id: number, text: string) => request<Npc>("POST", `/npcs/${enc(id)}/interactions`, { text }),
   issues: () => request<Issue[]>("GET", "/issues"),
   patchIssue: (id: number, patch: { resolved?: boolean; decision?: string | null }) => request<Issue>("PATCH", `/issues/${enc(id)}`, patch),
+
+  // Tavolo: il d100 lo tira il server
+  rollForChar: (id: number, req: CharRollRequest) => request<Roll>("POST", `/table/characters/${enc(id)}/rolls`, req),
+  masterRoll: (reason: string, secret: boolean) => request<Roll>("POST", "/table/rolls", { reason, secret }),
+  rolls: (opts: { charId?: number; limit?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (opts.charId != null) q.set("char_id", String(opts.charId));
+    if (opts.limit != null) q.set("limit", String(opts.limit));
+    const qs = q.toString();
+    return request<Roll[]>("GET", `/table/rolls${qs ? `?${qs}` : ""}`);
+  },
+  rollRequests: (status?: RollRequestStatus) => request<RollRequest[]>("GET", `/table/requests${status ? `?status=${enc(status)}` : ""}`),
+  createRollRequest: (charId: number, what: string, note: string) =>
+    request<RollRequest>("POST", "/table/requests", { char_id: charId, what, note }),
+  cancelRollRequest: (id: number) => request<void>("DELETE", `/table/requests/${enc(id)}`),
 };
