@@ -51,6 +51,8 @@ Sono solo per lo sviluppo locale.
 ## Altri comandi
 
 - Test backend: `backend/.venv/Scripts/python -m pytest -q` (da `backend/`)
+- Test frontend (logica pura, test runner di Node 22, nessuna dipendenza in più): `npm --prefix frontend test`
+- Frontend contro un backend su un'altra porta: variabile `STATISFY_API` (es. `http://127.0.0.1:8011`) prima di `npm --prefix frontend run dev`
 - Ricreare il database con i dati di esempio: `backend/.venv/Scripts/python -m app.seed --reset` (da `backend/`)
 - Frontend con backend finto in memoria: `npm --prefix frontend run dev:mock`
 - Mockup: `python mockup/serve.py`

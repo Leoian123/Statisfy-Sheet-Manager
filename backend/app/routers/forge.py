@@ -16,6 +16,7 @@ from ..auth import require_master
 from ..db import get_db
 from ..models import Campaign, Character, ForgeEntry, Npc
 from ..serialize import maxes_of, npc_out, rules_input
+from .combat import _state, _store
 
 router = APIRouter(prefix="/api/forge", tags=["forge"], dependencies=[Depends(require_master)])
 
@@ -52,6 +53,12 @@ class LiveIn(BaseModel):
     action: Literal["start", "stop", "next_turn", "damage", "heal"]
     index: int | None = None
     amount: int | None = Field(None, ge=0, le=10 ** 9)
+
+
+class RestIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    char_ids: list[int] | None = Field(None, max_length=200)
+    clear_effects: bool = True
 
 
 class CloseIn(BaseModel):
@@ -295,6 +302,33 @@ def assign_entry(entry_id: int, data: AssignIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(e)
     return {"entry": entry_out(e, _names(db)), "messages": messages}
+
+
+@router.post("/party/rest")
+def party_rest(data: RestIn, db: Session = Depends(get_db)):
+    """Riposo del gruppo: HP, MP, SP (e KI) al massimo per i PG scelti (tutti se `char_ids` manca).
+    Con `clear_effects` toglie anche effetti e cooldown e riporta il turno a 1; l'esito della morte sparisce.
+    Una riga nel registro del combattimento di ognuno."""
+    chars = _chars(db)
+    if data.char_ids is not None:
+        want = set(data.char_ids)
+        missing = want - {c.id for c in chars}
+        if missing:
+            raise HTTPException(404, f"Personaggio {min(missing)} non trovato.")
+        chars = [c for c in chars if c.id in want]
+    rested = []
+    for c in chars:
+        combat, r = _state(c)
+        mx = maxes_of(rules_input(c))
+        for k, v in mx.items():
+            r[k] = v
+        if data.clear_effects:
+            combat.update({"turn": 1, "effects": [], "cooldowns": []})
+        rules.add_log(combat, "Riposo: risorse al massimo" + (", effetti e ricariche azzerati." if data.clear_effects else "."))
+        _store(c, combat, r)
+        rested.append({"id": c.id, "name": c.name})
+    db.commit()
+    return {"rested": rested}
 
 
 def _live(e: ForgeEntry) -> dict:

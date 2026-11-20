@@ -1,13 +1,14 @@
 /* Registro unico della Plancia di gioco: tiri d100 e righe del combattimento, dal più recente, con filtro
    Tutto / Tiri / Combattimento (ricordato nel browser). Le righe del combattimento hanno l'ora in `combat.log_at`;
-   quelle vecchie senza ora vanno in fondo, nell'ordine in cui sono state scritte. */
+   quelle vecchie senza ora vanno in fondo (logica in lib/register.ts). */
 import { useState, type ReactNode } from "react";
 import type { Character, Roll } from "../api/types";
 import { CallTag, RollWhat, signed } from "./RollViews";
 import { TipRow } from "./TipRow";
 import { faceLabel } from "./DiceTray";
+import { registerEntries, splitTurn, type RegisterFilter } from "../lib/register";
 
-type Filter = "tutto" | "tiri" | "combattimento";
+type Filter = RegisterFilter;
 const FILTER_KEY = "statisfy-register-filter";
 const PAGE = 20;
 const LABELS: Record<Filter, string> = { tutto: "Tutto", tiri: "Tiri", combattimento: "Combattimento" };
@@ -19,33 +20,13 @@ function readFilter(): Filter {
   try { const v = localStorage.getItem(FILTER_KEY); return v === "tiri" || v === "combattimento" ? v : "tutto"; } catch { return "tutto"; }
 }
 
-type Entry =
-  | { kind: "roll"; key: string; at: number; r: Roll }
-  | { kind: "combat"; key: string; at: number; text: string; iso: string; seq: number };
-
-/** Righe del combattimento con l'ora (log_at è parallelo a log dalla fine). */
-function combatEntries(c: Character): Entry[] {
-  const log = c.combat.log ?? [];
-  const at = c.combat.log_at ?? [];
-  const off = log.length - at.length;
-  return log.map((text, i) => {
-    const iso = i - off >= 0 ? at[i - off] || "" : "";
-    const t = iso ? Date.parse(iso) : NaN;
-    return { kind: "combat" as const, key: `c${i}-${text}`, at: Number.isFinite(t) ? t : -Infinity, text, iso, seq: i };
-  });
-}
-
 export function PlayRegister({ c, rolls, error, loading }: { c: Character; rolls: Roll[]; error?: ReactNode; loading?: boolean }) {
   const [filter, setFilterRaw] = useState<Filter>(readFilter);
   const [max, setMax] = useState(PAGE);
   const setFilter = (f: Filter) => { setFilterRaw(f); try { localStorage.setItem(FILTER_KEY, f); } catch { /* facoltativo */ } };
 
-  const rollE: Entry[] = rolls.map((r) => ({ kind: "roll", key: `r${r.id}`, at: Date.parse(r.created_at), r }));
-  const combE = combatEntries(c);
-  const sorted = (filter === "tiri" ? rollE : filter === "combattimento" ? combE : [...rollE, ...combE])
-    .sort((a, b) => (b.at - a.at) || ((b.kind === "combat" ? b.seq : 0) - (a.kind === "combat" ? a.seq : 0)));
+  const { sorted, counts } = registerEntries(rolls, c.combat, filter);
   const all = sorted.slice(0, max);
-  const counts = { tutto: rollE.length + combE.length, tiri: rollE.length, combattimento: combE.length };
 
   return (
     <section className="win pg-log" aria-labelledby="pg-log-h">
@@ -87,15 +68,15 @@ export function PlayRegister({ c, rolls, error, loading }: { c: Character; rolls
                     </TipRow>
                   );
                 }
-                const m = /^T(\d+) · (.*)$/.exec(e.text);
+                const m = splitTurn(e.text);
                 return (
                   <TipRow key={e.key} className={`dt-log-row pg-row-cb${up}`} tip={<>
                     <span>{e.text}</span>
                     <span className="muted">{e.iso ? when(e.iso) : "Ora non registrata (riga di prima del registro unico)"}</span>
                   </>}>
                     <span className="xs muted num">{e.iso ? time(e.iso) : "—"}</span>
-                    <span className="pg-cb-txt small">{m ? m[2] : e.text}</span>
-                    <span className="chip violet num pg-cb-turn" title="Turno">T{m ? m[1] : "?"}</span>
+                    <span className="pg-cb-txt small">{m.text}</span>
+                    <span className="chip violet num pg-cb-turn" title="Turno">T{m.turn ?? "?"}</span>
                   </TipRow>
                 );
               })}

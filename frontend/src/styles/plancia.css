@@ -122,3 +122,12 @@
 }
 .pl-root a.btn { color: var(--fg); text-decoration: none; }
 .pl-root a.btn:hover { color: var(--fg); }
+
+/* Riposo del gruppo (conferma in due passi) e richieste rapide */
+.pl-rest { gap: 8px; margin-bottom: 10px; align-items: center; }
+.pl-rest .small { flex: 1 1 220px; min-width: 0; }
+.pl-quickask { display: flex; flex-wrap: wrap; gap: 6px; }
+.pl-qa { cursor: pointer; font: inherit; font-size: var(--fs-xs, 12px); background: var(--panel-2); color: inherit; border: 1px solid var(--line); }
+.pl-qa:hover { border-color: var(--violet); }
+.pl-qa[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+@media (max-width: 760px) { .pl-qa { min-height: 36px; padding: 6px 10px; } .pl-rest .btn { min-height: 44px; } }

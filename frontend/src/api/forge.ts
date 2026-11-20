@@ -131,6 +131,9 @@ export const forgeApi = {
     request<{ entry: ForgeEntry; messages: string[] }>("POST", `/forge/entries/${enc(id)}/assign`, { char_id: charId, force }),
   live: (id: number, action: LiveAction, index?: number, amount?: number) =>
     request<{ entry: ForgeEntry; message: string }>("POST", `/forge/encounters/${enc(id)}/live`, { action, index, amount }),
+  /** Riposo: risorse al massimo (e con clearEffects effetti, ricariche e turno azzerati); senza charIds tutto il gruppo. */
+  partyRest: (charIds?: number[], clearEffects = true) =>
+    request<{ rested: { id: number; name: string }[] }>("POST", "/forge/party/rest", { ...(charIds ? { char_ids: charIds } : {}), clear_effects: clearEffects }),
   closeEncounter: (id: number, mode: ExpMode) =>
     request<{ entry: ForgeEntry; results: ExpRow[]; messages: string[] }>("POST", `/forge/encounters/${enc(id)}/close`, { mode }),
 };

@@ -285,6 +285,9 @@ logica dei wizard (validazione per passo, anteprima, voce, assegnazione) in `bac
   Profilo di drop generato al momento: tabella d100 (soglie del tipo di profilo, rarità a partire dalla creatura più rara), un tiro per creatura (max 6),
   monete (Corone = numero × grado² / 4 ±50%, più 0–19 Scellini) e materiali. Senza `seed` è casuale.
 - `POST /api/forge/drop-roll` `{profile: DropProfile, seed?: int}` → `{rolls: [{d100, what, rarity}], text}` («Tira il bottino»: `text` va nel bottino deciso dal Master).
+- `POST /api/forge/party/rest` `{char_ids?: int[] (max 200), clear_effects?: bool = true}` → `{rested: [{id, name}]}`: **riposo**. HP, MP, SP (e KI)
+  al massimo per i PG scelti (tutti se `char_ids` manca); con `clear_effects` toglie effetti e ricariche e riporta il turno a 1. L'esito della morte
+  sparisce e ogni PG ha una riga «Riposo: …» nel registro del combattimento. 404 se un id non esiste.
 - `GET /api/forge/encounters/{id}/exp?mode=intera|divisa` → `{mode, party: int, rows: ExpRow[]}`: anteprima della chiusura.
 - `POST /api/forge/encounters/{id}/close` `{mode: "intera"|"divisa"}` → `{entry, results: ExpRow[], messages}`; 409 se già chiuso.
   Assegna l'EXP a ogni PG che partecipa e applica i level up (come `POST /characters/{id}/level-up`: +1 a ogni statistica e 10 punti liberi

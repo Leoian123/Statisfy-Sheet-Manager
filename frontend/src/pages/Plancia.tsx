@@ -17,6 +17,7 @@ import { DiceTray, useDiceSound, useFastRoll, type DiceTrayHandle, type ThrowOpt
 import { CritChip, RollLog, RollResult } from "../components/RollViews";
 import { CallPicker } from "../components/CallPicker";
 import { usePolling } from "../lib/usePolling";
+import { quickAsks } from "../lib/asks";
 import { CloseEncounter, WIZARDS } from "./Forgia";
 import "../styles/forge.css";
 import "../styles/plancia.css";
@@ -189,7 +190,18 @@ function Bar({ label, cur, max, cls }: { label: string; cur: number; max: number
 
 interface PartyProps { board: Board; rolls: Roll[]; reqs: RollRequest[]; onAsk: (id: number) => void; onAssign: (id: number) => void; onChanged: () => void }
 function Party({ board, rolls, reqs, onAsk, onAssign, onChanged }: PartyProps) {
+  const toast = useToast();
   const [sortBy, setSortBy] = useState<"level" | "hp">("level");
+  const [confirmRest, setConfirmRest] = useState(false);
+  const [resting, setResting] = useState(false);
+  async function rest() {
+    setResting(true);
+    try {
+      const out = await forgeApi.partyRest();
+      toast("SISTEMA", [`Riposo: ${out.rested.map((x) => x.name).join(", ") || "nessuno"}.`, "Risorse al massimo, effetti e ricariche azzerati."], { gold: true });
+      onChanged();
+    } catch (e) { toast("SISTEMA", [errorText(e)], { bad: true }); } finally { setResting(false); setConfirmRest(false); }
+  }
   const list = useMemo(() => board.party.slice().sort((a, b) => (sortBy === "hp"
     ? pct(a.resources.hp, a.maxes.hp) - pct(b.resources.hp, b.maxes.hp)
     : b.level - a.level || a.name.localeCompare(b.name, "it"))), [board.party, sortBy]);
@@ -202,6 +214,14 @@ function Party({ board, rolls, reqs, onAsk, onAssign, onChanged }: PartyProps) {
           </select></label>
       </header>
       <div className="win-b">
+        <div className="row pl-rest">
+          {confirmRest ? <>
+            <span className="small">Tutto il gruppo al massimo di HP, MP, SP e KI, senza effetti né ricariche?</span>
+            <button type="button" className="btn primary" disabled={resting} onClick={rest}>{resting ? "Riposo…" : "Sì, riposo"}</button>
+            <button type="button" className="btn ghost" disabled={resting} onClick={() => setConfirmRest(false)}>Annulla</button>
+          </> : <button type="button" className="btn ghost" disabled={!board.party.length} onClick={() => setConfirmRest(true)}
+            title="Fine scontro o riposo lungo: risorse al massimo, effetti, ricariche e turno azzerati per tutti i PG">☾ Riposo del gruppo</button>}
+        </div>
         <div className="pl-party">{list.map((p) => <PcCard key={p.id} p={p} last={rolls.find((r) => r.char_id === p.id) ?? null}
           open={reqs.filter((q) => q.char_id === p.id && q.status === "aperta").length} onAsk={onAsk} onAssign={onAssign} onChanged={onChanged} />)}</div>
         <span className="xs muted">Bordo rosso sotto il 30% di HP. Passa sopra a un PG (o toccalo) per MP, SP, KI e stati attivi.</span>
@@ -218,6 +238,14 @@ function PcCard({ p, last, open: openReqs, onAsk, onAssign, onChanged }: PcProps
   const [busy, setBusy] = useState(false);
   const hp = p.resources.hp ?? 0;
   const low = pct(hp, p.maxes.hp) < 30;
+  async function restOne() {
+    setBusy(true);
+    try {
+      await forgeApi.partyRest([p.id], false);
+      toast("SISTEMA", [`${p.name}: risorse al massimo (effetti lasciati).`]);
+      setOpen(false); onChanged();
+    } catch (e) { toast("SISTEMA", [errorText(e)], { bad: true }); } finally { setBusy(false); }
+  }
   async function act(type: "damage" | "heal") {
     const n = Math.round(Number(amount));
     if (!n || n < 0) return;
@@ -253,9 +281,12 @@ function PcCard({ p, last, open: openReqs, onAsk, onAssign, onChanged }: PcProps
       {open ? (
         <div className="pl-dmg">
           <label className="pl-sr" htmlFor={`pl-amt-${p.id}`}>Quantità per {p.name}</label>
-          <input id={`pl-amt-${p.id}`} className="input num" type="number" inputMode="numeric" min={1} placeholder="HP" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <input id={`pl-amt-${p.id}`} className="input num" type="number" inputMode="numeric" min={1} placeholder="HP" value={amount} onChange={(e) => setAmount(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); act(e.shiftKey ? "heal" : "damage"); } else if (e.key === "Escape") setOpen(false); }}
+            title="Invio = Danno · Maiusc+Invio = Cura · Esc chiude" autoFocus />
           <button type="button" className="btn" disabled={busy || !Number(amount)} onClick={() => act("damage")}>Danno</button>
           <button type="button" className="btn" disabled={busy || !Number(amount)} onClick={() => act("heal")}>Cura</button>
+          <button type="button" className="btn ghost" disabled={busy} onClick={restOne} title={`HP, MP, SP (e KI) di ${p.name} al massimo; effetti e ricariche restano`}>Al massimo</button>
           <button type="button" className="btn ghost icon" aria-label="Chiudi" onClick={() => setOpen(false)}>✕</button>
         </div>
       ) : (
@@ -551,13 +582,15 @@ function MasterRoll({ onRolled }: { onRolled: () => void }) {
 /* ---------------- Tavolo: richieste di tiro ai PG ---------------- */
 function AskPanel({ board, reqs, ask, onChanged }: { board: Board; reqs: RollRequest[]; ask: { id: number; n: number } | null; onChanged: () => void }) {
   const toast = useToast();
-  const [pc, setPc] = useState<number | null>(null);
+  const [pc, setPc] = useState<number | "all" | null>(null);
   const [what, setWhat] = useState("");
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const whatRef = useRef<HTMLInputElement>(null);
   const charId = pc ?? board.party[0]?.id ?? null;
+  const targets = charId === "all" ? board.party.map((p) => p.id) : charId != null ? [charId] : [];
+  const quick = quickAsks(reqs);
 
   // "Chiedi un tiro" da una card del gruppo: sceglie il PG e porta il cursore su "Cosa"
   useEffect(() => {
@@ -573,14 +606,19 @@ function AskPanel({ board, reqs, ask, onChanged }: { board: Board; reqs: RollReq
     e.preventDefault();
     const w = what.trim();
     if (w.length < 2) { setMsg("Scrivi cosa deve tirare."); whatRef.current?.focus(); return; }
-    if (charId == null) return;
+    if (!targets.length) return;
     setBusy(true); setMsg("");
-    try {
-      const q = await api.createRollRequest(charId, w, note.trim());
-      toast("SISTEMA", [`Richiesta inviata a ${q.char_name}: ${q.what}.`, "La vede sulla sua plancia."], { gold: true });
+    // Una richiesta per PG: se una fallisce le altre restano inviate, e il messaggio lo dice
+    const out = await Promise.allSettled(targets.map((id) => api.createRollRequest(id, w, note.trim())));
+    const ok = out.flatMap((x) => (x.status === "fulfilled" ? [x.value.char_name] : []));
+    const bad = out.find((x): x is PromiseRejectedResult => x.status === "rejected");
+    if (ok.length) {
+      toast("SISTEMA", [`Richiesta inviata a ${ok.join(", ")}: ${w}.`, "La vede sulla sua plancia."], { gold: true });
       setWhat(""); setNote("");
       onChanged();
-    } catch (er) { setMsg(errorText(er)); } finally { setBusy(false); }
+    }
+    if (bad) setMsg((ok.length ? `Inviata a ${ok.length} su ${targets.length}. ` : "") + errorText(bad.reason));
+    setBusy(false);
   }
   async function cancel(q: RollRequest) {
     try {
@@ -598,15 +636,19 @@ function AskPanel({ board, reqs, ask, onChanged }: { board: Board; reqs: RollReq
         <form className="stack" onSubmit={send}>
           <div className="tv-ask-row">
             <div className="field"><label className="label" htmlFor="pl-ask-pc">A chi</label>
-              <select className="input" id="pl-ask-pc" value={charId ?? ""} onChange={(e) => setPc(Number(e.target.value))}>
+              <select className="input" id="pl-ask-pc" value={charId ?? ""} onChange={(e) => setPc(e.target.value === "all" ? "all" : Number(e.target.value))}>
                 {board.party.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {board.party.length > 1 && <option value="all">Tutto il gruppo ({board.party.length})</option>}
               </select></div>
             <div className="field"><label className="label" htmlFor="pl-ask-what">Cosa</label>
               <input ref={whatRef} className="input" id="pl-ask-what" maxLength={60} placeholder="es. Furtività nel corridoio" value={what} onChange={(e) => setWhat(e.target.value)} /></div>
           </div>
+          <div className="pl-quickask" role="group" aria-label="Richieste rapide">
+            {quick.map((x) => <button key={x} type="button" className="chip pl-qa" aria-pressed={what.trim() === x} onClick={() => setWhat(x)}>{x}</button>)}
+          </div>
           <div className="field"><label className="label" htmlFor="pl-ask-note">Nota per il giocatore (facoltativa)</label>
             <input className="input" id="pl-ask-note" maxLength={120} value={note} onChange={(e) => setNote(e.target.value)} /></div>
-          <div className="row"><button type="submit" className="btn" disabled={busy || charId == null}>Invia richiesta</button><span className="xs muted" aria-live="polite">{msg}</span></div>
+          <div className="row"><button type="submit" className="btn" disabled={busy || !targets.length}>{charId === "all" ? `Invia a tutti (${targets.length})` : "Invia richiesta"}</button><span className="xs muted" aria-live="polite">{msg}</span></div>
         </form>
         {reqs.length > 0 && (
           <div className="tv-reqs">

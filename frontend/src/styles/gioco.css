@@ -122,3 +122,6 @@ button.pg-disclose:hover .pg-caret { color: var(--fg); }
   .pg-row-cb { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 6px; }
   .tv-actions { gap: 8px; }
 }
+
+/* Scorciatoie da tastiera: un chip con i tasti nel tooltip */
+.pg-keys { cursor: help; user-select: none; }
