@@ -735,6 +735,720 @@ def rules_config() -> dict:
     }
 
 
+# ---------- Forgia del Master (porting di mockup/screens/wizards-*.js, decisioni del 20/11/2026) ----------
+# Regole e numeri dei wizard di creazione: skill, classi, razze, titoli, PNG, incontri, incantesimi, miracoli.
+# Funzioni pure su dict; la logica dei wizard (validazione per passo, anteprima, salvataggio) è in forge.py.
+
+FORGE_STATS = {"STR": "Forza", "DEX": "Destrezza", "VIT": "Vitalità", "INT": "Intelligenza",
+               "FIN": "Finesse", "AUT": "Autorità"}
+
+# Skill (Progressione, Sezioni 3–4). Deciso: ogni skill ha i suoi valori per Grado, scelti nel wizard (uno per Grado).
+SKILL_TYPES = ["Combat", "Craft", "Utility", "Gathering", "Defense", "Knowledge", "Language", "Social", "Classe"]
+SKILL_GRADES = 10
+GRADE1_RULE = {
+    "Combat": "Al primo uso vero in combattimento.",
+    "Craft": "Dopo un lavoro completo fatto sotto la guida di un PNG che pratica il mestiere.",
+    "Gathering": "Dopo un lavoro completo fatto sotto la guida di un PNG che pratica il mestiere.",
+}
+ACQUIRE = [
+    {"v": "Level up", "l": "Level up (abilità di classe ogni 5 livelli)"},
+    {"v": "Libro", "l": "Libro (tomi rari)"},
+    {"v": "Quest training", "l": "Quest training con un PNG Maestro"},
+    {"v": "Titolo", "l": "Inclusa in un titolo"},
+    {"v": "Sviluppo organico", "l": "Sviluppo organico (rarissimo)"},
+]
+
+
+def linear_grades(v1: float) -> list[float]:
+    """«Lineare dal I»: il valore del Grado I moltiplicato per il Grado."""
+    return [clean(num(v1) * (i + 1)) for i in range(SKILL_GRADES)]
+
+
+WEAPON_GRADE_ROWS = [{"what": "Precisione", "unit": "%", "vals": linear_grades(2)},
+                     {"what": "Danno", "unit": "%", "vals": linear_grades(1)}]
+
+
+def grade_text(rows: list[dict], g: int) -> str:
+    """Testo di una skill al Grado g (1–10): «+4% Precisione, +2% Danno»."""
+    out = []
+    for r in rows or []:
+        vals = r.get("vals") or []
+        v = num(vals[g - 1]) if len(vals) >= g else 0
+        what = str(r.get("what") or "").strip()
+        if not what or v == 0:
+            continue
+        unit = "%" if r.get("unit", "%") == "%" else f" {r.get('unit')}"
+        out.append(f"{'+' if v > 0 else ''}{fmt_n(v)}{unit} {what}")
+    return ", ".join(out)
+
+
+# Classi
+CLASS_TYPES = [{"v": "base", "l": "Base", "sub": "scelta alla creazione"},
+               {"v": "avanzata", "l": "Avanzata", "sub": "si sblocca giocando"},
+               {"v": "produzione", "l": "Di produzione", "sub": "mestiere, si sblocca giocando"}]
+CLASS_LABEL = {"base": "Classe base", "avanzata": "Classe avanzata", "produzione": "Classe di produzione"}
+TALENT_LEVELS = [5, 10, 15, 20]
+
+# Razze (Ambientazione, Razze e popolazioni). Deciso: statistiche e talenti razziali liberi, senza limiti fissi.
+RACE_TEMPLATES = [
+    {"name": "Elfi di Eldermoor", "origin": "Eldermoor", "desc": "Longevi, custodi della magia naturale, legati all'Albero Mondo; saggi ma distaccati dalle faccende dei mortali."},
+    {"name": "Nani delle Montagne", "origin": "Montagne", "desc": "Artigiani della forgia dalla resistenza leggendaria, in clan patriarcali fondati sull'onore.", "rel": [{"race": "Umani", "rel": "Alleati"}]},
+    {"name": "Dragonborn dei Vulcani", "origin": "Regioni vulcaniche", "desc": "Discendenti dei draghi, in tribù dove il potere magico fa la gerarchia; respirano l'elemento del loro lignaggio."},
+    {"name": "Drow", "origin": "Profondità", "desc": "Elfi corrotti dall'oscurità, esiliati nelle caverne: una società crudele e raffinata."},
+    {"name": "Svirfneblin", "origin": "Profondità", "desc": "Gnomi delle profondità, minatori che comunicano con vibrazioni nella roccia."},
+    {"name": "Duergar", "origin": "Profondità", "desc": "Nani grigi con poteri psionici, forgiano metalli impossibili alla luce dei funghi."},
+    {"name": "Halfling", "origin": "Eldermoor", "desc": ""},
+    {"name": "Elementali minori", "origin": "Qadesh", "desc": ""},
+]
+RACE_ORIGINS_EXTRA = ["Montagne", "Regioni vulcaniche", "Profondità", "Altro"]
+RELATIONS = ["Alleati", "Cordiali", "Neutrali", "Diffidenti", "Ostili"]
+RACE_PREVIEW_KEYS = ["hp", "mp", "sp", "evasione", "precisione", "carico"]
+
+
+def race_level1_stats(mods: dict) -> list[dict]:
+    """PG di livello 1 della razza: statistiche base 10 e modificatori razziali nella colonna «Altro»."""
+    codes = list(dict.fromkeys([*BASE_STATS, *mods.keys()]))
+    return [{"code": k, "name": STAT_NAMES.get(k, k), "kind": "base" if k in BASE_STATS else "avanzata",
+             "iniziale": CREATION["base"] if k in BASE_STATS else 0, "creazione": 0, "investiti": 0, "levelup": 0,
+             "altro": num(mods.get(k)), "titoli": 0} for k in codes]
+
+
+# Titoli (Sistema Status Sociale, Sezione 1). Deciso: l'evoluzione sostituisce il titolo precedente e ne toglie i bonus.
+TITLE_ACQ = {"Comune": "Impegno normale", "Non Comune": "Dedizione specifica", "Raro": "Imprese notevoli",
+             "Epico": "Gesta che cambiano il mondo", "Leggendario": "Solo 1–2 per server",
+             "Mitico": "Trascende la mortalità", "Divino": "Intervento diretto di una divinità"}
+TITLE_EX = {"Comune": "Primo Sangue: +2 STR, +1 VIT, +5% critici vs umanoidi", "Raro": "Ammazzadraghi: +10 STR/VIT, +5 tutte",
+            "Epico": "Salvatore di Regni: +15 tutte", "Leggendario": "Primo tra i Mortali: +25 tutte, regen raddoppiata"}
+TITLE_EFFECTS = ["nessuno", "passivo", "attivo"]
+
+
+def expand_title_bonus(rows: list[dict]) -> dict:
+    """Bonus di un titolo: "ALL" vale per le 4 statistiche base, codici ripetuti si sommano."""
+    out: dict[str, float] = {}
+    for r in rows or []:
+        v = num(r.get("val"))
+        code = str(r.get("code") or "")
+        if not code or not v:
+            continue
+        for k in (BASE_STATS if code == "ALL" else [code]):
+            out[k] = clean(out.get(k, 0) + v)
+    return out
+
+
+def add_title_bonus(stats: list[dict], bonus: dict, sign: int) -> list[str]:
+    """Somma (sign=+1) o toglie (−1) i bonus alla colonna «Titoli»; ritorna i codici che il PG non ha."""
+    missing = []
+    for k, v in (bonus or {}).items():
+        row = next((r for r in stats if r.get("code") == k), None)
+        if row is None:
+            missing.append(k)
+            continue
+        row["titoli"] = clean(num(row.get("titoli")) + sign * num(v))
+    return missing
+
+
+def assign_title(stats: list[dict], titles: list[dict], title: dict, replace: str | None) -> dict:
+    """Aggiunge un titolo al PG (stats e titles modificati sul posto). Se `replace` è un titolo del PG
+    (evoluzione), lo toglie con i suoi bonus. {missing, replaced}"""
+    replaced = None
+    if replace:
+        i = next((j for j, t in enumerate(titles) if t.get("name") == replace), -1)
+        if i >= 0:
+            replaced = titles.pop(i)
+            add_title_bonus(stats, replaced.get("bonus") or {}, -1)
+    titles.append({"name": title["name"], "rarity": title["rarity"], "bonus": dict(title.get("bonus") or {})})
+    missing = add_title_bonus(stats, title.get("bonus") or {}, +1)
+    return {"missing": missing, "replaced": replaced["name"] if replaced else None}
+
+
+# PNG (Sistema PNG)
+TRUST_LEVELS = ["Scarso", "Neutrale", "Buono", "Eccellente"]
+RACES_KNOWN = ["Umano", "Umana", "Elfo", "Nano", "Dragonborn", "Drow", "Svirfneblin", "Duergar", "Halfling", "Elementale minore"]
+
+# Creature (Combat, "Creature" e "Taglia"): Danno = (10 + L×6) × rarità; Vita = (40 + L×20) × rarità × taglia
+SIZES = [{"v": "Fragile", "m": 0.5}, {"v": "Normale", "m": 1}, {"v": "Robusta", "m": 1.5}]
+ENVIRONMENTS = ["Foresta", "Montagna", "Grotta o dungeon", "Città", "Deserto", "Ghiacci", "Mare o costa", "Palude",
+                "Sottosuolo", "Rovine", "Piano oscuro"]
+
+
+def rarity_info(name: str | None) -> dict:
+    return next((r for r in RARITY_SCALE if r["name"] == name), RARITY_SCALE[0])
+
+
+def size_mult(size: str | None) -> float:
+    return next((s["m"] for s in SIZES if s["v"] == size), 1)
+
+
+def creature(level: Any, rarity: str | None, size: str | None = "Normale") -> dict:
+    r = rarity_info(rarity)
+    m = size_mult(size)
+    lv = max(0, int(num(level)))
+    return {"dmg": clean((10 + lv * 6) * r["creature_mult"]), "hp": clean((40 + lv * 20) * r["creature_mult"] * m),
+            "dmg_formula": f"(10 + {lv}×6) × {r['creature_mult']}",
+            "hp_formula": f"(40 + {lv}×20) × {r['creature_mult']} × {fmt_it(m)}"}
+
+
+def fmt_it(x: float) -> str:
+    """Numero all'italiana con al massimo 2 decimali (1,5)."""
+    v = clean(round(num(x), 2))
+    return str(v).replace(".", ",")
+
+
+# Esperienza (Progressione, Sezione 2): pari livello 2%, ±1 punto per livello di differenza, 0–10%;
+# dal livello 10 metà, dal 50 un quarto. Deciso: la rarità della creatura moltiplica l'EXP per grado³.
+def exp_gain(pg_level: Any, c_level: Any) -> dict:
+    base = max(0.0, min(10.0, 2 + (num(c_level) - num(pg_level))))
+    pl = num(pg_level)
+    factor = 0.25 if pl >= 50 else 0.5 if pl >= 10 else 1
+    return {"base": clean(base), "factor": factor, "pct": clean(base * factor)}
+
+
+def exp_for(pg_level: Any, creatures: list[dict]) -> dict:
+    """EXP (in % del livello) che un PG di quel livello prende da un incontro intero."""
+    tot = 0.0
+    parts = []
+    for c in creatures:
+        n = max(0, int(num(c.get("count"))))
+        if not n:
+            continue
+        g = exp_gain(pg_level, c.get("level"))
+        rm = rarity_info(c.get("rarity"))["creature_mult"]
+        tot += g["pct"] * rm * n
+        parts.append(f"{n}× {str(c.get('name') or 'creatura').strip()}: {fmt_it(g['base'])}%"
+                     + (f" × {fmt_it(g['factor'])}" if g["factor"] < 1 else "")
+                     + (f" × {rm} ({c.get('rarity')})" if rm > 1 else ""))
+    return {"pct": clean(round(tot, 6)), "parts": parts}
+
+
+def gain_exp(level: int, exp_pct: Any, pct: Any) -> dict:
+    """Aggiunge EXP (in %): ogni 100% è un livello. {level, exp_pct, ups}"""
+    exp = num(exp_pct) + num(pct)
+    ups = int(exp // 100) if exp >= 100 else 0
+    exp -= ups * 100
+    return {"level": level + ups, "exp_pct": clean(round(exp, 2)), "ups": ups}
+
+
+EXP_MODES = ["intera", "divisa"]
+
+
+def exp_share(full_by_pc: dict, mode: str) -> dict:
+    """«Intera»: ogni PG prende la sua EXP; «divisa»: la sua EXP diviso il numero di PG che partecipano."""
+    n = max(1, len(full_by_pc))
+    return {k: clean(round(v / n if mode == "divisa" else v, 6)) for k, v in full_by_pc.items()}
+
+
+# Difficoltà (deciso: la decide il Master; il wizard mostra una stima di riferimento, proposta):
+# (ΣVita creature × ΣDanno creature) / (ΣVita gruppo × ΣDanno gruppo)
+DIFFICULTY_BANDS = [(0.1, "Banale", "muted"), (0.3, "Facile", "good"), (0.7, "Equilibrato", "violet"),
+                    (1.5, "Difficile", "warn"), (4, "Mortale", "bad"), (math.inf, "Impossibile", "bad")]
+DIFFICULTY_LABELS = [b[1] for b in DIFFICULTY_BANDS]
+# Proposta: rarità tipica dell'arma per livello (stima del danno dei PG senza arma registrata)
+LEVEL_RARITY = [(24, "Comune"), (59, "Non Comune"), (119, "Raro"), (199, "Epico"), (299, "Unico"),
+                (399, "Leggendario"), (499, "Mitico"), (math.inf, "Divino")]
+
+
+def difficulty_tone(label: str) -> str:
+    return next((b[2] for b in DIFFICULTY_BANDS if b[1] == label), "muted")
+
+
+def rarity_for_level(level: Any) -> str:
+    return next(r for mx, r in LEVEL_RARITY if num(level) <= mx)
+
+
+def weapon_base_mid(rarity: str) -> float:
+    a, b = rarity_info(rarity)["weapon_base"]
+    return a if b is None else (a + b) / 2
+
+
+def weapon_base_range(rarity: str) -> str:
+    a, b = rarity_info(rarity)["weapon_base"]
+    return f"{fmt_n(a)}+" if b is None else f"{fmt_n(a)}–{fmt_n(b)}"
+
+
+def pg_power(ri: dict, level: int) -> dict:
+    """Danno per turno di un PG (proposta) = Base arma × max(molt. fisico, molt. magico) × attacchi per turno.
+    `ri` = dati del PG con l'equipaggiamento già applicato (serialize.rules_input)."""
+    d = {x["key"]: x["value"] for x in derived(ri)}
+    weapon = next((it for it in equipped_items(ri.get("inventory") or []) if num(it.get("weapon_base")) > 0), None)
+    base = num(weapon["weapon_base"]) if weapon else weapon_base_mid(rarity_for_level(level))
+    molt = max(num(d.get("moltFis")), num(d.get("moltMag")))
+    att = num(d.get("attacchi")) or 1
+    return {"hp": num(d.get("hp")), "dmg": base * molt * att, "base": base, "molt": molt, "att": att,
+            "weapon": weapon["name"] if weapon else f"stima {rarity_for_level(level)}"}
+
+
+def difficulty(creatures: list[dict], powers: list[dict]) -> dict:
+    c_hp = c_dmg = p_hp = p_dmg = 0.0
+    for c in creatures:
+        n = max(0, int(num(c.get("count"))))
+        k = creature(c.get("level"), c.get("rarity"), c.get("size"))
+        c_hp += k["hp"] * n
+        c_dmg += k["dmg"] * n
+    for p in powers:
+        p_hp += p["hp"]
+        p_dmg += p["dmg"]
+    ratio = (c_hp * c_dmg) / (p_hp * p_dmg) if p_hp * p_dmg > 0 else math.inf
+    band = next(b for b in DIFFICULTY_BANDS if ratio < b[0]) if ratio != math.inf else DIFFICULTY_BANDS[-1]
+    return {"c_hp": clean(c_hp), "c_dmg": clean(c_dmg), "p_hp": clean(p_hp), "p_dmg": clean(round(p_dmg, 4)),
+            "ratio": None if ratio == math.inf else clean(round(ratio, 4)), "label": band[1], "tone": band[2]}
+
+
+def top_rarity(creatures: list[dict]) -> str:
+    best = "Comune"
+    for c in creatures:
+        if rarity_info(c.get("rarity"))["grade"] > rarity_info(best)["grade"]:
+            best = c.get("rarity")
+    return best
+
+
+# Bottino (deciso: lo decide il Master). Il wizard genera al momento un profilo di drop generico:
+# un tiro d100 per creatura (max 6). Proposta: i quattro tipi di profilo e le loro soglie.
+DROP_KINDS = [
+    {"name": "Avaro", "text": "Poco o niente: bestie senza tesoro.", "up": 2, "same": 15, "down": 35},
+    {"name": "Normale", "text": "Bottino da strada: qualcosa di utile, raramente di valore.", "up": 5, "same": 25, "down": 40},
+    {"name": "Generoso", "text": "Creature che custodiscono o accumulano.", "up": 10, "same": 35, "down": 35},
+    {"name": "Tesoro", "text": "Un covo, un forziere, un boss: il bottino è il punto.", "up": 20, "same": 45, "down": 25},
+]
+DROP_CATEGORIES = ["Arma", "Armatura", "Accessorio", "Consumabile", "Materiale raro", "Pergamena o libro"]
+DROP_MAX_ROLLS = 6
+
+
+def rarity_step(name: str, d: int) -> str:
+    i = RARITIES.index(name) if name in RARITIES else 0
+    return RARITIES[max(0, min(len(RARITIES) - 1, i + d))]
+
+
+def make_drop_profile(creatures: list[dict], rng, kind: str | None = None) -> dict:
+    """Profilo di drop generato al momento: tabella d100 con soglie del tipo di profilo, rarità a partire dalla
+    creatura più rara; monete = Corone numero × grado²/4 (±50%) più 0–19 Scellini; materiali per creatura."""
+    top = top_rarity(creatures)
+    k = next((x for x in DROP_KINDS if x["name"] == kind), None) or rng.choice(DROP_KINDS)
+    cats = rng.sample(DROP_CATEGORIES, 3)
+    a = k["up"]
+    b = a + k["same"]
+    c = b + k["down"]
+    rows = [
+        {"from": 1, "to": a, "what": f"Oggetto {rarity_step(top, 1)} ({cats[0]})", "rarity": rarity_step(top, 1)},
+        {"from": a + 1, "to": b, "what": f"Oggetto {top} ({cats[1]})", "rarity": top},
+        {"from": b + 1, "to": c, "what": f"Oggetto {rarity_step(top, -1)} ({cats[2]})", "rarity": rarity_step(top, -1)},
+        {"from": c + 1, "to": 100, "what": "Solo monete e materiali", "rarity": ""},
+    ]
+    coins = sum(int(num(x.get("count"))) * rarity_info(x.get("rarity"))["grade"] ** 2 / 4 * rng.uniform(0.5, 1.5)
+                for x in creatures)
+    mats = [{"name": f"Materiali di {str(x.get('name') or 'creatura').strip().lower()}",
+             "qty": max(1, js_round(int(num(x.get("count"))) * rng.uniform(0.5, 2))), "rarity": x.get("rarity") or "Comune"}
+            for x in creatures]
+    rolls = min(DROP_MAX_ROLLS, sum(int(num(x.get("count"))) for x in creatures))
+    return {"kind": k["name"], "text": k["text"], "top": top, "rows": rows, "rolls": rolls,
+            "corone": js_round(coins), "scellini": rng.randrange(20), "mats": mats}
+
+
+def roll_drop(profile: dict, rng) -> dict:
+    """«Tira il bottino»: un d100 per tiro sulla tabella del profilo, più monete e materiali."""
+    rolls = []
+    for _ in range(max(0, int(num(profile.get("rolls"))))):
+        d = rng.randint(1, 100)
+        row = next((r for r in profile.get("rows") or [] if num(r.get("from")) <= d <= num(r.get("to"))), None)
+        rolls.append({"d100": d, "what": row["what"] if row else "—", "rarity": (row or {}).get("rarity") or ""})
+    lines = [f"{r['what']} [d100 {r['d100']}]" for r in rolls if r["rarity"]]
+    lines += [f"{m['qty']}× {m['name']} ({m['rarity']})" for m in profile.get("mats") or []]
+    coins = ", ".join(x for x in [f"{profile['corone']} Corone" if profile.get("corone") else "",
+                                  f"{profile['scellini']} Scellini" if profile.get("scellini") else ""] if x)
+    if coins:
+        lines.append(coins)
+    return {"rolls": rolls, "text": "\n".join(lines)}
+
+
+# ---- Incantesimi (Magia_Creazione_Incantesimi.txt, Magic.txt; decisioni 6–12 di docs/PROPOSTE.md) ----
+SPHERES = [
+    {"key": "Ignis", "it": "Fuoco", "field": "Combustione, calore, passione, trasformazione rapida"},
+    {"key": "Aqua", "it": "Acqua", "field": "Liquidi, guarigione, ghiaccio e vapore, sogni"},
+    {"key": "Terra", "it": "Terra", "field": "Roccia, metallo, cristalli, crescita, stabilità"},
+    {"key": "Ventus", "it": "Aria", "field": "Venti, volo, suoni, comunicazione a distanza"},
+    {"key": "Mens", "it": "Mente", "field": "Pensiero, memoria, telepatia, illusioni"},
+    {"key": "Anima", "it": "Spirito", "field": "Spiriti, energia vitale, morte, protezione dalle influenze"},
+    {"key": "Vis", "it": "Forza", "field": "Energia pura, scudi, proiettili, gravità, dissolvere magie"},
+    {"key": "Vita", "it": "Vita", "field": "Guarigione, crescita, mutazione, cicli vitali"},
+    {"key": "Spatium", "it": "Spazio", "field": "Distanza, portali, teletrasporto · sfera pura", "pure": True},
+    {"key": "Tempus", "it": "Tempo", "field": "Accelerare, rallentare, visioni · sfera pura", "pure": True},
+]
+SPHERE_KEYS = [s["key"] for s in SPHERES]
+SPELL_ROLES = ["forma", "innesco", "sostanza", "direzione", "potenza", "durata", "bersaglio", "protezione"]
+SPELL_CATEGORIES = [{"key": "attacco", "name": "Attacco"}, {"key": "difesa", "name": "Difesa"}, {"key": "cura", "name": "Cura"},
+                    {"key": "controllo", "name": "Controllo"}, {"key": "utilita", "name": "Utilità"},
+                    {"key": "movimento", "name": "Movimento"}, {"key": "percezione", "name": "Percezione"}]
+SPELL_ORIGINS = [
+    {"key": "grimorio", "name": "Grimorio", "text": "Scritto in uno slot del Grimorio Basilare: si consolida subito, senza pratica.", "skill": True},
+    {"key": "pratica", "name": "Pratica", "text": "Usato con continuità: entra «in pratica» come incantesimo di Grado I all'1%.", "skill": True},
+    {"key": "improvvisato", "name": "Improvvisato", "text": "Composto sul momento: non diventa una skill finché non si consolida.", "skill": False},
+]
+COMPAT_RAW = {
+    "Ignis": {"strong": ["Terra", "Ventus"], "weak": ["Aqua"]},
+    "Aqua": {"strong": ["Terra", "Vita"], "weak": ["Ignis"]},
+    "Terra": {"strong": ["Vita", "Ignis"], "weak": ["Ventus"]},
+    "Ventus": {"strong": ["Ignis", "Spatium"], "weak": ["Terra"]},
+    "Mens": {"strong_all": True, "note": "forte con tutte (compatibilità universale)"},
+    "Anima": {"strong": ["Vita", "Tempus"], "dangerous": ["Vis"]},
+    "Vis": {"note": "neutra con tutte, ma richiede un controllo preciso"},
+    "Vita": {"strong": ["Aqua", "Terra"], "weak": ["Anima"], "note": "debole con Anima se manca un'etica"},
+    "Spatium": {"strong": ["Tempus", "Ventus"], "note": "pericolosa se usata di fretta"},
+    "Tempus": {"strong": ["Spatium"], "dangerous_all": True, "note": "forte solo con Spatium, pericolosa con tutte le altre"},
+}
+COMPAT_LEVELS = {"S": {"name": "Forte", "tone": "good", "rank": 0}, "N": {"name": "Neutra", "tone": "muted", "rank": 1},
+                 "W": {"name": "Debole", "tone": "warn", "rank": 2}, "D": {"name": "Pericolosa", "tone": "bad", "rank": 3}}
+METAMAGIC = [
+    {"key": "extend", "name": "Estesa", "en": "Extend", "lv": 1, "text": "Durata doppia"},
+    {"key": "empower", "name": "Potenziata", "en": "Empower", "lv": 2, "text": "+50% agli effetti numerici"},
+    {"key": "maximize", "name": "Massimizzata", "en": "Maximize", "lv": 3, "text": "Danno o cura al massimo"},
+    {"key": "silent", "name": "Silenziosa", "en": "Silent", "lv": 1, "text": "Senza componenti verbali"},
+    {"key": "still", "name": "Immobile", "en": "Still", "lv": 1, "text": "Senza componenti gestuali"},
+    {"key": "subtle", "name": "Sottile", "en": "Subtle", "lv": 2, "text": "Difficile da individuare"},
+    {"key": "penetrating", "name": "Penetrante", "en": "Penetrating", "lv": 2, "text": "Ignora le resistenze"},
+    {"key": "persistent", "name": "Persistente", "en": "Persistent", "lv": 4, "text": "Continua senza concentrazione"},
+]
+SPHERE_META = {
+    "Ignis": {"name": "Ustionante", "text": "Le bruciature continuano a fare danno"},
+    "Aqua": {"name": "Fluente", "text": "L'incantesimo può muoversi e cambiare forma"},
+    "Terra": {"name": "Duratura", "text": "Durata lunghissima"},
+    "Ventus": {"name": "Rapida", "text": "Tempo di lancio ridotto"},
+    "Mens": {"name": "In rete", "text": "Colpisce più bersagli"},
+    "Anima": {"name": "Vincolante", "text": "Crea un legame spirituale duraturo"},
+    "Vis": {"name": "Sovraccarica", "text": "Potenza molto aumentata"},
+    "Vita": {"name": "Adattiva", "text": "Si evolve secondo le circostanze"},
+    "Spatium": {"name": "Ancorata", "text": "Non può essere spostata o dissolta"},
+    "Tempus": {"name": "Sincronizzata", "text": "Si attiva in un momento preciso"},
+}
+SPHERE_META_LV = 2  # deciso: metamagie di sfera +2 livelli
+MAGIC_ZONES = [
+    {"key": "", "name": "Nessuna zona particolare"},
+    {"key": "vulcano", "name": "Vulcano / deserto", "plus": "Ignis", "minus": "Aqua"},
+    {"key": "oceano", "name": "Oceano / lago", "plus": "Aqua", "minus": "Ignis"},
+    {"key": "montagna", "name": "Montagna / caverna", "plus": "Terra", "minus": "Ventus"},
+    {"key": "alture", "name": "Alture ventose", "plus": "Ventus", "minus": "Terra"},
+    {"key": "biblioteca", "name": "Biblioteca / accademia", "plus": "Mens"},
+    {"key": "cimitero", "name": "Cimitero / campo di battaglia", "plus": "Anima"},
+    {"key": "forgia", "name": "Forgia / laboratorio", "plus": "Vis"},
+    {"key": "foresta", "name": "Giardino / foresta", "plus": "Vita"},
+    {"key": "portale", "name": "Portale / velo sottile", "plus": "Spatium"},
+    {"key": "anomalia", "name": "Anomalia temporale", "plus": "Tempus"},
+]
+LEY_LINES = [{"v": 0, "name": "Nessuna linea di potere", "surge": 0}, {"v": 1, "name": "Linea minore (+1)", "surge": 0},
+             {"v": 2, "name": "Linea maggiore (+2)", "surge": 10}, {"v": 3, "name": "Incrocio di linee (+3)", "surge": 25}]
+BACKLASH_BANDS = [
+    {"max": 8, "name": "Minore", "tone": "good", "text": "Mal di testa o nausea, piccole fughe dell'elemento (scintille, brina). Dura 1–10 minuti."},
+    {"max": 15, "name": "Moderato", "tone": "warn", "text": "L'incantesimo rimbalza sul mago o produce un effetto casuale; drenaggio temporaneo. Dura 1–24 ore."},
+    {"max": 20, "name": "Maggiore", "tone": "warn", "text": "Ferita seria al mago, danni magici all'ambiente, piccola alterazione permanente. Dura 1–7 giorni."},
+    {"max": 25, "name": "Grave", "tone": "bad", "text": "Ferita mortale, area vasta colpita, cicatrice magica permanente."},
+    {"max": math.inf, "name": "Catastrofico", "tone": "bad", "text": "Morte, pietrificazione o follia; squarcio nella realtà, zona di pericolo magico."},
+]
+SPELL_MAX_LEVEL = 10
+COMBO_GRADE = 7  # combinazioni: Grado VII in ogni sfera (Magic.txt, 70%)
+
+
+def _judge(a: str, b: str) -> str:
+    r = COMPAT_RAW.get(a, {})
+    strong = b in r.get("strong", [])
+    if b in r.get("dangerous", []) or (r.get("dangerous_all") and not strong):
+        return "D"
+    if b in r.get("weak", []):
+        return "W"
+    if strong or r.get("strong_all"):
+        return "S"
+    return "N"
+
+
+def pair_compat(a: str, b: str) -> dict:
+    """Giudizio di una coppia di sfere: se i due punti di vista differiscono vale il più severo (deciso)."""
+    x, y = _judge(a, b), _judge(b, a)
+    level = x if COMPAT_LEVELS[x]["rank"] >= COMPAT_LEVELS[y]["rank"] else y
+    return {"a": a, "b": b, "level": level, "name": COMPAT_LEVELS[level]["name"], "tone": COMPAT_LEVELS[level]["tone"],
+            "views": [f"{a} → {b}: {COMPAT_LEVELS[x]['name']}", f"{b} → {a}: {COMPAT_LEVELS[y]['name']}"], "disagree": x != y}
+
+
+def compat_pairs(keys: list[str]) -> list[dict]:
+    return [pair_compat(keys[i], keys[j]) for i in range(len(keys)) for j in range(i + 1, len(keys))]
+
+
+def worst_pair(pairs: list[dict]) -> dict | None:
+    w = None
+    for p in pairs:
+        if w is None or COMPAT_LEVELS[p["level"]]["rank"] > COMPAT_LEVELS[w["level"]]["rank"]:
+            w = p
+    return w
+
+
+def zone_mod(keys: list[str], zone: str) -> dict:
+    """Sintonia della zona: +2 per la sfera favorita, −2 per quella sfavorita; con più sfere si somma, limite ±2."""
+    z = next((x for x in MAGIC_ZONES if x["key"] == zone), None)
+    if not z or not z["key"]:
+        return {"mod": 0, "parts": []}
+    s = 0
+    parts = []
+    for k in keys:
+        if k == z.get("plus"):
+            s += 2
+            parts.append(f"{k} +2")
+        if k == z.get("minus"):
+            s -= 2
+            parts.append(f"{k} −2")
+    return {"mod": max(-2, min(2, s)), "parts": parts}
+
+
+def spell_levels(spheres: list[dict], level: Any, meta: list[str], zone: str = "", ley: Any = 0) -> dict:
+    """Livello di lancio = base + metamagia (+2 per quelle di sfera) + 1 per ogni sfera in uso traverso;
+    efficacia = base + linea di potere + sintonia (minimo 1)."""
+    keys = [x.get("s") for x in spheres]
+    base = int(level) if isinstance(level, (int, float)) and float(level).is_integer() else 0
+    meta_std = sum(m["lv"] for m in METAMAGIC if m["key"] in meta)
+    meta_sph = sum(1 for k in keys if f"sph:{k}" in meta) * SPHERE_META_LV
+    trav = sum(1 for x in spheres if x.get("trav"))
+    z = zone_mod(keys, zone)
+    ley_v = int(num(ley))
+    return {"base": base, "meta_std": meta_std, "meta_sph": meta_sph, "meta": meta_std + meta_sph, "trav": trav,
+            "cast": base + meta_std + meta_sph + trav, "zone": z["mod"], "zone_parts": z["parts"], "ley": ley_v,
+            "eff": max(1, base + ley_v + z["mod"])}
+
+
+def spell_cost(cast: int, combo: bool = False) -> int:
+    """Mana = 10 × L × (L+1) (livello 1 = 20, il Dardo Magico); combinazione ×1,5."""
+    return js_round(10 * cast * (cast + 1) * (1.5 if combo else 1))
+
+
+def cast_turns(cast: int, combo: bool = False) -> int:
+    """Tempo di lancio ⌈L/3⌉ turni (minimo 1); combinazione +50%."""
+    return math.ceil(max(1, math.ceil(cast / 3)) * (1.5 if combo else 1))
+
+
+def spell_cd(cast: int) -> int:
+    """Ricarica ⌈L/2⌉ turni, minimo 1."""
+    return max(1, math.ceil(cast / 2))
+
+
+def sphere_grade(skills: list[dict], key: str) -> dict:
+    """Grado del PG in una sfera = skill di tipo Knowledge con il nome della sfera."""
+    s = next((x for x in skills or [] if "knowledge" in str(x.get("type") or "").lower()
+              and str(x.get("name") or "").lower() == key.lower()), None)
+    return {"grade": int(num(s.get("lvl"))) if s else 0, "pct": s.get("pct") if s else None}
+
+
+def sphere_reqs(spheres: list[dict], cast: int, combo: bool, skills: list[dict] | None) -> list[dict]:
+    """Ogni sfera va posseduta (Grado I; Grado VII per le combinazioni); consigliato Grado ≥ livello di lancio,
+    altrimenti il lancio conta come overcast (deciso)."""
+    need = COMBO_GRADE if combo else 1
+    rec = max(1, min(SPELL_MAX_LEVEL, cast))
+    out = []
+    for x in spheres:
+        g = sphere_grade(skills or [], x.get("s", ""))
+        has = g["grade"]
+        out.append({"s": x.get("s"), "need": need, "rec": rec, "has": has, "pct": g["pct"],
+                    "status": "missing" if has < need else "overcast" if has < rec else "ok"})
+    return out
+
+
+def backlash_band(score: float) -> dict:
+    return next(b for b in BACKLASH_BANDS if score <= b["max"])
+
+
+def backlash(spheres: list[dict], cast: int, risk: dict, anti: bool, overcast: bool) -> dict:
+    """Gravità = livello di lancio × 2 + fattori (al posto del d20, deciso)."""
+    f = [{"label": f"Livello di lancio {cast} × 2", "v": cast * 2}]
+    if risk.get("fatigue"):
+        f.append({"label": "Fatica (molti incantesimi oggi)", "v": 1})
+    if risk.get("emotion"):
+        f.append({"label": "Stato emotivo (stress, rabbia, paura)", "v": 1})
+    if risk.get("interrupt"):
+        f.append({"label": "Lancio interrotto", "v": 3})
+    if overcast:
+        f.append({"label": "Overcast (oltre le proprie capacità)", "v": 2})
+    if anti:
+        f.append({"label": "Zona antimagia", "v": 2})
+    prot = max(0, min(5, int(num(risk.get("protections")))))
+    if prot:
+        f.append({"label": f"Protezioni prese ({prot})", "v": -prot})
+    pure = {s["key"] for s in SPHERES if s.get("pure")}
+    if any(x.get("s") in pure for x in spheres):
+        f.append({"label": "Sfera pura (Spatium/Tempus)", "v": 2})
+    wp = worst_pair(compat_pairs([x.get("s") for x in spheres]))
+    if wp and wp["level"] == "D":
+        f.append({"label": f"Coppia pericolosa {wp['a']} + {wp['b']}", "v": 2})
+    elif wp and wp["level"] == "W":
+        f.append({"label": f"Coppia debole {wp['a']} + {wp['b']}", "v": 1})
+    score = max(0, sum(x["v"] for x in f))
+    b = backlash_band(score)
+    return {"score": score, "band": b["name"], "tone": b["tone"], "text": b["text"], "factors": f, "overcast": overcast}
+
+
+SPELL_COMPOSITION = [1, 0.85, 0.75]  # ×1 con una sfera, ×0,85 con due, ×0,75 con tre (deciso)
+
+
+def spell_effect(category: str, eff: int, n_spheres: int, molt_mag: float, meta: list[str]) -> dict | None:
+    """Danno o cura = 15–30 × efficacia × molt. danno magico × composizione (deciso). None se la categoria non ha numeri."""
+    if category not in ("attacco", "cura"):
+        return None
+    n = max(1, min(3, n_spheres))
+    comp = SPELL_COMPOSITION[n - 1]
+    lo, hi = 15 * eff * comp * molt_mag, 30 * eff * comp * molt_mag
+    steps = [f"base 15–30 × efficacia {eff}"]
+    if comp != 1:
+        steps.append(f"× {fmt_it(comp)} ({n} sfere)")
+    steps.append(f"× molt. magico {fmt_it(molt_mag)}")
+    if "empower" in meta:
+        lo, hi = lo * 1.5, hi * 1.5
+        steps.append("× 1,5 Potenziata")
+    if "maximize" in meta:
+        lo = hi
+        steps.append("Massimizzata: sempre il massimo")
+    return {"min": js_round(lo), "max": js_round(hi), "steps": steps, "kind": "Cura" if category == "cura" else "Danno"}
+
+
+def spell_meta_names(meta: list[str]) -> list[str]:
+    out = []
+    for k in meta:
+        if k.startswith("sph:"):
+            s = k[4:]
+            if s in SPHERE_META:
+                out.append(f"{SPHERE_META[s]['name']} ({s})")
+        else:
+            m = next((x for x in METAMAGIC if x["key"] == k), None)
+            if m:
+                out.append(m["name"])
+    return out
+
+
+# ---- Miracoli (decisioni 13–22 di docs/PROPOSTE.md): i miracoli sono skill, livelli 1–10 ----
+GODS = [
+    {"key": "luxor", "name": "Luxor", "domain": "Luce", "origin": True, "epithet": "Il Padre Luminoso", "sphere": "Ordine e giustizia; i suoi templi sono di cristallo puro",
+     "tone": "Solenne, inflessibile, giudica secondo la legge", "affine": ["protezione", "castigo", "rivelazione", "benedizione"],
+     "vows": ["Non mentire sotto giuramento", "Non negare giustizia a chi la chiede", "Rispettare l'ordine legittimo"]},
+    {"key": "solaria", "name": "Solaria", "domain": "Luce", "epithet": "La Madre Solare", "sphere": "Protezione dei giusti e dei valorosi; a Qadesh è figlia di Luxor, meno pura del padre",
+     "tone": "Calda e marziale, premia il coraggio", "affine": ["protezione", "guarigione", "benedizione"],
+     "vows": ["Non abbandonare un compagno in battaglia", "Proteggere chi non può difendersi", "Non colpire chi si arrende"]},
+    {"key": "verdania", "name": "Verdania", "domain": "Luce", "epithet": "La Nutrice Verde", "sphere": "Tutte le cose che crescono e fioriscono",
+     "tone": "Materna e paziente", "affine": ["guarigione", "benedizione", "purificazione"],
+     "vows": ["Non distruggere ciò che cresce senza necessità", "Restituire alla terra ciò che si prende"]},
+    {"key": "ferrum", "name": "Ferrum", "domain": "Luce", "epithet": "Il Fabbro Divino", "sphere": "Forgiò le prime armi e insegnò l'arte agli umani",
+     "tone": "Pratico e burbero, rispetta il lavoro ben fatto", "affine": ["benedizione", "protezione"],
+     "vows": ["Non rompere l'opera di un altro per invidia", "Onorare ogni dono con il lavoro"]},
+    {"key": "umbranis", "name": "Umbranis", "domain": "Ombra", "origin": True, "epithet": "L'Imperatrice del Vuoto (detta anche Umbris)", "sphere": "Tessitrice del destino e del caos",
+     "tone": "Enigmatica e capricciosa", "affine": ["rivelazione", "castigo", "intercessione"],
+     "vows": ["Non opporsi al destino rivelato", "Lasciare sempre una scelta al caso"]},
+    {"key": "morteus", "name": "Morteus", "domain": "Ombra", "epithet": "Il Giudice Finale", "sphere": "Pesa le anime e decide il loro destino ultraterreno",
+     "tone": "Impassibile e giudicante", "affine": ["castigo", "rivelazione", "intercessione"],
+     "vows": ["Non profanare i morti", "Non sfuggire alla propria morte con l'inganno", "Rispettare il giudizio pronunciato"]},
+    {"key": "tempestus", "name": "Tempestus", "domain": "Ombra", "epithet": "Il Distruttore", "sphere": "Signore delle tempeste e della furia della natura",
+     "tone": "Furioso e impulsivo", "affine": ["castigo", "benedizione"],
+     "vows": ["Non cercare riparo dalla tempesta", "Non trattenere la furia davanti a un affronto"]},
+    {"key": "venenum", "name": "Venenum", "domain": "Ombra", "epithet": "Il Sussurratore", "sphere": "Maestro dell'inganno e dei veleni sottili",
+     "tone": "Sussurrato e ambiguo", "affine": ["castigo", "rivelazione", "purificazione"],
+     "vows": ["Non rivelare i segreti del culto", "Ripagare ogni debito, anche con l'inganno"]},
+]
+MIRACLE_NATURES = [
+    {"key": "benedizione", "name": "Benedizione", "text": "Potenzia un alleato, un oggetto o un luogo"},
+    {"key": "guarigione", "name": "Guarigione", "text": "Ripristina Vita, chiude ferite, cura malattie", "base": [40, 60]},
+    {"key": "protezione", "name": "Protezione", "text": "Scudi, santuari, difesa da influenze ostili"},
+    {"key": "castigo", "name": "Castigo", "text": "Danno o punizione inflitta in nome del dio", "base": [15, 30]},
+    {"key": "rivelazione", "name": "Rivelazione", "text": "Visioni, verità nascoste, presagi"},
+    {"key": "purificazione", "name": "Purificazione", "text": "Scaccia maledizioni, veleni e corruzione"},
+    {"key": "intercessione", "name": "Intercessione", "text": "Chiede al dio di intervenire di persona"},
+]
+FAVOR_SCALE = [{"v": -3, "name": "Maledizione divina"}, {"v": -2, "name": "Rinnegato"}, {"v": -1, "name": "In disgrazia"},
+               {"v": 0, "name": "Neutrale"}, {"v": 1, "name": "Notato"}, {"v": 2, "name": "Favorito"},
+               {"v": 3, "name": "Prescelto"}, {"v": 4, "name": "Benedizione divina"}]
+MIRACLE_AGAINST = [
+    {"key": "indebolito", "name": "Il prodigio si indebolisce", "text": "Effetto dimezzato; il Mana è speso per intero.", "from_text": True},
+    {"key": "cessa", "name": "Il prodigio non avviene", "text": "Nessun effetto; il Mana è speso.", "from_text": True},
+    {"key": "favore1", "name": "Perdita di favore (−1 grado)", "text": "Il prodigio riesce, ma il dio se ne ricorda."},
+    {"key": "favore2", "name": "Perdita di favore (−2 gradi)", "text": "Il prodigio fallisce e il chierico porta un segno del disfavore."},
+    {"key": "maledizione", "name": "Maledizione divina", "text": "Il favore crolla a Maledizione divina; il dio può mandare un castigo."},
+]
+
+
+def favor_name(v: Any) -> str:
+    return next((f["name"] for f in FAVOR_SCALE if f["v"] == int(num(v))), "Neutrale")
+
+
+def miracle_cost(level: int) -> int:
+    """Mana = 12,5 × L × (L+1) (livello 1 = 25, la Cura Minore)."""
+    return js_round(12.5 * level * (level + 1))
+
+
+def miracle_fede(level: int) -> int:
+    """Fede richiesta = 5 × L × (L+1)."""
+    return 5 * level * (level + 1)
+
+
+def favor_required(level: int, affine: bool) -> int:
+    """Livello 1–2 Notato, 3–5 Favorito, 6–8 Prescelto, 9–10 Benedizione; un grado in più fuori dominio."""
+    base = 1 if level <= 2 else 2 if level <= 5 else 3 if level <= 8 else 4
+    return min(4, base + (0 if affine else 1))
+
+
+def favor_mult(have: int, need: int) -> dict:
+    """×1 al favore richiesto, +25% per ogni grado in più; un grado sotto ×0,5; due o più gradi sotto 0."""
+    d = have - need
+    if d >= 0:
+        return {"mult": 1 + 0.25 * d, "state": "potenziato" if d > 0 else "pieno"}
+    if d == -1:
+        return {"mult": 0.5, "state": "indebolito"}
+    return {"mult": 0, "state": "cessa"}
+
+
+def char_fede(stats: list[dict]) -> float:
+    """Fede del PG: statistica avanzata FED/FEDE (si sblocca quando il PG crede in un dio); 0 se non c'è."""
+    row = next((r for r in stats or [] if str(r.get("code") or "").upper() in ("FED", "FEDE")
+                or str(r.get("name") or "").lower() == "fede"), None)
+    return stat_total(row) if row else 0
+
+
+def char_favor(reputation: list[dict], god_name: str) -> dict:
+    """Favore = reputazione cosmica del PG verso il dio (per nome della scala o valore −3…+4)."""
+    rep = next((r for r in reputation or [] if "cosmic" in str(r.get("scope") or "").lower()
+                and str(r.get("target") or "").lower() == god_name.lower()), None)
+    if not rep:
+        return {"v": 0, "recorded": False}
+    by_name = next((f for f in FAVOR_SCALE if f["name"].lower() == str(rep.get("label") or "").lower()), None)
+    v = by_name["v"] if by_name else max(-3, min(4, js_round(num(rep.get("value")))))
+    return {"v": v, "recorded": True}
+
+
+def is_cleric(classe: str | None) -> bool:
+    return "chieric" in str(classe or "").lower()
+
+
+def miracle_power(nature: str, level: int, fede: float, have_favor: int, need_favor: int) -> dict:
+    """Potenza = base × livello × (1 + Fede/100) × molt. favore (deciso). value None se la natura non ha numeri."""
+    nat = next((n for n in MIRACLE_NATURES if n["key"] == nature), None)
+    fm = favor_mult(have_favor, need_favor)
+    if not nat or "base" not in nat or not level:
+        return {"fm": fm, "value": None}
+    k = level * (1 + fede / 100) * fm["mult"]
+    return {"fm": fm, "value": {"min": js_round(nat["base"][0] * k), "max": js_round(nat["base"][1] * k),
+                                "base": list(nat["base"]), "kind": "Cura" if nature == "guarigione" else "Danno"}}
+
+
+def forge_config() -> dict:
+    """Costanti della Forgia per il frontend (opzioni dei wizard)."""
+    return {
+        "stats": [{"code": k, "name": v} for k, v in FORGE_STATS.items()],
+        "skill_types": list(SKILL_TYPES), "acquire": copy.deepcopy(ACQUIRE), "grade1_rule": dict(GRADE1_RULE),
+        "weapon_grade_rows": copy.deepcopy(WEAPON_GRADE_ROWS),
+        "class_types": copy.deepcopy(CLASS_TYPES), "talent_levels": list(TALENT_LEVELS),
+        "race_templates": copy.deepcopy(RACE_TEMPLATES), "race_origins_extra": list(RACE_ORIGINS_EXTRA),
+        "relations": list(RELATIONS), "races_known": list(RACES_KNOWN),
+        "title_acq": dict(TITLE_ACQ), "title_examples": dict(TITLE_EX), "title_effects": list(TITLE_EFFECTS),
+        "trust": list(TRUST_LEVELS), "sizes": copy.deepcopy(SIZES), "environments": list(ENVIRONMENTS),
+        "difficulty": [{"max": None if b[0] == math.inf else b[0], "label": b[1], "tone": b[2]} for b in DIFFICULTY_BANDS],
+        "drop_kinds": copy.deepcopy(DROP_KINDS), "exp_modes": list(EXP_MODES),
+        "spheres": copy.deepcopy(SPHERES), "spell_roles": list(SPELL_ROLES), "spell_categories": copy.deepcopy(SPELL_CATEGORIES),
+        "spell_origins": copy.deepcopy(SPELL_ORIGINS), "compat_notes": {k: v.get("note") for k, v in COMPAT_RAW.items() if v.get("note")},
+        "metamagic": copy.deepcopy(METAMAGIC), "sphere_meta": copy.deepcopy(SPHERE_META), "sphere_meta_lv": SPHERE_META_LV,
+        "zones": copy.deepcopy(MAGIC_ZONES), "ley_lines": copy.deepcopy(LEY_LINES),
+        "backlash_bands": [{**b, "max": None if b["max"] == math.inf else b["max"]} for b in BACKLASH_BANDS],
+        "gods": copy.deepcopy(GODS), "natures": copy.deepcopy(MIRACLE_NATURES), "favor": copy.deepcopy(FAVOR_SCALE),
+        "against": copy.deepcopy(MIRACLE_AGAINST), "spell_max_level": SPELL_MAX_LEVEL, "combo_grade": COMBO_GRADE,
+    }
+
+
 # ---------- Modifica della scheda da parte del Master ----------
 
 # Colonne di origine che il Master scrive a mano. "oggetti" (se presente) è calcolata dagli oggetti equipaggiati.

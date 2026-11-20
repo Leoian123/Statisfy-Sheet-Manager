@@ -8,7 +8,7 @@ Riferimento funzionale: il mockup in `mockup/` (`rules.js`, `data.js`, `screens/
 - JSON ovunque; numeri come numeri, nessuna formattazione lato server.
 - Auth: `Authorization: Bearer <token>` (JWT HS256, scadenza 12h). Ruoli: `master`, `player`.
 - Errori: status HTTP + `{"detail": "messaggio in italiano leggibile dall'utente"}`. Validazione 422 con `detail` stringa (non la lista Pydantic grezza).
-- Permessi: il `player` vede e modifica solo i PG con `owner_id` = proprio id; il `master` tutto. Tutte le rotte `/campaign`, `/npcs`, `/issues` sono solo master (403 altrimenti).
+- Permessi: il `player` vede e modifica solo i PG con `owner_id` = proprio id; il `master` tutto. Tutte le rotte `/campaign`, `/npcs`, `/issues` e `/forge` sono solo master (403 altrimenti).
 
 ## Utenti di sviluppo (seed)
 | username | password | ruolo | display_name |
@@ -232,9 +232,64 @@ Con `create_issues` ogni PG con incoerenze ha una questione `"Import Excel — N
 
 Stesso import da riga di comando (cartella `backend`): `.venv\Scripts\python -m app.excel_import FILE.xlsx [...] [--dry-run] [--owner Nome=username] [--no-issues]`.
 
+## Forgia del Master (solo master)
+Wizard di creazione dei contenuti (porting di `mockup/screens/forgia.js`, `wizards-master.js`, `wizards-magia.js`) e libreria della campagna.
+Tutte le rotte `/api/forge/*` sono solo master (403 per i player). Regole e costanti in `backend/app/rules.py` (sezione «Forgia del Master»),
+logica dei wizard (validazione per passo, anteprima, voce, assegnazione) in `backend/app/forge.py`. Decisioni del 20/11/2026: `docs/PROPOSTE.md`.
+
+`ForgeKind = "skills"|"classes"|"races"|"titles"|"npcs"|"encounters"|"spells"|"miracles"` (wizard Skill, Classe, Razza, Titolo, PNG, Incontro, Incantesimo, Miracolo).
+
+- `GET /api/forge/meta` → opzioni dei wizard: costanti (`skill_types`, `weapon_grade_rows`, `class_types`, `race_templates`, `relations`,
+  `sizes`, `environments`, `difficulty`, `drop_kinds`, `spheres`, `metamagic`, `sphere_meta`, `zones`, `ley_lines`, `backlash_bands`,
+  `gods`, `natures`, `favor`, `against`, …), `steps: {ForgeKind: [etichette dei passi]}`, `rarities`, `roman`, `grades`,
+  `stat_codes` (codici delle statistiche dei PG), `characters: [{id, name, level, classe, exp_pct}]`,
+  `library_skills`, `known_titles` (libreria + titoli dei PG), `classes` (base + libreria), `races`, `kingdoms`, `session`.
+- `GET /api/forge/library[?kind=ForgeKind]` → `ForgeEntry[]` (ordine di creazione).
+- `POST /api/forge/preview` `{kind, draft}` → `{kind, steps: [str], first_bad: int, computed: {...}}`.
+  `draft` è la bozza libera del wizard (campi del modulo, vedi `frontend/src/forge/*.tsx`); `steps` ha un messaggio per passo
+  (`""` = passo valido), `first_bad` il primo passo non valido (−1 = tutto valido); `computed` i valori dell'anteprima calcolati dal server
+  (gradi della skill, statistiche di un PG di livello 1 della razza, variazioni del titolo sul PG, creature, difficoltà stimata, EXP per PG,
+  livelli/costo/backlash/danno dell'incantesimo, Fede/favore/potenza del miracolo, requisiti sul PG…). Non salva niente.
+- `POST /api/forge/entries` `{kind, draft}` → 201 `{entry: ForgeEntry, messages: [str]}`; 422 con il primo passo non valido
+  (`"Passo 3 (Gradi): riga 1: manca il valore del Grado III."`). Se la bozza assegna un PG (`charId`) il PG viene modificato:
+  - skill: nuova voce in `skills` (passiva, Grado I · 0%) o `active_skills` (attiva, `cost` "15 SP");
+  - titolo: aggiunto a `titles` e bonus sommati alla colonna `titoli`; con `prev` = un titolo che il PG ha, l'**evoluzione lo sostituisce**
+    e ne toglie i bonus; bonus su statistiche che il PG non ha: ignorati e segnalati;
+  - incantesimo (`assign`, origine grimorio o pratica) e miracolo (`assign`): nuova skill attiva Grado I · 1% con `kind` "Incantesimo"/"Miracolo";
+    sfere mancanti (incantesimo) o classe/Fede/favore insufficienti (miracolo) richiedono `force: true`.
+  - PNG: crea anche il PNG nell'archivio (`/api/npcs`, `entry.npc_id`); i campi in più (personalità, background, combattimento) restano in `entry.data.npc`.
+- `DELETE /api/forge/entries/{id}` → 204. Toglie la voce dalla libreria; non annulla assegnazioni né cancella il PNG.
+- `POST /api/forge/drop-profile` `{creatures: [{name, level, rarity, size, count}], kind?: "Avaro"|"Normale"|"Generoso"|"Tesoro", seed?: int}` → `DropProfile`.
+  Profilo di drop generato al momento: tabella d100 (soglie del tipo di profilo, rarità a partire dalla creatura più rara), un tiro per creatura (max 6),
+  monete (Corone = numero × grado² / 4 ±50%, più 0–19 Scellini) e materiali. Senza `seed` è casuale.
+- `POST /api/forge/drop-roll` `{profile: DropProfile, seed?: int}` → `{rolls: [{d100, what, rarity}], text}` («Tira il bottino»: `text` va nel bottino deciso dal Master).
+- `GET /api/forge/encounters/{id}/exp?mode=intera|divisa` → `{mode, party: int, rows: ExpRow[]}`: anteprima della chiusura.
+- `POST /api/forge/encounters/{id}/close` `{mode: "intera"|"divisa"}` → `{entry, results: ExpRow[], messages}`; 409 se già chiuso.
+  Assegna l'EXP a ogni PG che partecipa e applica i level up (come `POST /characters/{id}/level-up`: +1 a ogni statistica e 10 punti liberi
+  per livello, riga nel registro di combattimento). `entry.closed = {mode, at, session, results, text}`.
+
+```
+ForgeEntry = {id, kind: ForgeKind, name, summary, data: {...voce del wizard}, assigned_to: int|null, assigned_name: str|null,
+              npc_id: int|null, closed: {mode, at, session, results: ExpRow[], text}|null, session: int, created_at: str}
+DropProfile = {kind, text, top: rarità, rows: [{from, to, what, rarity}], rolls, corone, scellini, mats: [{name, qty, rarity}]}
+ExpRow = {id, name, level, exp_pct, full: num, pct: num, after_level, after_exp, ups}
+```
+
+Regole usate (tutte nel backend):
+- **EXP** (Progressione, Sezione 2): pari livello 2%, ±1 punto per livello di differenza (0–10%), dal livello 10 metà, dal 50 un quarto;
+  poi **× grado³ della rarità** della creatura (Non Comune ×8, Raro ×27 … Divino ×512) × numero di creature. «Intera»: ogni PG prende la sua EXP
+  (calcolata sul suo livello alla chiusura); «divisa»: la sua EXP ÷ numero di PG che partecipano. Ogni 100% è un livello.
+- **Creature** (Combat): Danno = (10 + L×6) × grado³; Vita = (40 + L×20) × grado³ × taglia (Fragile ×0,5, Normale ×1, Robusta ×1,5).
+- **Difficoltà**: la decide il Master (`masterDiff`); la stima (proposta) è (ΣVita × ΣDanno creature) / (ΣVita × ΣDanno gruppo).
+- **Skill**: un valore per ognuno dei 10 Gradi per ogni riga «cosa migliora» (nessuna formula unica).
+- **Razze**: statistiche e talenti razziali liberi (qualsiasi statistica, anche negativa, nessun limite).
+- **Incantesimi**: Mana 10 × L × (L+1), lancio ⌈L/3⌉ turni, ricarica ⌈L/2⌉, backlash L×2 + fattori, danno 15–30 × efficacia × molt. magico × composizione.
+- **Miracoli**: Fede 5 × L × (L+1), Mana 12,5 × L × (L+1), favore richiesto per livello (+1 grado fuori dominio), potenza base × L × (1 + Fede/100) × molt. favore.
+
 ## Seed
 All'avvio, se il DB è vuoto: utenti sopra, campagna "Campagna di Alba Chiara" (sessione 15), i 6 PG di `mockup/data.js`
 (Kelvin completo con inventario MMORPG: Thanatos a due mani e Spalla del Simbionte equipaggiati → giocatore1, Eric → giocatore2, Corax → 3, Deniel → 4, Connor → 5, Dante → 6), i 3 PNG, quest aperte e questioni (con le decisioni già prese).
 Se il DB esiste già, all'avvio una migrazione leggera dà un `id` agli oggetti che non ce l'hanno e sposta il vecchio campo
 testuale `stats` in `stats_text` (gli oggetti restano nella borsa; nessuna colonna nuova nel DB: l'inventario è JSON).
 Per avere gli oggetti di esempio di Kelvin: `python -m app.seed --reset`.
+La tabella della libreria della Forgia (`forge_entries`) viene creata all'avvio anche sui DB esistenti; parte vuota.

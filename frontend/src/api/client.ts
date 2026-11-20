@@ -48,7 +48,7 @@ function detailMessage(status: number, body: unknown): string {
   return `Richiesta non riuscita (errore ${status}).`;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const token = getToken();
   let status: number;
   let data: unknown = null;

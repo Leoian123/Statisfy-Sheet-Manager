@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { AppDataProvider, useAppData } from "./auth/AppData";
@@ -11,6 +12,7 @@ import { Crea } from "./pages/Crea";
 import { LevelUp } from "./pages/LevelUp";
 import { Combattimento } from "./pages/Combattimento";
 import { Master } from "./pages/Master";
+import { Forgia } from "./pages/Forgia";
 
 export function App() {
   return (
@@ -43,7 +45,8 @@ function Gate() {
           <Route path="/personaggi/:id/level-up" element={<LevelUp />} />
           <Route path="/personaggi/:id/combattimento" element={<Combattimento />} />
           <Route path="/crea" element={<Crea />} />
-          <Route path="/master" element={<MasterOnly />} />
+          <Route path="/master" element={<MasterOnly><Master /></MasterOnly>} />
+          <Route path="/master/forgia" element={<MasterOnly><Forgia /></MasterOnly>} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
@@ -61,7 +64,7 @@ function Home() {
   return <Navigate to={`/personaggi/${id}`} replace />;
 }
 
-function MasterOnly() {
+function MasterOnly({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   if (user?.role !== "master") {
     return (
@@ -70,7 +73,7 @@ function MasterOnly() {
       </Win>
     );
   }
-  return <Master />;
+  return <>{children}</>;
 }
 
 function NotFound() {
