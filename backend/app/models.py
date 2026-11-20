@@ -81,3 +81,19 @@ class Issue(Base):
     sev: Mapped[str] = mapped_column(String(10))
     resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     decision: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class ForgeEntry(Base):
+    """Voce della libreria della campagna creata con la Forgia del Master (skill, classe, razza, titolo, PNG,
+    incontro, incantesimo, miracolo). `data` = voce completa del wizard; `closed` = chiusura di un incontro."""
+    __tablename__ = "forge_entries"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20), index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    assigned_to: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)  # id del PG, senza FK
+    npc_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    closed: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
+    session: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[str] = mapped_column(String(40), default="")
