@@ -25,9 +25,9 @@ def test_rules_endpoint(client):
     assert len(r["grades"]) == 10
 
 
-def test_preview(client):
+def test_preview(client, p1):
     stats = [{"code": "STR", "iniziale": 10, "creazione": 5}, {"code": "VIT", "iniziale": 10, "creazione": 10}]
-    r = client.post("/api/rules/preview", json={"stats": stats}).json()
+    r = client.post("/api/rules/preview", headers=p1, json={"stats": stats}).json()
     assert r["totals"] == {"STR": 15, "VIT": 20}
     assert next(d for d in r["derived"] if d["key"] == "hp")["value"] == 400
 

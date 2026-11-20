@@ -1,9 +1,10 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from . import config
 
-engine = create_engine(config.DATABASE_URL, connect_args={"check_same_thread": False})
+# timeout: quanto una scrittura aspetta il lock di SQLite prima di «database is locked» (default 5 s)
+engine = create_engine(config.DATABASE_URL, connect_args={"check_same_thread": False, "timeout": 15})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
@@ -17,3 +18,24 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Colonne aggiunte dopo la prima versione dello schema: create_all non altera le tabelle esistenti, quindi i DB
+# già creati le ricevono qui. Solo DDL costante, nessun dato dell'utente.
+_ADDED_COLUMNS = [
+    ("characters", "version", "ALTER TABLE characters ADD COLUMN version INTEGER NOT NULL DEFAULT 1"),
+    ("forge_entries", "version", "ALTER TABLE forge_entries ADD COLUMN version INTEGER NOT NULL DEFAULT 1"),
+]
+
+
+def ensure_columns(bind) -> list[str]:
+    """Aggiunge le colonne mancanti alle tabelle esistenti. Ritorna «tabella.colonna» aggiunte."""
+    insp = inspect(bind)
+    tables = set(insp.get_table_names())
+    todo = [(t, c, ddl) for t, c, ddl in _ADDED_COLUMNS
+            if t in tables and c not in {x["name"] for x in insp.get_columns(t)}]
+    if todo:
+        with bind.begin() as conn:
+            for _, _, ddl in todo:
+                conn.execute(text(ddl))
+    return [f"{t}.{c}" for t, c, _ in todo]

@@ -9,6 +9,17 @@ Riferimento funzionale: il mockup in `mockup/` (`rules.js`, `data.js`, `screens/
 - Auth: `Authorization: Bearer <token>` (JWT HS256, scadenza 12h). Ruoli: `master`, `player`.
 - Errori: status HTTP + `{"detail": "messaggio in italiano leggibile dall'utente"}`. Validazione 422 con `detail` stringa (non la lista Pydantic grezza).
 - Permessi: il `player` vede e modifica solo i PG con `owner_id` = proprio id; il `master` tutto. Tutte le rotte `/campaign`, `/npcs`, `/issues` e `/forge` sono solo master (403 altrimenti).
+- Limiti e conflitti (tutti con `detail` in italiano):
+  - **413** corpo oltre 1 MB (JSON) o 6 MB (multipart dell'import Excel).
+  - **422** numeri non finiti nel JSON (`NaN`, `Infinity`, `1e999`) e interi oltre i 64 bit (anche negli id del percorso).
+    Tetti: `amount` delle azioni di combattimento ≤ 10⁹, `hpPerTurn` e `absorb` degli effetti entro ±10⁹, `text` ≤ 300
+    caratteri, `level` ≤ 9999, `corone`/`scellini` ≤ 10¹².
+  - **409** blocco ottimistico: se due sessioni salvano lo stesso PG (o la stessa voce della Forgia) nello stesso istante,
+    la seconda riceve 409 «modificato da un'altra sessione» e deve ricaricare. Vale anche per vincoli violati in
+    contemporanea (es. due PG con lo stesso nome).
+  - **429** su `POST /api/auth/login` dopo 10 tentativi falliti in 10 minuti per stesso utente e IP (50 per IP),
+    con header `Retry-After`. Un login riuscito azzera il conteggio. Utente inesistente e password errata danno
+    la stessa risposta nello stesso tempo.
 
 ## Utenti di sviluppo (seed)
 | username | password | ruolo | display_name |
@@ -59,7 +70,7 @@ manoPrincipale, manoSecondaria`. Tipo di equipaggiamento → slot ammessi (model
 | dueMani | manoPrincipale e blocca manoSecondaria |
 | scudo, tenuto | solo manoSecondaria |
 
-- `POST /api/rules/preview` `{stats: [StatRow...], item_bonus?: {}, equip?: {}, magia?: {}, inventory?: Item[], classe_id?: string}`
+- `POST /api/rules/preview` (autenticata; `stats` ≤ 100 righe, `inventory` ≤ 2000) `{stats: [StatRow...], item_bonus?: {}, equip?: {}, magia?: {}, inventory?: Item[], classe_id?: string}`
   (con `inventory` la colonna `oggetti`, `equip` e `item_bonus` vengono ricalcolati dall'equipaggiato, come per la scheda;
   con `classe_id` si aggiunge l'equipaggiamento iniziale della classe, indossato con la stessa logica della creazione
   (`rules.starting_equipment`: solo ciò che ha i requisiti soddisfatti), così l'anteprima della creazione guidata
@@ -206,7 +217,8 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
 
 ## Import schede Excel (solo master)
 - `POST /api/import/excel` — `multipart/form-data`:
-  - `file` (obbligatorio): `.xlsx`, massimo 5 MB (413 oltre, 422 se non è un `.xlsx` leggibile)
+  - `file` (obbligatorio): `.xlsx`, massimo 5 MB (413 oltre, 422 se non è un `.xlsx` leggibile). 422 anche se
+    l'archivio si espande oltre 50 MB o ha più di 1000 elementi (zip bomb) o se un foglio supera 10.000 righe × 200 colonne.
   - `dry_run` (facoltativo, default `false`): `true` = solo report, nessuna modifica al DB
   - `owners` (facoltativo): JSON `{"NomePG": "username"}` per i PG **nuovi**; senza, il PG nuovo va al Master che importa. 422 se lo username non esiste.
   - `create_issues` (facoltativo, default `true`): crea/aggiorna le questioni del Master con le incoerenze

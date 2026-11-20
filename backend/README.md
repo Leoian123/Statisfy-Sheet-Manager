@@ -17,7 +17,9 @@ Al primo avvio crea `statisfy.db` (SQLite) e lo popola con i dati di seed se è 
 Per ricreare il DB da zero: `.venv\Scripts\python -m app.seed --reset`.
 
 Variabili d'ambiente (facoltative):
-- `STATISFY_SECRET` — segreto JWT (default di sviluppo: cambiarlo in produzione)
+- `STATISFY_SECRET` — segreto JWT, almeno 32 caratteri casuali. Se manca, al primo avvio ne viene generato
+  uno e salvato in `backend/.secret_key` (escluso da git; `STATISFY_SECRET_FILE` per un altro percorso).
+  Cancellare il file invalida tutte le sessioni.
 - `STATISFY_DB_URL` — URL SQLAlchemy del DB (default `sqlite:///backend/statisfy.db`)
 
 ## Import delle schede Excel

@@ -4,7 +4,7 @@ import type {
   CharRollRequest, NewEffect, Npc, PreviewRequest, PreviewResponse, Roll, RollCall, RollRequest, RollRequestStatus, RulesConfig, SlotKey, User,
 } from "./types";
 
-const TOKEN_KEY = "statisfy-token";
+export const TOKEN_KEY = "statisfy-token";
 const USE_MOCK = import.meta.env.VITE_MOCK === "1";
 
 export class ApiError extends Error {

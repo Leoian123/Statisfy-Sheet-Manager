@@ -4,9 +4,15 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# Tetti generici: oltre questi valori i numeri non hanno senso di gioco e gli interi non stanno in SQLite (int64)
+MAX_LEVEL = 9999
+MAX_AMOUNT = 10 ** 9
+MAX_COINS = 10 ** 12
+
+
 class LoginIn(BaseModel):
-    username: str
-    password: str
+    username: str = Field(max_length=100)
+    password: str = Field(max_length=256)
 
 
 class StatRowIn(BaseModel):
@@ -25,11 +31,11 @@ class StatRowIn(BaseModel):
 
 
 class PreviewIn(BaseModel):
-    stats: list[StatRowIn]
+    stats: list[StatRowIn] = Field(max_length=100)
     item_bonus: dict[str, float] | None = None
     equip: dict[str, float] | None = None
     magia: dict[str, int] | None = None
-    inventory: list[dict[str, Any]] | None = None  # se presente, l'equipaggiato ricalcola Oggetti/equip/bonus
+    inventory: list[dict[str, Any]] | None = Field(None, max_length=2000)  # se presente, l'equipaggiato ricalcola Oggetti/equip/bonus
     # Creazione guidata: aggiunge l'equipaggiamento iniziale della classe, indossato come alla creazione del PG
     classe_id: str | None = None
 
@@ -186,13 +192,13 @@ class CharacterPatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
     resources: Resources | None = None
     combat: CombatPatch | None = None
-    level: int | None = Field(None, ge=1)
+    level: int | None = Field(None, ge=1, le=MAX_LEVEL)
     exp_pct: float | None = Field(None, ge=0, le=100)
     regno: str | None = None
     pvp: Literal["Bianco", "Grigio", "Rosso"] | None = None
     gilda: Gilda | None = None
-    corone: int | None = Field(None, ge=0)
-    scellini: int | None = Field(None, ge=0)
+    corone: int | None = Field(None, ge=0, le=MAX_COINS)
+    scellini: int | None = Field(None, ge=0, le=MAX_COINS)
     stats: list[StatRowEdit] | None = None
     item_bonus: dict[str, float] | None = None
     equip: Equip | None = None
@@ -235,16 +241,16 @@ class DistributeIn(BaseModel):
 
 class CombatActionIn(BaseModel):
     type: Literal["damage", "heal", "spend_mp", "spend_sp", "spend_ki"]
-    amount: int = Field(gt=0)
+    amount: int = Field(gt=0, le=MAX_AMOUNT)
 
 
 class EffectIn(BaseModel):
     name: str = Field(min_length=1, max_length=60)
     kind: Literal["good", "bad"]
     turns: int = Field(ge=1, le=99)
-    text: str | None = None
-    hpPerTurn: float | None = None
-    absorb: float | None = Field(None, ge=0)
+    text: str | None = Field(None, max_length=300)
+    hpPerTurn: float | None = Field(None, ge=-MAX_AMOUNT, le=MAX_AMOUNT, allow_inf_nan=False)
+    absorb: float | None = Field(None, ge=0, le=MAX_AMOUNT, allow_inf_nan=False)
 
 
 class DeathIn(BaseModel):

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api, getToken, setToken, setUnauthorizedHandler } from "../api/client";
+import { TOKEN_KEY, api, getToken, setToken, setUnauthorizedHandler } from "../api/client";
 import type { User } from "../api/types";
 
 interface AuthState {
@@ -24,6 +24,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setUnauthorizedHandler(() => setUser(null));
     return () => setUnauthorizedHandler(null);
+  }, []);
+
+  // Più schede: il token è condiviso in localStorage. Se un'altra scheda esce o entra con un altro utente,
+  // questa scheda non deve restare con l'interfaccia del vecchio utente e il token del nuovo: si ricarica.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== TOKEN_KEY && e.key !== null) return; // null = localStorage.clear()
+      if (e.newValue === e.oldValue) return;
+      window.location.reload();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   useEffect(() => {
