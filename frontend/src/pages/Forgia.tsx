@@ -1,6 +1,7 @@
 /* Forgia del Master: wizard di creazione dei contenuti e libreria della campagna (porting di mockup/screens/forgia.js).
    Le bozze restano finché non si salva o si annulla, anche tornando alla Forgia. */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { errorText } from "../api/client";
 import { forgeApi, type ExpMode, type ExpRow, type ForgeEntry, type ForgeKind, type ForgeMeta } from "../api/forge";
 import { useAppData } from "../auth/AppData";
@@ -10,11 +11,12 @@ import { useToast } from "../components/Toast";
 import { Win } from "../components/Win";
 import { Wizard, nf, type DraftState, type WizardDef } from "../forge/engine";
 import { MAGIC_WIZARDS } from "../forge/wizardsMagic";
+import { oggetto } from "../forge/wizardsItem";
 import { PG_WIZARDS } from "../forge/wizardsPg";
 import { WORLD_WIZARDS } from "../forge/wizardsWorld";
 import "../styles/forge.css";
 
-const WIZARDS: WizardDef[] = [...PG_WIZARDS, ...WORLD_WIZARDS, ...MAGIC_WIZARDS];
+export const WIZARDS: WizardDef[] = [...PG_WIZARDS, oggetto, ...WORLD_WIZARDS, ...MAGIC_WIZARDS];
 const GROUPS = [
   { key: "Personaggi", text: "Ciò che i giocatori possono diventare e ottenere." },
   { key: "Mondo", text: "Chi e cosa incontrano ad Aethermoor." },
@@ -31,12 +33,25 @@ export function Forgia() {
   const [drafts, setDrafts] = useState<Record<string, DraftState & { dirty?: boolean }>>({});
   const [libKind, setLibKind] = useState<ForgeKind | "all">("all");
   const topRef = useRef<HTMLDivElement>(null);
+  const [params, setParams] = useSearchParams();
 
   const reload = useCallback(() => Promise.all([forgeApi.meta(), forgeApi.library()]).then(([m, l]) => { setMeta(m); setLib(l); }), []);
   useEffect(() => {
     setError(null);
     reload().catch((e) => setError(errorText(e)));
   }, [nonce, reload]);
+
+  // ?w=<wizard> (dalla Plancia di comando: «Crea al volo») apre subito quel wizard
+  const wanted = params.get("w");
+  useEffect(() => {
+    if (!meta || !wanted) return;
+    const def = WIZARDS.find((x) => x.id === wanted);
+    if (def) {
+      setDrafts((ds) => (ds[def.id] ? ds : { ...ds, [def.id]: { d: def.fresh(meta), step: 0 } }));
+      setActive(def.id);
+    }
+    setParams({}, { replace: true });
+  }, [meta, wanted, setParams]);
 
   if (error) return <ErrorBox title="Forgia del Master" message={error} action={<button type="button" className="btn" onClick={() => setNonce((x) => x + 1)}>Riprova</button>} />;
   if (!meta || !lib) return <Loading text="Accensione della Forgia…" />;
@@ -161,7 +176,7 @@ function Library({ meta, lib, setLib, kind, setKind, onChars }: {
 }
 
 /* Chiusura di un incontro (deciso il 20/11/2026): pop-up con EXP intera o divisa tra i PG che partecipano e level up. */
-function CloseEncounter({ entry, onDone }: { entry: ForgeEntry; onDone: (e: ForgeEntry | null, msgs: string[]) => void }) {
+export function CloseEncounter({ entry, onDone }: { entry: ForgeEntry; onDone: (e: ForgeEntry | null, msgs: string[]) => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [mode, setMode] = useState<ExpMode>("intera");
   const [rows, setRows] = useState<ExpRow[] | null>(null);

@@ -268,3 +268,78 @@ def test_empty_drafts_never_crash(client, master, kind):
     pv = preview(client, master, kind, {})
     assert len(pv["steps"]) == len(forge.WIZARDS[kind]["steps"]) and pv["first_bad"] in range(len(pv["steps"]))
     assert save(client, master, kind, {}).status_code == 422
+
+
+# ---------------- Plancia di comando: oggetti, assegnazione dalla libreria, incontro in corso ----------------
+ITEM = {"name": "Lama del Gelo", "rarity": "Epico", "type": "Arma", "equip_type": "unaMano", "weapon_base": 180,
+        "stats": [{"code": "STR", "val": 12}], "bonus": [{"key": "critico", "val": 3}], "reqLevel": 70,
+        "req": [{"code": "DEX", "val": 100}], "weight": 3, "qty": 1}
+
+
+def test_item_wizard_puts_item_in_bag(client, master):
+    kid = kelvin_id(client, master)
+    pv = preview(client, master, "items", {**ITEM, "charId": kid})
+    assert pv["first_bad"] == -1
+    c = pv["computed"]
+    assert c["slots"] == ["Mano principale", "Mano secondaria"] and c["unmet"] == []
+    assert c["item"]["stats_text"] == "Una mano · Base 180 · STR +12 · Prob. critico +3"
+    assert "Livello 70" not in c["unmet"]
+    r = save(client, master, "items", {**ITEM, "charId": kid})
+    assert r.status_code == 201, r.text
+    inv = char(client, master, kid)["inventory"]
+    it = next(x for x in inv if x["name"] == "Lama del Gelo")
+    assert it["id"] and it["slot"] is None and it["req"] == {"level": 70, "DEX": 100} and it["bonus"] == {"critico": 3}
+    bad = {**ITEM, "bonus": [{"key": "volare", "val": 1}]}
+    assert preview(client, master, "items", bad)["first_bad"] == 1
+
+
+def test_assign_from_library_later(client, master):
+    kid = kelvin_id(client, master)
+    title = {"name": "Maestro Artigiano", "rarity": "Raro", "how": "Completare cento opere", "bonus": [{"code": "DEX", "val": 20}],
+             "effType": "nessuno", "trigger": "Consegnare la centesima opera", "prev": "Artigiano Talentuoso"}
+    eid = save(client, master, "titles", title).json()["entry"]["id"]
+    pv = client.get(f"/api/forge/entries/{eid}/assign-preview?char_id={kid}", headers=master).json()
+    assert pv["error"] == "" and pv["replaces"] == "Artigiano Talentuoso"
+    assert {x["code"]: x["delta"] for x in pv["lines"]} == {"DEX": 15, "VIT": -5, "FIN": -10}
+    dex = char(client, master, kid)["totals"]["DEX"]
+    r = client.post(f"/api/forge/entries/{eid}/assign", json={"char_id": kid}, headers=master)
+    assert r.status_code == 200, r.text
+    assert r.json()["entry"]["data"]["assignments"][0]["name"] == "Kelvin"
+    after = char(client, master, kid)
+    assert after["totals"]["DEX"] == dex + 15 and "Artigiano Talentuoso" not in [t["name"] for t in after["titles"]]
+    again = client.post(f"/api/forge/entries/{eid}/assign", json={"char_id": kid}, headers=master)
+    assert again.status_code == 422 and "ha già il titolo" in again.json()["detail"]
+    # incantesimo con sfere che il PG non ha: serve force
+    spell = {"name": "Fiamma", "effect": "Una fiammata improvvisa", "category": "attacco", "origin": "grimorio",
+             "spheres": [{"s": "Ignis", "role": "forma"}], "level": 1, "meta": [], "env": {}, "risk": {}, "assign": False}
+    sid = save(client, master, "spells", spell).json()["entry"]["id"]
+    r = client.post(f"/api/forge/entries/{sid}/assign", json={"char_id": kid}, headers=master)
+    assert r.status_code == 422 and "Ignis" in r.json()["detail"]
+    assert client.post(f"/api/forge/entries/{sid}/assign", json={"char_id": kid, "force": True}, headers=master).status_code == 200
+    race = save(client, master, "races", {"name": "Drow", "origin": "Profondità", "desc": "Elfi corrotti dall'oscurità.",
+                                          "traits": [{"name": "Scurovisione", "effect": "Vede al buio"}], "mods": [],
+                                          "langs": "Comune", "life": 300}).json()["entry"]["id"]
+    assert client.post(f"/api/forge/entries/{race}/assign", json={"char_id": kid}, headers=master).status_code == 422
+
+
+def test_live_encounter_and_board(client, master):
+    chars = client.get("/api/forge/meta", headers=master).json()["characters"]
+    eid = save(client, master, "encounters", encounter_draft([chars[0]["id"]])).json()["entry"]["id"]
+    live = lambda body: client.post(f"/api/forge/encounters/{eid}/live", json=body, headers=master)
+    assert live({"action": "next_turn"}).status_code == 409  # non ancora in corso
+    assert live({"action": "start"}).status_code == 200
+    mx = (40 + 110 * 20) * 216 * 2
+    r = live({"action": "damage", "index": 0, "amount": 1000})
+    assert r.json()["entry"]["data"]["live"]["hp"] == [mx - 1000]
+    live({"action": "next_turn"})
+    live({"action": "damage", "index": 0, "amount": 10 ** 9})
+    assert live({"action": "heal", "index": 0, "amount": 500}).json()["entry"]["data"]["live"]["hp"] == [500]
+    b = client.get("/api/forge/board", headers=master).json()
+    assert b["active_encounter_id"] == eid and b["campaign"]["session"] >= 1
+    enc = b["encounters"][0]
+    assert enc["live"]["turn"] == 2 and enc["creatures"][0]["hp"] == 500 and enc["creatures"][0]["max"] == mx
+    assert len(b["party"]) == len(chars) and {"hp", "mp", "sp"} <= set(b["party"][0]["maxes"])
+    assert any("turno 2" in x["text"] for x in b["log"])
+    client.post(f"/api/forge/encounters/{eid}/close", json={"mode": "intera"}, headers=master)
+    b = client.get("/api/forge/board", headers=master).json()
+    assert b["encounters"] == [] and b["active_encounter_id"] is None

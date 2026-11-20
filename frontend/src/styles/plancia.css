@@ -1,0 +1,124 @@
+/* Plancia di comando del Master. PC: tutto in una pagina; telefono (≤ 760px): una sezione alla volta + barra in basso. */
+.pl-root { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.pl-gold { color: var(--gold); } .pl-fg { color: var(--fg); } .pl-good { color: var(--good); } .pl-bad { color: var(--bad); } .pl-warn { color: var(--warn); }
+.pl-hp { color: var(--hp); }
+.pl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.pl-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 16px 20px;
+  background: var(--panel); border: 1px solid var(--gold); border-radius: var(--radius); box-shadow: 0 0 24px var(--gold-soft);
+}
+.pl-head-t { display: flex; flex-direction: column; gap: 4px; flex: 1 1 300px; min-width: 0; }
+.pl-title { margin: 0; font-family: var(--font-display); font-size: var(--fs-xl); color: var(--gold); overflow-wrap: anywhere; }
+.pl-kpis { display: flex; flex-wrap: wrap; gap: 8px; }
+.pl-kpis .kv { padding: 4px 14px; border-left: 1px solid var(--line); }
+.pl-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pl-quick-b { display: flex; flex-wrap: wrap; gap: 8px; }
+.pl-quick-b .btn, .pl-head .btn { text-decoration: none; display: inline-flex; align-items: center; }
+
+.pl-cols { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.pl-main { flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.pl-side { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+
+/* Gruppo */
+.pl-sort { display: inline-flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-family: var(--font-body); font-weight: 400; }
+.pl-sort .input { width: auto; padding: 4px 8px; }
+.pl-party { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+.pl-pc { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pl-pc.is-low { border-color: var(--bad); }
+.pl-pc-top { display: flex; flex-direction: column; gap: 6px; padding: 2px; }
+.pl-pc-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pl-pc-h h3 { margin: 0; font-size: var(--fs-md); }
+.pl-pc-act { display: flex; flex-wrap: wrap; gap: 6px; }
+.pl-pc-act .btn { flex: 1 1 auto; padding: 5px 8px; font-size: var(--fs-sm); text-decoration: none; text-align: center; }
+.pl-bar { display: flex; flex-direction: column; gap: 3px; }
+.pl-bar-t { display: flex; justify-content: space-between; gap: 8px; }
+.pl-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
+.pl-hp-bg { background: var(--hp); } .pl-gold-bg { background: var(--gold); }
+.pl-thin { height: 4px; }
+.pl-dmg { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pl-dmg .input { width: 9ch; flex: 1 1 70px; }
+.pl-dmg .btn { padding: 5px 10px; }
+
+/* Assegna */
+.pl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pl-chipbtn { border-radius: 999px; padding: 5px 14px; }
+.pl-chipbtn[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); background: var(--gold-soft); }
+.pl-kinds { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line); }
+.pl-kinds button {
+  background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; color: var(--muted);
+  font-family: var(--font-display); font-weight: 600; font-size: var(--fs-sm);
+}
+.pl-kinds button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--gold); }
+.pl-assign { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.pl-assign-l { flex: 3 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.pl-entry {
+  text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--panel-2); color: inherit; font: inherit; cursor: pointer; min-width: 0;
+}
+.pl-entry[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.pl-entry .xs { overflow-wrap: anywhere; }
+.pl-entry-n { font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.pl-effect {
+  flex: 2 1 240px; min-width: 0; border: 1px solid var(--gold); border-radius: var(--radius); padding: 14px;
+  display: flex; flex-direction: column; gap: 8px; background: var(--gold-soft);
+}
+.pl-delta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+
+/* Incontro */
+.pl-banner {
+  display: none; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border: 1px solid var(--gold);
+  border-radius: var(--radius); background: var(--gold-soft); color: inherit; font: inherit; cursor: pointer;
+}
+.pl-enc-t { font-family: var(--font-display); font-size: var(--fs-lg); }
+.pl-cr { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.pl-cr-h { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pl-kv2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pl-enc-act { display: flex; flex-wrap: wrap; gap: 8px; }
+.pl-enc-act .btn { flex: 1 1 auto; }
+.pl-pre { white-space: pre-line; }
+
+/* Liste (PNG, quest, registro) */
+.pl-list { gap: 0; padding-top: 6px; padding-bottom: 6px; }
+.pl-li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.pl-li-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.pl-npc:last-child .pl-li, .pl-list > .pl-li:last-child { border-bottom: 0; }
+.pl-note { display: flex; gap: 6px; padding: 0 0 10px; flex-wrap: wrap; }
+.pl-note .input { flex: 1 1 180px; }
+.pl-log { gap: 8px; }
+.pl-log-r { display: flex; gap: 10px; align-items: baseline; }
+
+/* Barra in basso: solo telefono */
+.pl-tabbar { display: none; }
+.pl-dot { position: absolute; top: 8px; right: calc(50% - 16px); width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+
+@media (max-width: 760px) {
+  .pl-root { padding-bottom: 84px; gap: 14px; }
+  .pl-head { padding: 12px 14px; gap: 10px; }
+  .pl-kpis { display: none; }
+  .pl-head .row { width: 100%; }
+  .pl-head .row > * { flex: 1 1 auto; justify-content: center; min-height: 44px; }
+  .pl-banner { display: flex; }
+  .pl-root[data-tab="gruppo"] .pl-sec:not([data-sec="gruppo"]),
+  .pl-root[data-tab="incontro"] .pl-sec:not([data-sec="incontro"]),
+  .pl-root[data-tab="forgia"] .pl-sec:not([data-sec="forgia"]),
+  .pl-root[data-tab="assegna"] .pl-sec:not([data-sec="assegna"]),
+  .pl-root[data-tab="altro"] .pl-sec:not([data-sec="altro"]) { display: none; }
+  .pl-quick { flex-direction: column; align-items: stretch; }
+  .pl-quick-b { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pl-quick-b .btn { justify-content: center; min-height: 48px; }
+  .pl-pc-act .btn, .pl-dmg .btn, .pl-enc-act .btn, .pl-chipbtn, .pl-kinds button, .pl-note .btn { min-height: 44px; }
+  .pl-party { grid-template-columns: minmax(0, 1fr); }
+  .pl-tabbar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--panel);
+    border-top: 1px solid var(--line); padding: 0 4px env(safe-area-inset-bottom, 0px);
+  }
+  .pl-tabbar button {
+    position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    min-height: 58px; background: transparent; border: 0; color: var(--muted); cursor: pointer;
+    font-family: var(--font-display); font-weight: 600; font-size: var(--fs-xs);
+  }
+  .pl-tabbar button[aria-current="page"] { color: var(--gold); box-shadow: inset 0 2px 0 var(--gold); }
+}
+.pl-root a.btn { color: var(--fg); text-decoration: none; }
+.pl-root a.btn:hover { color: var(--fg); }

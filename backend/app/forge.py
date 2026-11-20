@@ -18,7 +18,8 @@ from typing import Any, Callable
 from . import rules as R
 
 KIND_LABEL = {"skills": "Skill", "classes": "Classi", "races": "Razze", "titles": "Titoli", "npcs": "PNG",
-              "encounters": "Incontri", "spells": "Incantesimi", "miracles": "Miracoli"}
+              "encounters": "Incontri", "spells": "Incantesimi", "miracles": "Miracoli",
+              "items": "Oggetti"}
 KINDS = list(KIND_LABEL)
 
 
@@ -414,24 +415,29 @@ def title_compute(d: dict, ctx: dict) -> dict:
                  "acq": R.TITLE_ACQ.get(d.get("rarity") or ""), "example": R.TITLE_EX.get(d.get("rarity") or ""),
                  "char": char_brief(c), "assign": None}
     if c:
-        prev = next((t for t in c["titles"] if d.get("prev") and t.get("name") == d.get("prev")), None)
-        delta = dict(bonus)
-        for k, v in (dct(prev.get("bonus")) if prev else {}).items():
-            delta[k] = R.clean(delta.get(k, 0) - R.num(v))
-        lines = []
-        for k, v in delta.items():
-            if not v:
-                continue
-            row = next((r for r in c["stats"] if r.get("code") == k), None)
-            if row is None:
-                lines.append({"code": k, "missing": True, "delta": v})
-                continue
-            before = R.num(row.get("titoli"))
-            tot = R.stat_total(row)
-            lines.append({"code": k, "missing": False, "delta": v, "before": R.clean(before), "after": R.clean(before + v),
-                          "total_before": tot, "total_after": R.clean(tot + v)})
-        out["assign"] = {"replaces": prev["name"] if prev else None, "clash": _title_clash(d, c), "lines": lines}
+        out["assign"] = {**title_delta(bonus, d.get("prev"), c), "clash": _title_clash(d, c)}
     return out
+
+
+def title_delta(bonus: dict, prev_name: str | None, c: dict) -> dict:
+    """Variazioni della colonna «Titoli» se il PG riceve il titolo (togliendo il precedente se è un'evoluzione)."""
+    prev = next((t for t in c["titles"] if prev_name and t.get("name") == prev_name), None)
+    delta = dict(bonus)
+    for k, v in (dct(prev.get("bonus")) if prev else {}).items():
+        delta[k] = R.clean(delta.get(k, 0) - R.num(v))
+    lines = []
+    for k, v in delta.items():
+        if not v:
+            continue
+        row = next((r for r in c["stats"] if r.get("code") == k), None)
+        if row is None:
+            lines.append({"code": k, "missing": True, "delta": v})
+            continue
+        before = R.num(row.get("titoli"))
+        tot = R.stat_total(row)
+        lines.append({"code": k, "missing": False, "delta": v, "before": R.clean(before), "after": R.clean(before + v),
+                      "total_before": tot, "total_after": R.clean(tot + v)})
+    return {"replaces": prev["name"] if prev else None, "lines": lines}
 
 
 def title_build(d: dict, ctx: dict) -> dict:
@@ -815,6 +821,163 @@ def miracle_apply(e: dict, pg: dict) -> list[str]:
 
 
 # ======================================================================
+# 9. OGGETTO (inventario MMORPG: tipo → slot, bonus alle statistiche e alle derivate, requisiti)
+# ======================================================================
+ITEM_BONUS_KEYS = list(dict.fromkeys([*R.EQUIP_FORMULA_KEYS, *R.DERIVED_KEYS]))
+
+
+def item_bonus_options() -> list[dict]:
+    labels = {d["key"]: d["label"] for d in R.DERIVED}
+    labels.update({"difesa": "Difesa (equip)", "difesaMagica": "Difesa magica (equip)", "blocco": "Blocco scudo (equip)"})
+    return [{"v": k, "l": labels.get(k, k)} for k in ITEM_BONUS_KEYS]
+
+
+def _rows_map(rows: Any, key: str = "code") -> dict:
+    out: dict[str, float] = {}
+    for r in lst(rows):
+        r = dct(r)
+        k = txt(r.get(key))
+        v = as_num(r.get("val"))
+        if k and v:
+            out[k] = R.clean(out.get(k, 0) + v)
+    return out
+
+
+def _item(d: dict) -> dict:
+    req = _rows_map(d.get("req"))
+    lv = as_int(d.get("reqLevel"), 1, 999)
+    if lv:
+        req = {"level": lv, **req}
+    et = d.get("equip_type") if d.get("equip_type") in R.EQUIP_TYPES else None
+    raw = {"name": txt(d.get("name")) or "Oggetto", "rarity": d.get("rarity") or "Comune", "type": txt(d.get("type")),
+           "equip_type": et, "stats": _rows_map(d.get("stats")), "bonus": _rows_map(d.get("bonus"), "key"), "req": req,
+           "weapon_base": as_num(d.get("weapon_base")) or None, "weight": as_num(d.get("weight")) or 0,
+           "qty": as_int(d.get("qty"), 1, 99999) or 1, "desc": txt(d.get("desc")) or None, "stats_text": txt(d.get("stats_text"))}
+    it = R.normalize_item(raw)
+    if not it["stats_text"]:
+        parts = [R.EQUIP_TYPES[et]["label"]] if et else []
+        if it["weapon_base"]:
+            parts.append(f"Base {R.fmt_n(it['weapon_base'])}")
+        parts += [f"{k} {signed(v)}" for k, v in it["stats"].items()]
+        labels = {o["v"]: o["l"] for o in item_bonus_options()}
+        parts += [f"{labels.get(k, k)} {signed(v)}" for k, v in it["bonus"].items()]
+        it["stats_text"] = " · ".join(parts)
+    return it
+
+
+def item_check(d: dict, ctx: dict) -> list[str]:
+    s0 = ("dai un nome all'oggetto (almeno 2 caratteri)." if not filled(d.get("name"), 2)
+          else "scegli la rarità." if d.get("rarity") not in R.RARITIES
+          else "indica il tipo (es. Arma, Armatura, Pozione)." if not filled(d.get("type"), 2)
+          else "tipo di equipaggiamento sconosciuto." if d.get("equip_type") not in (None, "", *R.EQUIP_TYPES) else "")
+    s1 = ""
+    if d.get("weapon_base") not in (None, "") and (as_num(d.get("weapon_base")) is None or as_num(d.get("weapon_base")) < 0):
+        s1 = "la Base danno dell'arma è un numero ≥ 0, o lasciala vuota."
+    for i, r in enumerate(lst(d.get("stats"))):
+        r = dct(r)
+        if s1:
+            break
+        if not re.fullmatch(r"[A-Z]{2,5}", txt(r.get("code"))):
+            s1 = f"statistica {i + 1}: scegli il codice."
+        elif as_int(r.get("val"), -99999, 99999) in (None, 0):
+            s1 = f"{txt(r.get('code'))}: un intero diverso da 0, o togli la riga."
+    for i, r in enumerate(lst(d.get("bonus"))):
+        r = dct(r)
+        if s1:
+            break
+        if r.get("key") not in ITEM_BONUS_KEYS:
+            s1 = f"bonus {i + 1}: scegli il valore derivato."
+        elif as_num(r.get("val")) in (None, 0):
+            s1 = f"bonus {i + 1}: un numero diverso da 0, o togli la riga."
+    s2 = ""
+    if d.get("reqLevel") not in (None, "") and as_int(d.get("reqLevel"), 1, 999) is None:
+        s2 = "il livello richiesto va da 1 a 999, o lascialo vuoto."
+    for i, r in enumerate(lst(d.get("req"))):
+        r = dct(r)
+        if s2:
+            break
+        if not re.fullmatch(r"[A-Z]{2,5}", txt(r.get("code"))) or as_int(r.get("val"), 1, 99999) is None:
+            s2 = f"requisito {i + 1}: statistica e valore minimo (intero ≥ 1)."
+    if not s2 and (as_num(d.get("weight")) is None or (as_num(d.get("weight")) or 0) < 0):
+        s2 = "il peso è un numero ≥ 0 (kg)."
+    if not s2 and as_int(d.get("qty"), 1, 99999) is None:
+        s2 = "la quantità è un intero ≥ 1."
+    c = char_by_id(ctx, d.get("charId"))
+    s3 = "personaggio non trovato." if d.get("charId") not in (None, "") and c is None else ""
+    return [s0, s1, s2, s3]
+
+
+def item_compute(d: dict, ctx: dict) -> dict:
+    it = _item(d)
+    c = char_by_id(ctx, d.get("charId"))
+    et = R.EQUIP_TYPES.get(it["equip_type"] or "")
+    return {"item": it, "slots": [R.SLOT_LABELS[s] for s in et["slots"]] if et else [],
+            "two_handed": bool(et and et.get("two_handed")), "category": next((x["label"] for x in R.CATEGORIES if x["key"] == it["category"]), ""),
+            "weapon_range": R.weapon_base_range(it["rarity"]), "char": char_brief(c),
+            "unmet": R.unmet_requirements(c["ri"], it) if c else []}
+
+
+def item_build(d: dict, ctx: dict) -> dict:
+    it = _item(d)
+    c = char_by_id(ctx, d.get("charId"))
+    return {"name": it["name"], "rarity": it["rarity"], "item": it, "assignedTo": c["id"] if c else None,
+            "summary": f"{it['rarity']} · {it['type']}{' · ' + it['stats_text'] if it['stats_text'] else ''}"
+                       + (f" · a {c['name']}" if c else "")}
+
+
+def item_apply(e: dict, pg: dict) -> list[str]:
+    it = R.normalize_item({**e["item"], "id": R.new_item_id(), "slot": None})
+    pg["inventory"].append(it)
+    return [f"{pg['name']}: «{it['name']}» nella borsa{' (×' + str(it['qty']) + ')' if it['qty'] > 1 else ''}."]
+
+
+# ======================================================================
+# Assegnare a un PG una voce già nella libreria
+# ======================================================================
+ASSIGNABLE = ["titles", "items", "skills", "spells", "miracles"]
+
+
+def assign_preview(kind: str, e: dict, c: dict) -> dict:
+    """Esito dell'assegnazione di una voce della libreria al PG `c` (dict di contesto):
+    {error, issues (servono force), lines/replaces (titoli), unmet (oggetti), text}."""
+    out: dict = {"error": "", "issues": [], "lines": [], "replaces": None, "unmet": []}
+    name = txt(e.get("name"))
+    if kind == "titles":
+        if any(txt(t.get("name")).lower() == name.lower() for t in c["titles"]):
+            out["error"] = f"{c['name']} ha già il titolo «{name}»."
+        bad = [n for n in lst(e.get("incompatible")) if n in [t.get("name") for t in c["titles"]] and n != e.get("prev")]
+        if bad and not out["error"]:
+            out["error"] = f"{c['name']} ha «{'», «'.join(bad)}», incompatibile con questo titolo."
+        out.update(title_delta(dct(e.get("bonus")), e.get("prev"), c))
+    elif kind == "skills":
+        lst_ = c["active_skills"] if e.get("mode") == "attiva" else c["skills"]
+        if any(txt(x.get("name")).lower() == name.lower() for x in lst_):
+            out["error"] = f"{c['name']} ha già una skill chiamata «{name}»."
+    elif kind == "spells":
+        if any(txt(x.get("name")).lower() == name.lower() for x in c["active_skills"]):
+            out["error"] = f"{c['name']} ha già «{name}» tra le skill attive."
+        elif e.get("origin") == "improvvisato":
+            out["error"] = "Un incantesimo improvvisato non diventa una skill."
+        else:
+            sph = [{"s": x.get("sphere")} for x in lst(e.get("spheres"))]
+            reqs = R.sphere_reqs(sph, int(R.num(e.get("castLevel"))), bool(e.get("combo")), c["skills"])
+            out["issues"] = [f"{c['name']} non possiede {r['s']} Grado {R.ROMAN[r['need']]}" for r in reqs if r["status"] == "missing"]
+    elif kind == "miracles":
+        if any(txt(x.get("name")).lower() == name.lower() for x in c["active_skills"]):
+            out["error"] = f"{c['name']} ha già «{name}» tra le skill attive."
+        else:
+            god = next((g for g in R.GODS if g["name"] == e.get("god")), None)
+            d = {"god": god["key"] if god else "", "level": e.get("level"), "fede": e.get("fede"), "favor": e.get("favor"),
+                 "cost": e.get("cost"), "cd": e.get("cd"), "nature": e.get("nature"), "charId": c["id"]}
+            out["issues"] = _miracle_state(d, {"chars": [c]})["issues"]
+    elif kind == "items":
+        out["unmet"] = R.unmet_requirements(c["ri"], dct(e.get("item")))
+    else:
+        out["error"] = "Questo tipo di voce non si assegna a un PG."
+    return out
+
+
+# ======================================================================
 # Registro dei wizard
 # ======================================================================
 WIZARDS: dict[str, dict[str, Any]] = {
@@ -834,6 +997,8 @@ WIZARDS: dict[str, dict[str, Any]] = {
                "compute": spell_compute, "build": spell_build, "apply": spell_apply},
     "miracles": {"steps": ["Divinità", "Natura", "Requisiti e costo", "Voti e tabù", "Anteprima"], "check": miracle_check,
                  "compute": miracle_compute, "build": miracle_build, "apply": miracle_apply},
+    "items": {"steps": ["Identità", "Effetti", "Requisiti e peso", "Assegna"], "check": item_check,
+              "compute": item_compute, "build": item_build, "apply": item_apply},
 }
 
 
