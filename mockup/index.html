@@ -34,6 +34,7 @@
 
 <div class="app">
   <nav class="nav" id="nav" aria-label="Sezioni">
+    <a href="#plancia" data-route="plancia">Plancia</a>
     <a href="#scheda" data-route="scheda">Scheda personaggio</a>
     <a href="#inventario" data-route="inventario">Inventario</a>
     <a href="#levelup" data-route="levelup">Level up</a>
@@ -55,12 +56,13 @@
 <script src="screens/master.js" charset="utf-8"></script>
 <script src="screens/inventario.js" charset="utf-8"></script>
 <script src="screens/forgia.js" charset="utf-8"></script>
+<script src="screens/plancia.js" charset="utf-8"></script>
 <script src="screens/wizards-magia.js" charset="utf-8"></script>
 <script src="screens/wizards-master.js" charset="utf-8"></script>
 <script>
 (function () {
   const S = window.STATISFY;
-  const ROUTES = ["scheda", "inventario", "crea", "levelup", "combattimento", "master", "forgia"];
+  const ROUTES = ["plancia", "scheda", "inventario", "crea", "levelup", "combattimento", "master", "forgia"];
   const MASTER_ONLY = ["master", "forgia"];
 
   // Menu account in alto a sinistra (creazione personaggio: funzione dell'utente, non della scheda)
