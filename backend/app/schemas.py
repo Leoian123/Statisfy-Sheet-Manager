@@ -30,6 +30,8 @@ class PreviewIn(BaseModel):
     equip: dict[str, float] | None = None
     magia: dict[str, int] | None = None
     inventory: list[dict[str, Any]] | None = None  # se presente, l'equipaggiato ricalcola Oggetti/equip/bonus
+    # Creazione guidata: aggiunge l'equipaggiamento iniziale della classe, indossato come alla creazione del PG
+    classe_id: str | None = None
 
 
 class CreationStats(BaseModel):
@@ -56,6 +58,7 @@ class Resources(BaseModel):
     hp: float = Field(ge=0)
     mp: float = Field(ge=0)
     sp: float = Field(ge=0)
+    ki: float | None = Field(default=None, ge=0)  # solo per i PG con la statistica avanzata KI
 
 
 class Equip(BaseModel):
@@ -231,7 +234,7 @@ class DistributeIn(BaseModel):
 
 
 class CombatActionIn(BaseModel):
-    type: Literal["damage", "heal", "spend_mp", "spend_sp"]
+    type: Literal["damage", "heal", "spend_mp", "spend_sp", "spend_ki"]
     amount: int = Field(gt=0)
 
 

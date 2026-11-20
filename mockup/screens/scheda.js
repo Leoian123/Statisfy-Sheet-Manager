@@ -185,6 +185,7 @@
     const res = c.resources || { hp: d.hp, mp: d.mp, sp: d.sp };
     const rows = [
       ["hp", "Vita (HP)"], ["mp", "Mana (MP)"], ["sp", "Stamina (SP)"],
+      ...(d.ki != null ? [["ki", "KI"]] : []), // barra KI come nel foglio Excel di Corax: 100 + KI×8
     ].map(([k, label]) => `
       <div class="sc-res-row">
         ${S.ui.bar(k, label, Math.min(res[k] ?? d[k], d[k]), d[k])}

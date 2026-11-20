@@ -18,6 +18,7 @@
   --hp: #e35d5d;
   --mp: #5590f2;
   --sp: #4fc28f;
+  --ki: #f08c3e;          /* KI (Monaco) */
   --good: #4fc28f;
   --warn: #e8a33c;
   --bad: #e35d5d;
@@ -48,7 +49,7 @@
     --bg: #f2f1f7; --bg-glow: #e6e0fa; --panel: #ffffff; --panel-2: #f7f6fc;
     --line: #dcd8ea; --line-strong: #c3bddb; --fg: #1b1d2c; --muted: #5d6280;
     --gold: #9a6b12; --gold-soft: #9a6b1218; --violet: #6445d4; --violet-soft: #6445d414;
-    --on-accent: #ffffff; --hp: #c43c3c; --mp: #2c6cd4; --sp: #1f8a5a;
+    --on-accent: #ffffff; --hp: #c43c3c; --mp: #2c6cd4; --sp: #1f8a5a; --ki: #c25e0d;
     --good: #1f8a5a; --warn: #b36a00; --bad: #c43c3c;
     --r-comune: #6b7085; --r-noncomune: #2f8d43; --r-raro: #2c6cd4; --r-epico: #7c43d0;
     --r-unico: #0f8c87; --r-leggendario: #c25e0d; --r-mitico: #c02a4c; --r-divino: #8f7a12;
@@ -59,7 +60,7 @@
   --bg: #f2f1f7; --bg-glow: #e6e0fa; --panel: #ffffff; --panel-2: #f7f6fc;
   --line: #dcd8ea; --line-strong: #c3bddb; --fg: #1b1d2c; --muted: #5d6280;
   --gold: #9a6b12; --gold-soft: #9a6b1218; --violet: #6445d4; --violet-soft: #6445d414;
-  --on-accent: #ffffff; --hp: #c43c3c; --mp: #2c6cd4; --sp: #1f8a5a;
+  --on-accent: #ffffff; --hp: #c43c3c; --mp: #2c6cd4; --sp: #1f8a5a; --ki: #c25e0d;
   --good: #1f8a5a; --warn: #b36a00; --bad: #c43c3c;
   --r-comune: #6b7085; --r-noncomune: #2f8d43; --r-raro: #2c6cd4; --r-epico: #7c43d0;
   --r-unico: #0f8c87; --r-leggendario: #c25e0d; --r-mitico: #c02a4c; --r-divino: #8f7a12;
@@ -252,7 +253,7 @@ main#view { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .bar-top .num { color: var(--fg); }
 .bar-track { height: 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 999px; background: var(--c, var(--violet)); transition: width .3s ease; }
-.bar.hp { --c: var(--hp); } .bar.mp { --c: var(--mp); } .bar.sp { --c: var(--sp); }
+.bar.hp { --c: var(--hp); } .bar.mp { --c: var(--mp); } .bar.sp { --c: var(--sp); } .bar.ki { --c: var(--ki); }
 .bar.exp { --c: var(--gold); } .bar.exp .bar-track { height: 5px; }
 
 /* ---------- Tabelle ---------- */

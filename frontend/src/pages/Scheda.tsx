@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { Character, Derived, Resources } from "../api/types";
+import type { Character, Derived, ResourceKey } from "../api/types";
+import { resourceMaxes, resourcesFor } from "../lib/resources";
 import { useAppData } from "../auth/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { EditToggle } from "../components/edit/fields";
@@ -103,17 +104,18 @@ function Header({ c, onChange }: { c: Character; onChange: (c: Character) => voi
   );
 }
 
-const RES: [keyof Resources, string][] = [["hp", "Vita (HP)"], ["mp", "Mana (MP)"], ["sp", "Stamina (SP)"]];
-
 function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Derived>; onChange: (c: Character) => void }) {
   const { busy, error, run } = useBusy();
   const master = useIsMaster();
   const [edit, setEdit] = useState(false);
 
-  async function move(k: keyof Resources, dir: 1 | -1) {
+  const res = resourcesFor(d);
+  const curOf = (k: ResourceKey, max: number) => c.resources[k] ?? max;  // KI mancante = al massimo
+
+  async function move(k: ResourceKey, dir: 1 | -1) {
     const max = d[k]?.value ?? 0;
     const step = Math.max(1, Math.round(max * 0.1));
-    const cur = Math.min(c.resources[k], max);
+    const cur = Math.min(curOf(k, max), max);
     const next = Math.max(0, Math.min(max, cur + dir * step));
     if (next === c.resources[k]) return;
     const res = await run(() => api.patchCharacter(c.id, { resources: { ...c.resources, [k]: next } }));
@@ -121,10 +123,9 @@ function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Deri
   }
 
   if (edit) {
-    const max = { hp: d.hp?.value ?? 0, mp: d.mp?.value ?? 0, sp: d.sp?.value ?? 0 };
     return (
       <Win title="Risorse" right={<EditToggle on onClick={() => setEdit(false)} label="risorse" />}>
-        <ResourcesEditor key={c.id} c={c} max={max} onChange={onChange} onClose={() => setEdit(false)} />
+        <ResourcesEditor key={c.id} c={c} max={resourceMaxes(d)} onChange={onChange} onClose={() => setEdit(false)} />
       </Win>
     );
   }
@@ -132,15 +133,15 @@ function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Deri
   return (
     <Win title="Risorse" right={master ? <EditToggle on={false} onClick={() => setEdit(true)} label="risorse" /> : undefined}>
       <div className="sc-res">
-        {RES.map(([k, label]) => {
-          const max = d[k]?.value ?? 0;
+        {res.map(({ key: k, label, max }) => {
+          const cur = curOf(k, max);
           return (
             <div className="sc-res-row" key={k}>
-              <Bar kind={k} label={label} cur={Math.min(c.resources[k], max)} max={max} />
+              <Bar kind={k} label={label} cur={Math.min(cur, max)} max={max} />
               <div className="sc-res-btns">
-                <button type="button" className="btn icon" disabled={busy || c.resources[k] <= 0} onClick={() => move(k, -1)}
+                <button type="button" className="btn icon" disabled={busy || cur <= 0} onClick={() => move(k, -1)}
                   aria-label={`${label}: −10%`} title="−10% del massimo">−</button>
-                <button type="button" className="btn icon" disabled={busy || c.resources[k] >= max} onClick={() => move(k, 1)}
+                <button type="button" className="btn icon" disabled={busy || cur >= max} onClick={() => move(k, 1)}
                   aria-label={`${label}: +10%`} title="+10% del massimo">+</button>
               </div>
             </div>

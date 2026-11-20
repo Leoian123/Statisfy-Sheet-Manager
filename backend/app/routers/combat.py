@@ -8,7 +8,7 @@ from ..auth import current_user
 from ..db import get_db
 from ..models import User
 from ..schemas import CombatActionIn, DeathIn, EffectIn
-from ..serialize import maxes
+from ..serialize import maxes, maxes_of, rules_input
 from .characters import get_char, save, set_json, tidy
 
 router = APIRouter(prefix="/api/characters/{char_id}", tags=["combat"])
@@ -45,9 +45,11 @@ def combat_action(char_id: int, data: CombatActionIn, user: User = Depends(curre
         r["hp"] = min(mx["hp"], cur + amt) if cur < mx["hp"] else cur
         rules.add_log(combat, f"Cura: +{n(gain)} HP. HP {n(r['hp'])}.")
     else:
-        k = "mp" if data.type == "spend_mp" else "sp"
+        k = data.type.removeprefix("spend_")
         L = k.upper()
-        cur = rules.num(r.get(k))
+        if k not in mx:
+            raise HTTPException(422, f"{c.name} non ha la statistica {L}.")
+        cur = rules.num(r.get(k, mx[k]))
         if cur < amt:
             raise HTTPException(422, f"{L} insufficienti: servono {n(amt)}, disponibili {n(cur)}.")
         r[k] = cur - amt
@@ -60,7 +62,9 @@ def combat_action(char_id: int, data: CombatActionIn, user: User = Depends(curre
 def combat_end_turn(char_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     c = get_char(char_id, user, db)
     combat, r = _state(c)
-    rules.end_turn(r, combat, maxes(c))
+    ri = rules_input(c)
+    ki_regen = next((d["value"] for d in rules.derived(ri) if d["key"] == "kiCombat"), 0)
+    rules.end_turn(r, combat, maxes_of(ri), ki_regen)
     _store(c, combat, r)
     return save(db, c)
 
@@ -120,10 +124,11 @@ def death(char_id: int, data: DeathIn, user: User = Depends(current_user), db: S
         c.exp_pct = p["exp_pct"]
     mx = maxes(c)  # le statistiche non cambiano con la morte: i massimi restano quelli delle stat
     if data.respawn == "checkpoint":
-        r = {k: rules.js_round(mx[k] / 2) for k in ("hp", "mp", "sp")}
-        res_line = f"Rinascita al checkpoint: HP {n(r['hp'])} · MP {n(r['mp'])} · SP {n(r['sp'])} (50%)."
+        r = {k: rules.js_round(mx[k] / 2) for k in rules.resource_keys(mx)}
+        parts = " · ".join(f"{rules.RESOURCE_LABELS[k]} {n(r[k])}" for k in r)
+        res_line = f"Rinascita al checkpoint: {parts} (50%)."
     else:
-        r = {"hp": 1, "mp": min(rules.num(r.get("mp")), mx["mp"]), "sp": min(rules.num(r.get("sp")), mx["sp"])}
+        r = {**rules.clamp_resources(r, mx), "hp": 1}  # MP, SP e KI restano come sono (entro il massimo)
         res_line = "Rinascita sul posto: 1 HP."
     combat.update({"turn": 1, "effects": [], "cooldowns": [], "log": []})
     if p["protected"]:

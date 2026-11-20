@@ -552,7 +552,7 @@
     const ohw = R().offHandWeapon(c);
     if (ohw) {
       const oh = R().offHandPct(c);
-      chips += `<span class="chip inv-chip-wrap ${oh.talent ? "good" : "warn"}" title="${esc(`Doppia impugnatura libera per tutti: il danno della mano secondaria lo decide il talento. Senza talento: ${R().OFFHAND_BASE_PCT}% (proposta).`)}">${esc(`${ohw.name} in mano secondaria: ${nf(oh.pct)}% danno`)}</span>`;
+      chips += `<span class="chip inv-chip-wrap ${oh.talent ? "good" : "warn"}" title="${esc(`Doppia impugnatura libera per tutti: il danno della mano secondaria lo decide il talento. Senza talento: ${R().OFFHAND_BASE_PCT}%.`)}">${esc(`${ohw.name} in mano secondaria: ${nf(oh.pct)}% danno`)}</span>`;
     }
     const bonusBox = `<div class="inv-group">Bonus attivi degli oggetti</div>
       <div class="inv-bonus">${chips || `<span class="muted small">Nessun bonus attivo.</span>`}</div>`;

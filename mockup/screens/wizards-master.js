@@ -83,7 +83,7 @@
       const n = Math.max(0, Number(c.count) || 0);
       if (!n) continue;
       const g = expGain(pgLevel, Number(c.level) || 0);
-      const rm = rarity(c.rarity).creatureMult; // deciso 20/11/2026: la rarità moltiplica l'EXP (numero: grado³, proposta)
+      const rm = rarity(c.rarity).creatureMult; // deciso 20/11/2026: la rarità moltiplica l'EXP (grado³, deciso)
       tot += g.pct * rm * n;
       parts.push(`${n}× ${c.name || "creatura"}: ${nf(g.base)}%${g.factor < 1 ? ` × ${nf(g.factor)}` : ""}${rm > 1 ? ` × ${rm} (${c.rarity})` : ""}`);
     }
@@ -433,6 +433,8 @@
       .wmr-line > .field.wmr-grow { flex: 2 1 180px; }
       .wmr-line > .field.wmr-narrow { flex: 1 1 72px; max-width: 120px; }
       .wmr-line > .btn { flex: none; }
+      .wmr-drop { display: grid; gap: 6px; min-width: 0; }
+      .wmr-drop-t td, .wmr-drop-t th { padding: 4px 8px; }
       .wmr-grades { flex: 1 1 100%; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; min-width: 0; }
       .wmr-grades .field { gap: 2px; min-width: 0; }
       .wmr-grades .label { text-align: center; }
@@ -1235,7 +1237,64 @@
      ===================================================================== */
   const ENVS = ["Foresta", "Montagna", "Grotta o dungeon", "Città", "Deserto", "Ghiacci", "Mare o costa", "Palude", "Sottosuolo", "Rovine", "Piano oscuro"];
   const PROP_DIFF = "difficoltà = (Vita totale creature × Danno totale creature) / (Vita totale gruppo × Danno totale gruppo). Danno di un PG = Base arma equipaggiata (o media della rarità tipica per il suo livello) × max(molt. fisico, molt. magico) × attacchi per turno. Soglie: <0,1 Banale, <0,3 Facile, <0,7 Equilibrato, <1,5 Difficile, <4 Mortale, oltre Impossibile. Non conta Difesa, critici, abilità.";
-  const PROP_LOOT = "il bottino ha la rarità della creatura più rara dell'incontro.";
+  const DEC_LOOT = "il bottino lo decide il Master; il profilo di drop è un suggerimento generato al momento.";
+  const PROP_DROP = "profilo: un tiro d100 per creatura (max 6). Le soglie dipendono dal tipo di profilo, la rarità parte da quella della creatura più rara; monete: Corone = numero di creature × grado di rarità² / 4 (±50%) più 0–19 Scellini.";
+
+  /* ---------- Profili di drop generici, generati sul momento (deciso il 20/11/2026) ----------
+     Il Master decide il bottino: il profilo è una tabella d100 da usare o ignorare, rigenerabile a piacere. */
+  const DROP_KINDS = [
+    { name: "Avaro", text: "Poco o niente: bestie senza tesoro.", up: 2, same: 15, down: 35 },
+    { name: "Normale", text: "Bottino da strada: qualcosa di utile, raramente di valore.", up: 5, same: 25, down: 40 },
+    { name: "Generoso", text: "Creature che custodiscono o accumulano.", up: 10, same: 35, down: 35 },
+    { name: "Tesoro", text: "Un covo, un forziere, un boss: il bottino è il punto.", up: 20, same: 45, down: 25 },
+  ];
+  const DROP_CATS = ["Arma", "Armatura", "Accessorio", "Consumabile", "Materiale raro", "Pergamena o libro"];
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function rarityStep(name, d) {
+    const R = S.rules.RARITIES;
+    return R[Math.max(0, Math.min(R.length - 1, R.indexOf(name) + d))];
+  }
+  function makeDropProfile(cs) {
+    const top = topRarity(cs);
+    const kind = pick(DROP_KINDS);
+    const cats = DROP_CATS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+    const a = kind.up, b = a + kind.same, c = b + kind.down;
+    const pad = (n) => String(n).padStart(2, "0");
+    const rows = [
+      { roll: `01–${pad(a)}`, what: `Oggetto ${rarityStep(top, 1)} (${cats[0]})`, rarity: rarityStep(top, 1) },
+      { roll: `${pad(a + 1)}–${pad(b)}`, what: `Oggetto ${top} (${cats[1]})`, rarity: top },
+      { roll: `${pad(b + 1)}–${pad(c)}`, what: `Oggetto ${rarityStep(top, -1)} (${cats[2]})`, rarity: rarityStep(top, -1) },
+      { roll: `${pad(c + 1)}–100`, what: "Solo monete e materiali", rarity: "" },
+    ];
+    /* Monete: Corone = numero × grado² / 4 (±50%), più qualche Scellino. Kelvin ne ha 25: un incontro non deve valere un tesoro */
+    let coins = 0;
+    for (const x of cs) coins += (Number(x.count) * rarity(x.rarity).grade ** 2 / 4) * rnd(0.5, 1.5);
+    const corone = Math.round(coins), scellini = Math.floor(rnd(0, 20));
+    const mats = cs.map((x) => ({ name: `Materiali di ${x.name.trim().toLowerCase()}`, qty: Math.max(1, Math.round(Number(x.count) * rnd(0.5, 2))), rarity: x.rarity }));
+    return { kind: kind.name, text: kind.text, top, rows, rolls: Math.min(6, cs.reduce((t, x) => t + Number(x.count), 0)), corone, scellini, mats };
+  }
+  function rollDrop(pf) {
+    const lims = pf.rows.map((r) => Number(r.roll.split("–")[1]));
+    const out = [];
+    for (let i = 0; i < pf.rolls; i++) {
+      const d = 1 + Math.floor(Math.random() * 100);
+      const row = pf.rows[lims.findIndex((l) => d <= l)];
+      if (row.rarity) out.push(`${row.what} [d100 ${d}]`);
+    }
+    const coins = [pf.corone ? `${pf.corone} Corone` : "", pf.scellini ? `${pf.scellini} Scellini` : ""].filter(Boolean).join(", ");
+    return [...out, ...pf.mats.map((m) => `${m.qty}× ${m.name} (${m.rarity})`), coins].filter(Boolean).join("\n");
+  }
+  function dropHtml(pf) {
+    if (!pf) return `<p class="small muted">Nessun profilo: generane uno, oppure scrivi direttamente il bottino.</p>`;
+    return `<div class="wmr-drop">
+      <div class="small"><b>Profilo ${esc(pf.kind)}</b> · <span class="muted">${esc(pf.text)}</span></div>
+      <table class="t wmr-drop-t"><thead><tr><th>d100</th><th>Risultato</th></tr></thead><tbody>
+        ${pf.rows.map((r) => `<tr><td class="num">${esc(r.roll)}</td><td>${r.rarity ? S.ui.rarityChip(r.rarity) + " " : ""}${esc(r.what)}</td></tr>`).join("")}
+      </tbody></table>
+      <div class="xs muted">Tiri: ${pf.rolls} (uno per creatura, max 6) · Monete: ${pf.corone} Corone, ${pf.scellini} Scellini · ${pf.mats.map((m) => `${m.qty}× ${esc(m.name)}`).join(", ")}</div>
+    </div>`;
+  }
   const PROP_EXP_RAR = "la rarità moltiplica l'EXP per grado³, come la forza della creatura (Non Comune ×8, Raro ×27, Epico ×64 … Divino ×512).";
   const DEC_EXP = "quando chiudi l'incontro scegli se ogni PG prende l'EXP intera o se va divisa nel gruppo.";
   const DEC_DIFF = "la difficoltà la decide il Master al momento; la stima calcolata è solo un riferimento.";
@@ -1257,12 +1316,14 @@
       const party = chars(ctx).map((c) => c.id);
       const level = avgLevel(ctx, party);
       return { name: "", place: "", env: "Foresta", conditions: "", party, level,
-        creatures: [{ name: "", level, rarity: "Comune", size: "Normale", count: 1 }], hooks: "", lootNote: "", masterDiff: "" };
+        creatures: [{ name: "", level, rarity: "Comune", size: "Normale", count: 1 }], hooks: "", lootNote: "", masterDiff: "", drop: null };
     },
     act(st, a, el, ctx) {
       if (a === "avg") { st.level = avgLevel(ctx, st.party); return "avg"; }
       if (a === "c-add") { st.creatures.push({ name: "", level: Number(st.level) || 1, rarity: "Comune", size: "Normale", count: 1 }); return `creatures.${st.creatures.length - 1}.name`; }
       if (a === "c-rm") { st.creatures.splice(Number(el.dataset.i), 1); return "c-add"; }
+      if (a === "drop-gen") { const cs = validCreatures(st); if (cs.length) st.drop = makeDropProfile(cs); return "drop-gen"; }
+      if (a === "drop-roll") { if (st.drop) st.lootNote = rollDrop(st.drop); return "lootNote"; }
     },
     live: {
       avg: (st, ctx) => `Media dei PG scelti: <b class="num">${avgLevel(ctx, st.party)}</b>`,
@@ -1329,9 +1390,14 @@
           const cs = validCreatures(st);
           const top = topRarity(cs);
           return `
-          <div class="sysmsg gold"><span class="tag">[BOTTINO]</span><span>Suggerito: oggetti ${esc(top)} — arma con Base danno ${baseRange(top)}. ${prop(PROP_LOOT)}</span></div>
+          <div class="field"><span class="label">Profilo di drop ${decided(DEC_LOOT)} ${prop(PROP_DROP)}</span>
+            ${dropHtml(st.drop)}
+            <div class="row">${btn("drop-gen", st.drop ? "Rigenera profilo" : "Genera profilo di drop", { id: "drop-gen", disabled: !cs.length })}
+              ${btn("drop-roll", "Tira il bottino", { cls: "ghost", id: "drop-roll", disabled: !st.drop, title: "Scrive il risultato nel bottino deciso dal Master, che puoi poi correggere" })}</div>
+            <span class="hint">Rarità di riferimento: ${esc(top)} (creatura più rara) · arma ${esc(top)}: Base danno ${baseRange(top)}.</span>
+          </div>
           ${fSel("masterDiff", "Difficoltà decisa dal Master", [{ v: "", l: "Usa la stima" }, ...DIFF.map((d) => d[1])], { hint: "Facoltativa: la stima calcolata nell'anteprima è solo un riferimento." })}
-          ${fText("lootNote", "Bottino deciso dal Master", { area: true, rows: 2, ph: "es. Zanna di lupo (Comune), 12 Scellini" })}
+          ${fText("lootNote", "Bottino deciso dal Master", { area: true, rows: 4, ph: "es. Zanna di lupo (Comune), 12 Scellini" })}
           ${fText("hooks", "Ganci narrativi", { area: true, rows: 3, ph: "es. Uno dei lupi porta un collare con lo stemma di Orsino" })}
           ${ref("Bersagli inermi o inattivi danno metà EXP (Progressione, Sezione 2).")}`;
         } },
@@ -1360,8 +1426,8 @@
         ${sec("Valutazione", decided(DEC_DIFF))}
         ${st.masterDiff ? row("Difficoltà", `<span class="chip ${diffTone(st.masterDiff)}">${esc(st.masterDiff)}</span> <span class="xs muted">decisa dal Master</span>`) : ""}
         ${row(st.masterDiff ? "Stima" : "Difficoltà (stima)", d ? `<span class="chip ${d.tone}">${d.label}</span> ${prop(PROP_DIFF)}` : DASH, diffTip)}
-        ${row("EXP intera per PG", cs.length ? `<span class="num">${nf(exp.pct)}%</span> ${prop(PROP_EXP_RAR)} ${decided(DEC_EXP)}` : DASH, cs.length ? esc(expTip) : "")}
-        ${row("Bottino", cs.length ? `${S.ui.rarityChip(top)} ${prop(PROP_LOOT)}` : DASH, cs.length ? `Arma ${top}: Base danno ${baseRange(top)} (scala di rarità)` : "")}
+        ${row("EXP intera per PG", cs.length ? `<span class="num">${nf(exp.pct)}%</span> ${decided(PROP_EXP_RAR + " " + DEC_EXP)}` : DASH, cs.length ? esc(expTip) : "")}
+        ${row("Profilo di drop", st.drop ? `${esc(st.drop.kind)} · ${S.ui.rarityChip(st.drop.top)}` : DASH, st.drop ? st.drop.rows.map((r) => `${r.roll}: ${r.what}`).join("\n") : "Il bottino lo decide il Master; il profilo è facoltativo.")}
         ${sec("Scena")}
         ${trow("Condizioni", st.conditions)}
         ${trow("Ganci", st.hooks)}
@@ -1381,7 +1447,7 @@
         name: st.name.trim(), place: st.place.trim(), env: st.env, conditions: st.conditions.trim(), party: st.party.slice(), level: Number(st.level),
         creatures: cs, difficulty: { label: diffLabel, estimate: d.label, ratio: d.ratio, byMaster: !!st.masterDiff }, expPct: exp.pct,
         expByPc: Object.fromEntries(pcs.map((p) => [p.id, expFor(p.level, cs).pct])),
-        loot: { rarity: top, weaponBase: rarity(top).weaponBase, note: st.lootNote.trim() }, hooks: st.hooks.trim(),
+        loot: { rarity: top, weaponBase: rarity(top).weaponBase, profile: st.drop, note: st.lootNote.trim() }, hooks: st.hooks.trim(),
         summary: `${st.place.trim()} · ${cs.reduce((s, c) => s + c.count, 0)} creature · ${diffLabel}${st.masterDiff ? "" : " (stima)"} · EXP ${nf(exp.pct)}% a lv ${st.level}`,
       };
     },

@@ -210,6 +210,9 @@ DERIVED: list[dict] = [
      "calc": lambda t, c: t["LCK"] / 100, "formula": "LCK / 100",
      "explain": lambda t, c: f"{_f(t['LCK'])} / 100",
      "note": lambda c: "Nel foglio di Dante la cella calcola LCK/100, ma la descrizione dice LCK/10: da confermare."},
+    {"key": "ki", "label": "KI max", "fmt": "int", "src": "Excel (Corax)", "only_if": "KI",
+     "calc": lambda t, c: 100 + t["KI"] * 8, "formula": "100 + KI×8",
+     "note": lambda c: "Risorsa come Vita e Mana: si spende in combattimento e rigenera a fine turno."},
     {"key": "kiCombat", "label": "Regen KI in combattimento", "fmt": "dec", "src": "Excel (Corax)", "only_if": "KI",
      "calc": lambda t, c: t["VIT"] / 30, "formula": "VIT / 30 a turno"},
     {"key": "kiFuori", "label": "Regen KI fuori combattimento", "fmt": "permin", "src": "Excel (Corax)", "only_if": "KI",
@@ -813,10 +816,27 @@ def sheet_errors(sheet: dict) -> list[str]:
     return errs
 
 
+RESOURCE_KEYS = ("hp", "mp", "sp", "ki")  # "ki" solo per i PG con la statistica avanzata KI
+RESOURCE_LABELS = {"hp": "HP", "mp": "MP", "sp": "SP", "ki": "KI"}
+
+
+def resource_keys(maxes: dict) -> list[str]:
+    """Risorse che valgono per un PG, dati i suoi massimi (KI incluso solo se c'è)."""
+    return [k for k in RESOURCE_KEYS if k in maxes]
+
+
+def clamp_resources(resources: dict | None, maxes: dict) -> dict:
+    """Risorse correnti entro i massimi: una risorsa mancante (es. KI appena sbloccato) parte dal massimo,
+    una che il PG non ha più (es. statistica KI rimossa) sparisce."""
+    r = resources or {}
+    return {k: clean(min(num(r.get(k, maxes[k])), num(maxes[k]))) for k in resource_keys(maxes)}
+
+
 def resource_errors(resources: dict, maxes: dict) -> list[str]:
-    labels = {"hp": "HP", "mp": "MP", "sp": "SP"}
-    return [f"{labels[k]} oltre il massimo ({fmt_n(resources[k])} su {fmt_n(maxes[k])})."
-            for k in ("hp", "mp", "sp") if num(resources.get(k)) > num(maxes.get(k))]
+    errs = [f"{RESOURCE_LABELS[k]}: il personaggio non ha la statistica KI." for k in ("ki",)
+            if resources.get(k) is not None and k not in maxes]
+    return errs + [f"{RESOURCE_LABELS[k]} oltre il massimo ({fmt_n(resources[k])} su {fmt_n(maxes[k])})."
+                   for k in resource_keys(maxes) if num(resources.get(k)) > num(maxes.get(k))]
 
 
 # ---------- Combattimento (funzioni pure su dict) ----------
@@ -853,12 +873,18 @@ def apply_damage(resources: dict, combat: dict, amount: int) -> None:
             add_log(combat, "HP a zero: il personaggio è a terra.")
 
 
-def end_turn(resources: dict, combat: dict, maxes: dict) -> None:
+def end_turn(resources: dict, combat: dict, maxes: dict, ki_regen: float = 0) -> None:
+    """Fine turno. `ki_regen` = derivata kiCombat finale (VIT/30, bonus oggetti inclusi), usata solo se c'è il KI."""
     mp_gain = max(0, min(maxes["mp"] - num(resources["mp"]), js_round(maxes["mp"] * REGEN["mp_pct"] / 100)))
     sp_gain = max(0, min(maxes["sp"] - num(resources["sp"]), js_round(maxes["sp"] * REGEN["sp_pct"] / 100)))
     resources["mp"] = clean(min(maxes["mp"], num(resources["mp"]) + mp_gain))
     resources["sp"] = clean(min(maxes["sp"], num(resources["sp"]) + sp_gain))
-    add_log(combat, f"Fine turno: MP +{fmt_n(mp_gain)}, SP +{fmt_n(sp_gain)}.")
+    line = f"Fine turno: MP +{fmt_n(mp_gain)}, SP +{fmt_n(sp_gain)}"
+    if "ki" in maxes:  # KI: VIT/30 a turno (derivata kiCombat, bonus oggetti inclusi), entro il massimo
+        ki_gain = max(0, min(maxes["ki"] - num(resources.get("ki", maxes["ki"])), js_round(num(ki_regen))))
+        resources["ki"] = clean(min(maxes["ki"], num(resources.get("ki", maxes["ki"])) + ki_gain))
+        line += f", KI +{fmt_n(ki_gain)}"
+    add_log(combat, line + ".")
     effects = combat.get("effects") or []
     for e in effects:
         h = num(e.get("hpPerTurn"))

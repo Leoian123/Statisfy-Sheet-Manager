@@ -13,7 +13,7 @@ Nel mockup i punti decisi hanno il chip verde **deciso**; quelli ancora aperti i
    - Mano principale → solo principale; Due mani (anche archi e bastoni) → principale e blocca la secondaria;
    - Scudo e Tenuto in mano secondaria (focus, tomo, simbolo sacro) → solo secondaria.
    - **Doppia impugnatura — DECISO:** libera per tutti; il danno della mano secondaria lo decide un talento.
-     *Ancora proposta:* senza talento la mano secondaria fa il 50% del danno; il talento ("Doppia impugnatura", "Ambidestria") scrive la sua percentuale nell'effetto.
+     Senza talento la mano secondaria fa il 50% del danno (deciso); il talento ("Doppia impugnatura", "Ambidestria") scrive la sua percentuale nell'effetto.
 2. **Bonus degli oggetti — DECISO.**
    - alle statistiche (es. VIT +8): colonna di origine "Oggetti", calcolata dall'equipaggiato;
    - alle derivate: Difesa, Difesa magica e Blocco restano nelle formule già decise (Difesa equip × (1 + VIT/100)); gli altri (Evasione, Critico, Velocità…) si sommano dopo la formula.
@@ -49,19 +49,22 @@ Nel mockup i punti decisi hanno il chip verde **deciso**; quelli ancora aperti i
 26. **Difficoltà di un incontro — DECISO:** la decide il Master al momento. Il wizard mostra solo una stima di riferimento:
     - *stima (proposta):* (Vita × Danno delle creature) / (Vita × Danno del gruppo); Banale < 0,1, Facile < 0,3, Equilibrato < 0,7, Difficile < 1,5, Mortale < 4, oltre Impossibile.
 27. **EXP del gruppo — DECISO:** quando il Master chiude un incontro (Forgia → Libreria → «Chiudi incontro») un pop-up chiede se l'EXP è intera per ogni PG o divisa tra i PG che partecipano, e mostra chi sale di livello.
-28. **EXP e rarità — DECISO:** la rarità della creatura moltiplica l'EXP, come in AdventureQuest.
-    - *Ancora proposta:* il moltiplicatore è grado³, lo stesso della forza della creatura (Non Comune ×8, Raro ×27 … Divino ×512). Non ho trovato una formula ufficiale di AdventureQuest per la rarità; un'alternativa più morbida è il grado semplice (×2, ×3 … ×8).
+28. **EXP e rarità — DECISO:** la rarità della creatura moltiplica l'EXP per grado³, lo stesso della sua forza (Non Comune ×8, Raro ×27 … Divino ×512).
+29. **Bottino — DECISO:** lo decide il Master. Il wizard dell'incontro genera al momento un profilo di drop generico (tabella d100 per creatura, monete e materiali) che il Master può rigenerare, tirare o ignorare.
+    - *Ancora proposta:* i quattro tipi di profilo (Avaro, Normale, Generoso, Tesoro) e le loro soglie.
+
+## Statistiche avanzate dai fogli Excel — DECISO
+- **Fortuna (Dante):** entra nell'Evasione, (DEX + LCK)/20; Bonus Fortuna sui tiri = LCK/100 (la cella dell'Excel). Viene dal talento **Re dei Giochi**, Epico ed evolutivo (+25 LCK), non da un titolo.
+- **KI (Corax):** barra KI accanto a HP/MP/SP, KI max = 100 + KI × 8; rigenera VIT/30 a turno in combattimento, VIT/15 al minuto fuori, VIT/5 al minuto in meditazione.
+- **Carisma di Corax:** i suoi titoli danno +150 CHA, ma nell'Excel la cella «Punti Titoli» era 0 senza formula. Nell'app si applicano i bonus dei titoli (CHA 398).
 
 ## Ancora aperti
-- **Bottino:** della rarità della creatura più rara dell'incontro? (non ancora risposto)
-- **Danno della mano secondaria senza talento:** 50%?
-- **Moltiplicatore EXP per rarità:** grado³ o grado semplice?
-- **Punti Level up di Corax:** vedi sotto.
+- Effetti di Carisma, Saggezza e Shadow: oggi non incidono su nessuna derivata.
 
-## Punti Level up di Corax
+## Punti Level up incoerenti — DECISO: si tengono come nell'Excel
 Nel foglio Excel Corax è di livello 181. La regola dice: a ogni livello +1 automatico a ogni statistica base e 10 punti liberi. Quindi da livello 1 a 181 ci sono 180 level up:
 - colonna «Punti Level Up» di STR, DEX, VIT e INT: dovrebbe essere 180, nel foglio è **185** (5 in più per statistica, 20 in tutto);
 - SHA 178, KI 144 e CHA 108 sono più bassi perché sono statistiche avanzate sbloccate più tardi: prendono +1 solo dai livelli successivi allo sblocco;
 - punti liberi: 1.800 (180 × 10), giusti; ne ha investiti 1.680, gliene restano 120.
 
-Possibili spiegazioni dei +5: Corax era di livello 186 e ha perso 5 livelli morendo (la morte toglie livelli ma il foglio non ha tolto i punti automatici), oppure è un errore di battitura. Da decidere: 185 o 180?
+Anche Deniel (110 invece di 109) ed Eric (Saggezza 129) hanno punti in più. Il Master ha deciso di tenerli: restano nell'app e sono annotati sulla statistica.

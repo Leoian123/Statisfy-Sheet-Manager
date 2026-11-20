@@ -124,7 +124,9 @@ export interface Death {
   protected: boolean;
 }
 
-export interface Resources { hp: number; mp: number; sp: number }
+/** Risorse correnti. `ki` esiste solo per i PG con la statistica avanzata KI (KI max = 100 + KI×8). */
+export interface Resources { hp: number; mp: number; sp: number; ki?: number }
+export type ResourceKey = keyof Resources;
 
 export interface Character {
   id: number;
@@ -220,6 +222,8 @@ export interface PreviewRequest {
   equip?: Character["equip"];
   magia?: Character["magia"];
   inventory?: InventoryItem[];
+  /** Creazione guidata: aggiunge l'equipaggiamento iniziale della classe, indossato come alla creazione. */
+  classe_id?: string;
 }
 export interface PreviewResponse {
   totals: Record<string, number>;
@@ -234,7 +238,7 @@ export interface CreateCharacterRequest {
   owner_id?: number;
 }
 
-export type CombatActionType = "damage" | "heal" | "spend_mp" | "spend_sp";
+export type CombatActionType = "damage" | "heal" | "spend_mp" | "spend_sp" | "spend_ki";
 
 export interface NewEffect {
   name: string;

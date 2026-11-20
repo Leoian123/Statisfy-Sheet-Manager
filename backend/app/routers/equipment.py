@@ -24,8 +24,9 @@ def _apply(db: Session, c: Character, fn) -> dict:
     # Le risorse correnti non possono superare i nuovi massimi (es. togliendo un oggetto con VIT)
     mx = maxes(c)
     r = copy.deepcopy(c.resources or {"hp": 0, "mp": 0, "sp": 0})
-    if any(rules.num(r.get(k)) > mx[k] for k in ("hp", "mp", "sp")):
-        set_json(c, "resources", tidy({k: min(rules.num(r.get(k)), mx[k]) for k in ("hp", "mp", "sp")}))
+    res = rules.clamp_resources(r, mx)
+    if res != r:
+        set_json(c, "resources", tidy(res))
     return save(db, c)
 
 

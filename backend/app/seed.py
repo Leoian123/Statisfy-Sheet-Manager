@@ -9,6 +9,7 @@ from . import rules
 from .auth import hash_password
 from .db import Base, SessionLocal, engine
 from .models import Campaign, Character, Issue, Npc, User
+from .serialize import maxes
 
 USERS = [("master", "Il Narratore", "master")] + [(f"giocatore{i}", f"Giocatore {i}", "player") for i in range(1, 7)]
 
@@ -212,9 +213,9 @@ OTHERS = [
             stat("INT", "Intelligenza", "base", 10, 15, 300, 185, 62, 156, "Excel: Punti Level Up 185, al livello 181 sarebbero 180"),
             stat("SHA", "Shadow", "avanzata", 5, 0, 300, 178, 10, 220),
             stat("KI", "KI", "avanzata", 5, 10, 430, 144, 0, 140),
-            stat("CHA", "Carisma", "avanzata", 10, 0, 100, 108, 30, 0),
+            stat("CHA", "Carisma", "avanzata", 10, 0, 100, 108, 30, 150, "Titoli: +150 dai bonus CHA dei titoli (nell’Excel la cella Punti Titoli era 0 senza formula)"),
         ],
-        "titles": [{"name": "La Santa del Mattatoio", "rarity": "Epico", "bonus": {"DEX": 10, "VIT": 8, "INT": 6, "SHA": 10}}, {"name": "Prima Maestra", "rarity": "Epico", "bonus": {"DEX": 25}}, {"name": "Primo Monaco", "rarity": "Epico", "bonus": {"DEX": 15, "VIT": 15, "KI": 10}}, {"name": "Il Primo Agente dei Nocturn", "rarity": "Unico", "bonus": {"VIT": -20, "INT": 15, "SHA": 30}}, {"name": "Mano DX e Mano Sx del Doc", "rarity": "Raro", "bonus": {"VIT": 15}}, {"name": "Underdog", "rarity": "Epico", "bonus": {"DEX": 50}}, {"name": "Cacciatore di Maghi", "rarity": "Epico", "bonus": {"DEX": 5, "VIT": 10, "INT": 5}}, {"name": "Portatori di Calamità", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "SHA": 50, "KI": 50}}, {"name": "Amici dei Draghi", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "SHA": 50, "KI": 50}}, {"name": "Come Russel", "rarity": "Leggendario", "bonus": {"STR": 30, "DEX": 30, "VIT": 30, "INT": 30, "SHA": 30, "KI": 30}}, {"name": "Confessore della Madre", "rarity": "Raro", "bonus": {"SHA": 50}}, {"name": "Sangue di Oni", "rarity": "Epico", "bonus": {"STR": 50, "VIT": 35}}],
+        "titles": [{"name": "La Santa del Mattatoio", "rarity": "Epico", "bonus": {"DEX": 10, "VIT": 8, "INT": 6, "SHA": 10}}, {"name": "Prima Maestra", "rarity": "Epico", "bonus": {"DEX": 25}}, {"name": "Primo Monaco", "rarity": "Epico", "bonus": {"DEX": 15, "VIT": 15, "KI": 10}}, {"name": "Il Primo Agente dei Nocturn", "rarity": "Unico", "bonus": {"VIT": -20, "INT": 15, "SHA": 30, "CHA": 20}}, {"name": "Mano DX e Mano Sx del Doc", "rarity": "Raro", "bonus": {"VIT": 15}}, {"name": "Underdog", "rarity": "Epico", "bonus": {"DEX": 50}}, {"name": "Cacciatore di Maghi", "rarity": "Epico", "bonus": {"DEX": 5, "VIT": 10, "INT": 5}}, {"name": "Portatori di Calamità", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "SHA": 50, "KI": 50, "CHA": 50}}, {"name": "Amici dei Draghi", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "SHA": 50, "KI": 50, "CHA": 50}}, {"name": "Come Russel", "rarity": "Leggendario", "bonus": {"STR": 30, "DEX": 30, "VIT": 30, "INT": 30, "SHA": 30, "KI": 30, "CHA": 30}}, {"name": "Confessore della Madre", "rarity": "Raro", "bonus": {"SHA": 50}}, {"name": "Sangue di Oni", "rarity": "Epico", "bonus": {"STR": 50, "VIT": 35}}],
         "talents": [],
     },
     {
@@ -253,10 +254,10 @@ OTHERS = [
             stat("DEX", "Destrezza", "base", 10, 10, 0, 119, 0, 0),
             stat("VIT", "Vitalità", "base", 10, 0, 0, 119, 0, 0),
             stat("INT", "Intelligenza", "base", 10, 10, 0, 119, 0, 0),
-            stat("LCK", "Fortuna", "avanzata", 5, 0, 1190, 113, 0, 25, "Fortuna: la gimmick di Dante. Nel foglio entra nell’Evasione: (DEX + LCK)/20"),
+            stat("LCK", "Fortuna", "avanzata", 5, 0, 1190, 113, 25, 0, "Fortuna: la gimmick di Dante. Altro = +25 dal talento Re dei Giochi. Entra nell’Evasione: (DEX + LCK)/20"),
         ],
-        "titles": [{"name": "Re dei Giochi", "rarity": "Epico", "bonus": {"LCK": 25}}],
-        "talents": [],
+        "titles": [],
+        "talents": [{"name": "Re dei Giochi", "rarity": "Epico", "origin": "Evolutivo", "effect": "Fortuna +25. Talento evolutivo: cresce evolvendo. Bonus Fortuna sui tiri = LCK/100."}],
     },
 ]
 
@@ -295,7 +296,7 @@ ISSUES = [
      "sev": "warn", "resolved": True,
      "decision": "Scala unica a 8 gradi: Comune, Non Comune, Raro, Epico, Unico, Leggendario, Mitico, Divino. Base danno arma: Unico 250–500, Leggendario 500–1000, Mitico 1000–2000, Divino 2000+. Moltiplicatore creature = grado³ (fino a ×512). Evolutivo è un tipo di oggetto con rarità effettiva, non un grado."},
     {"title": "Punti Level Up incoerenti", "text": "Corax (lv 181) ha 185 punti invece di 180 su STR, DEX, VIT e INT; Deniel (lv 110) ne ha 110 invece di 109; Eric (lv 110) ha 129 punti su WIS, più dei 109 level up.", "sev": "warn",
-     "resolved": False, "decision": None},
+     "resolved": True, "decision": "Si tengono come nell'Excel (deciso dal Master il 20/11/2026): i punti restano e sono annotati sulla statistica."},
     {"title": "Formule non definite", "text": "Difesa, iniziativa, probabilità di critico e di blocco non hanno formula.",
      "sev": "bad", "resolved": True,
      "decision": "Difesa = VIT/10 + Difesa equip × (1 + VIT/100); Difesa magica = INT/10 + Difesa magica equip × (1 + INT/100); Iniziativa = 10 + DEX/10; Critico = 5 + DEX/40 % (max 75%); Blocco = Blocco scudo + STR/40 % (solo con scudo, max 75%)."},
@@ -321,7 +322,7 @@ def _character(data: dict, owner: User) -> Character:
         c.resources = data["resources"]
     else:
         d = rules.derived_values({"stats": c.stats, "equip": c.equip, "magia": c.magia})
-        c.resources = {"hp": d["hp"], "mp": d["mp"], "sp": d["sp"]}
+        c.resources = {k: d[k] for k in rules.RESOURCE_KEYS if k in d}
     return c
 
 
@@ -348,17 +349,24 @@ def seed(db: Session) -> None:
 def migrate(db: Session) -> int:
     """Compatibilità con i DB creati prima dell'inventario MMORPG: dà un id a ogni oggetto e porta il vecchio
     campo testuale `stats` in `stats_text` (gli oggetti restano nella borsa, i valori manuali di equip e
-    item_bonus restano invariati). Ritorna il numero di personaggi aggiornati."""
+    item_bonus restano invariati). I PG con la statistica KI senza `resources.ki` partono dal KI massimo.
+    Ritorna il numero di personaggi aggiornati."""
     changed = 0
     for c in db.scalars(select(Character)).unique():
         raw = c.inventory or []
         inv = rules.normalize_inventory(raw)
         ids = rules.ensure_item_ids(inv)
         legacy = any(isinstance(x, dict) and (isinstance(x.get("stats"), str) or "category" not in x) for x in raw)
+        touched = False
         if ids or legacy:
             c.inventory = inv
             flag_modified(c, "inventory")
-            changed += 1
+            touched = True
+        if any(r.get("code") == "KI" for r in (c.stats or [])) and "ki" not in (c.resources or {}):
+            c.resources = {**(c.resources or {}), "ki": maxes(c)["ki"]}
+            flag_modified(c, "resources")
+            touched = True
+        changed += touched
     if changed:
         db.commit()
     return changed

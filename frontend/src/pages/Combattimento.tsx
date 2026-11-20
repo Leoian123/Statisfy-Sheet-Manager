@@ -8,6 +8,7 @@ import { DerivedRow } from "../components/DerivedRow";
 import { ErrorBox, InlineError, Loading } from "../components/Status";
 import { Win } from "../components/Win";
 import { n, plural } from "../lib/format";
+import { resourcesFor } from "../lib/resources";
 import { useBusy, useCharacter } from "../lib/useCharacter";
 import { dmap } from "./Scheda";
 
@@ -51,7 +52,9 @@ function CombatWin({ c, onChange }: { c: Character; onChange: (c: Character) => 
 
   const d = dmap(c.derived);
   const r = c.resources;
-  const max = { hp: d.hp?.value ?? 0, mp: d.mp?.value ?? 0, sp: d.sp?.value ?? 0 };
+  const res = resourcesFor(d);  // HP, MP, SP e KI (solo per chi ha la statistica KI)
+  const hasKi = res.some((x) => x.key === "ki");
+  const kiRegen = d.kiCombat?.value ?? 0;
   const shield = c.combat.effects.find((e) => Number(e.absorb) > 0);
   const positions = rules?.positions ?? FALLBACK_POSITIONS;
   const amount = Math.floor(Number(amt));
@@ -101,9 +104,7 @@ function CombatWin({ c, onChange }: { c: Character; onChange: (c: Character) => 
         </select>
       </div>
       <div className="stack">
-        <Bar kind="hp" label="Vita (HP)" cur={r.hp} max={max.hp} />
-        <Bar kind="mp" label="Mana (MP)" cur={r.mp} max={max.mp} />
-        <Bar kind="sp" label="Stamina (SP)" cur={r.sp} max={max.sp} />
+        {res.map((x) => <Bar key={x.key} kind={x.key} label={x.label} cur={r[x.key] ?? x.max} max={x.max} />)}
         {shield && <div className="row"><span className="chip good">{shield.name}: assorbe ancora {n(Number(shield.absorb))} danni</span></div>}
       </div>
       <div className="lu-amt">
@@ -116,10 +117,12 @@ function CombatWin({ c, onChange }: { c: Character; onChange: (c: Character) => 
           <button type="button" className="btn" disabled={busy || !amountOk} onClick={() => action("heal")}>Cura</button>
           <button type="button" className="btn" disabled={busy || !amountOk} onClick={() => action("spend_mp")}>Spendi MP</button>
           <button type="button" className="btn" disabled={busy || !amountOk} onClick={() => action("spend_sp")}>Spendi SP</button>
+          {hasKi && <button type="button" className="btn" disabled={busy || !amountOk} onClick={() => action("spend_ki")}>Spendi KI</button>}
         </div>
         <p className="footnote">
           HP non si rigenerano in combattimento.
-          {rules && <> A fine turno: MP +{rules.regen.mp_pct}% e SP +{rules.regen.sp_pct}% del massimo.</>}
+          {rules && <> A fine turno: MP +{rules.regen.mp_pct}% e SP +{rules.regen.sp_pct}% del massimo{hasKi
+            ? <>, KI +{n(Math.round(kiRegen))} (VIT/30)</> : null}.</>}
         </p>
       </div>
       <InlineError message={error} />
@@ -204,7 +207,7 @@ function CombatWin({ c, onChange }: { c: Character; onChange: (c: Character) => 
             </>
           )}
           <span>{deathMsg.respawn === "checkpoint"
-            ? `Rinascita al checkpoint: HP ${n(r.hp)} · MP ${n(r.mp)} · SP ${n(r.sp)}.`
+            ? `Rinascita al checkpoint: ${res.map((x) => `${x.short} ${n(r[x.key] ?? 0)}`).join(" · ")}.`
             : "Rinascita sul posto: 1 HP."}</span>
           <div className="row" style={{ marginTop: 6 }}><button type="button" className="btn ghost" onClick={() => setDeathMsg(null)}>Chiudi</button></div>
         </div>

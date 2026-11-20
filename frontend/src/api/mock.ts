@@ -2,7 +2,7 @@
 // Simula il server: qui (e solo qui) le regole sono replicate dal mockup per poter sviluppare senza backend.
 import type {
   Campaign, Character, CharacterSummary, Derived, DerivedFmt, Effect, EquipTypeDef, InventoryItem, ItemPreview, Issue, Npc,
-  RulesConfig, SlotDef, SlotKey, StatRow, User,
+  Resources, RulesConfig, SlotDef, SlotKey, StatRow, User,
 } from "./types";
 
 type Res = { status: number; data: unknown };
@@ -11,9 +11,11 @@ type Res = { status: number; data: unknown };
 const SOURCES = ["iniziale", "creazione", "investiti", "levelup", "altro", "titoli", "oggetti"] as const;
 const statTotal = (r: Partial<StatRow>) => SOURCES.reduce((s, k) => s + (Number(r[k]) || 0), 0);
 
-type Calc = { t: Record<string, number>; eq: Character["equip"]; mg: Character["magia"] };
+type Calc = { t: Record<string, number>; eq: Character["equip"]; mg: Character["magia"]; has: (code: string) => boolean };
 interface Def {
   key: string; label: string; fmt: DerivedFmt; src: string; cap?: number; disputed?: boolean;
+  /** derivata di una statistica avanzata: vale solo se il PG ha quella statistica */
+  onlyIf?: string;
   calc: (x: Calc) => number; formula: (x: Calc) => string; explain?: (x: Calc) => string; note?: (x: Calc) => string;
 }
 const div = (mg: Calc["mg"]) => Math.max(10, 100 - 10 * ((mg.nucleo || 0) + (mg.talenti || 0)));
@@ -23,7 +25,10 @@ const DEFS: Def[] = [
   { key: "mp", label: "Mana (MP) max", fmt: "int", src: "Regole", calc: ({ t }) => 50 + t.INT * 10, formula: f("50 + INT×10") },
   { key: "sp", label: "Stamina (SP) max", fmt: "int", src: "Regole (confermata il 19/11/2026)", calc: ({ t }) => 50 + (t.STR + t.DEX) * 5, formula: f("50 + (STR+DEX)×5") },
   { key: "carico", label: "Carico massimo", fmt: "kg", src: "Regole", calc: ({ t }) => 50 + t.STR * 2, formula: f("50 + STR×2 kg") },
-  { key: "evasione", label: "Evasione", fmt: "pct", src: "Regole", calc: ({ t }) => t.DEX / 20, formula: f("DEX / 20 %") },
+  // Con la Fortuna (LCK) l'Evasione è (DEX + LCK)/20, come nel foglio Excel di Dante
+  { key: "evasione", label: "Evasione", fmt: "pct", src: "Regole + Excel (Fortuna)", calc: ({ t }) => (t.DEX + (t.LCK ?? 0)) / 20,
+    formula: ({ has }) => (has("LCK") ? "(DEX + LCK) / 20 %" : "DEX / 20 %"),
+    explain: ({ t, has }) => (has("LCK") ? `(${t.DEX} + ${t.LCK}) / 20` : `${t.DEX} / 20`) },
   { key: "precisione", label: "Precisione", fmt: "pct", src: "Regole", calc: ({ t }) => 70 + t.DEX / 10, formula: f("70 + DEX/10 %") },
   { key: "regen", label: "Regen HP", fmt: "permin", src: "Regole", calc: ({ t }) => t.VIT / 10, formula: f("VIT / 10 HP/min") },
   { key: "bonusExp", label: "Bonus EXP", fmt: "pct", src: "Regole", calc: ({ t }) => t.INT / 20, formula: f("INT / 20 %") },
@@ -48,6 +53,14 @@ const DEFS: Def[] = [
   { key: "velocita", label: "Velocità movimento", fmt: "pct", src: "Excel", calc: ({ t }) => 100 + t.DEX / 5, formula: f("100 + DEX/5 %") },
   { key: "resVeleni", label: "Res. veleni", fmt: "pct", src: "Excel", calc: ({ t }) => t.VIT / 5, formula: f("VIT / 5 %") },
   { key: "resElementi", label: "Res. elementi", fmt: "pct", src: "Excel", calc: ({ t }) => t.VIT / 10, formula: f("VIT / 10 %") },
+  // Derivate delle statistiche avanzate (formule dei fogli Excel)
+  { key: "bonusFortuna", label: "Bonus Fortuna sui tiri", fmt: "dec", src: "Excel (Dante)", onlyIf: "LCK", calc: ({ t }) => t.LCK / 100, formula: f("LCK / 100"),
+    note: f("Nel foglio di Dante la cella calcola LCK/100, ma la descrizione dice LCK/10: da confermare.") },
+  { key: "ki", label: "KI max", fmt: "int", src: "Excel (Corax)", onlyIf: "KI", calc: ({ t }) => 100 + t.KI * 8, formula: f("100 + KI×8"),
+    note: f("Risorsa come Vita e Mana: si spende in combattimento e rigenera a fine turno.") },
+  { key: "kiCombat", label: "Regen KI in combattimento", fmt: "dec", src: "Excel (Corax)", onlyIf: "KI", calc: ({ t }) => t.VIT / 30, formula: f("VIT / 30 a turno") },
+  { key: "kiFuori", label: "Regen KI fuori combattimento", fmt: "permin", src: "Excel (Corax)", onlyIf: "KI", calc: ({ t }) => t.VIT / 15, formula: f("VIT / 15 al minuto") },
+  { key: "kiMeditazione", label: "Regen KI in meditazione", fmt: "permin", src: "Excel (Corax)", onlyIf: "KI", calc: ({ t }) => t.VIT / 5, formula: f("VIT / 5 al minuto") },
 ];
 
 function totalsOf(stats: Partial<StatRow>[]): Record<string, number> {
@@ -60,15 +73,16 @@ function derivedOf(stats: Partial<StatRow>[], ib: Record<string, number> = {}, e
     t: totalsOf(stats),
     eq: { difesa: 0, difesaMagica: 0, blocco: 0, ...(eq || {}) },
     mg: { nucleo: 0, talenti: 0, ...(mg || {}) },
+    has: (code) => stats.some((r) => r.code === code),
   };
-  return DEFS.map((d) => {
+  return DEFS.filter((d) => !d.onlyIf || x.has(d.onlyIf)).map((d) => {
     const raw = d.calc(x);
     const base = d.cap != null ? Math.min(d.cap, raw) : raw;
     const bonus = Number(ib[d.key]) || 0;
     const value = d.cap != null ? Math.min(d.cap, base + bonus) : base + bonus;
     const formula = d.formula(x);
     const explain = d.explain ? d.explain(x)
-      : formula.replace(/ \(.*\)$/, "").replace(/ %$/, "").replace(/\b(STR|DEX|VIT|INT)\b/g, (m) => String(x.t[m] ?? m));
+      : formula.replace(/ \(.*\)$/, "").replace(/ %$/, "").replace(/\b(STR|DEX|VIT|INT|LCK|KI)\b/g, (m) => String(x.t[m] ?? m));
     return { key: d.key, label: d.label, fmt: d.fmt, base, bonus, value, formula, explain, src: d.src, note: d.note ? d.note(x) : null, cap: d.cap ?? null, disputed: false };
   });
 }
@@ -415,18 +429,33 @@ const kelvin: Stored = {
   death: null,
 };
 
-function quick(id: number, owner: number, name: string, classe: string, level: number, s: number[], inv: number[], extra: Partial<Stored> = {}): Stored {
-  const names: [string, string][] = [["STR", "Forza"], ["DEX", "Destrezza"], ["VIT", "Vitalità"], ["INT", "Intelligenza"]];
-  const stats = names.map(([c, n], i) => st(c, n, "base", 10, s[i], inv[i], level - 1, 0, 0));
+const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+const RES_KEYS = ["hp", "mp", "sp", "ki"] as const;
+type ResKey = (typeof RES_KEYS)[number];
+/** Massimi delle risorse: hp, mp, sp e ki solo per chi ha la statistica KI (come serialize.maxes_of). */
+function maxesOf(c: RulesIn): Resources {
+  const d = Object.fromEntries(derivedFor(c).map((x) => [x.key, x.value]));
+  return asRes(Object.fromEntries(RES_KEYS.filter((k) => k in d).map((k) => [k, d[k]])));
+}
+/** Applica `fn` a ogni risorsa presente (hp, mp, sp e l'eventuale ki). */
+const asRes = (o: Record<string, number>) => o as unknown as Resources;
+const mapRes = (r: Resources, fn: (v: number, k: ResKey) => number) =>
+  asRes(Object.fromEntries(Object.entries(r).map(([k, v]) => [k, fn(v, k as ResKey)])));
+/** Risorse entro i massimi: una mancante (KI appena sbloccato) parte dal massimo, una non più valida sparisce. */
+function clampRes(c: Stored) {
+  const mx = maxesOf(c);
+  c.resources = mapRes(mx, (m, k) => Math.min(c.resources[k] ?? m, m));
+}
+
+/** Gli altri PG: dati reali da backend/app/seed.py (OTHERS), cioè dalle schede Excel STATISFY. */
+type RealIn = Pick<Stored, "name" | "classe" | "level" | "exp_pct" | "regno" | "pvp" | "gilda" | "corone" | "scellini" | "stats"> & Partial<Stored>;
+function real(id: number, owner: number, data: RealIn): Stored {
   const c: Stored = {
-    id, owner_id: owner + 1, owner_name: `Giocatore ${owner}`, name, classe, level, exp_pct: 30, regno: "Valeria", pvp: "Bianco",
-    gilda: { nome: "—", ruolo: "" }, corone: 0, scellini: 0, stats, item_bonus: {}, equip: { difesa: 0, difesaMagica: 0, blocco: 0 },
-    magia: { nucleo: 0, talenti: 0 }, resources: { hp: 0, mp: 0, sp: 0 }, ...emptyLists,
-    combat: { position: "Mischia", turn: 1, effects: [], cooldowns: [], log: [] }, death: null, ...extra,
+    id, owner_id: owner + 1, owner_name: `Giocatore ${owner}`, item_bonus: {}, equip: { difesa: 0, difesaMagica: 0, blocco: 0 },
+    magia: { nucleo: 0, talenti: 0 }, resources: { hp: 0, mp: 0, sp: 0 }, ...clone(emptyLists),
+    combat: { position: "Mischia", turn: 1, effects: [], cooldowns: [], log: [] }, death: null, ...data,
   };
-  const d = derivedOf(c.stats);
-  const v = (k: string) => d.find((x) => x.key === k)!.value;
-  if (!extra.resources) c.resources = { hp: v("hp"), mp: v("mp"), sp: v("sp") };
+  if (!data.resources) c.resources = maxesOf(c);
   return c;
 }
 
@@ -434,11 +463,68 @@ const db = {
   nextId: 7,
   chars: [
     kelvin,
-    quick(2, 2, "Eric", "Faro della Civiltà", 64, [0, 0, 10, 10], [40, 60, 210, 320], { gilda: { nome: "Lanterne di Valeria", ruolo: "Diplomatico" } }),
-    quick(3, 3, "Corax", "Monaco", 181, [10, 10, 0, 0], [600, 700, 400, 100], { pvp: "Grigio", gilda: { nome: "Pugno di Raijin", ruolo: "Ufficiale" } }),
-    quick(4, 4, "Deniel", "Guerriero", 110, [10, 0, 10, 0], [620, 200, 270, 0]),
-    quick(5, 5, "Connor", "Ladro", 52, [0, 20, 0, 0], [60, 330, 80, 40], { regno: "Qadesh" }),
-    quick(6, 6, "Dante", "Ladro", 88, [0, 15, 5, 0], [120, 500, 150, 100], { pvp: "Rosso" }),
+    real(2, 2, {
+      name: "Eric", classe: "Faro della Civiltà", level: 110, exp_pct: 0, regno: "Valeria", pvp: "Bianco",
+      gilda: {"nome": "Lanterne di Valeria", "ruolo": "Diplomatico"}, corone: 0, scellini: 0,
+      stats: [
+        st("STR", "Forza", "base", 10, 0, 0, 109, 0, 213),
+        st("DEX", "Destrezza", "base", 10, 5, 0, 109, 0, 220),
+        st("VIT", "Vitalità", "base", 10, 5, 0, 109, 0, 410),
+        st("INT", "Intelligenza", "base", 10, 10, 1000, 109, 30, 283),
+        st("CHA", "Carisma", "avanzata", 5, 0, 90, 109, 0, 265),
+        st("WIS", "Saggezza", "avanzata", 5, 0, 0, 129, 0, 180, "Excel: Punti Level Up 129, più dei 109 level up del livello 110"),
+      ],
+      titles: [{"name": "Questo Matrimonio non s'ha da fare", "rarity": "Raro", "bonus": {"STR": 5, "VIT": 10}}, {"name": "Fratello d'Armi del Passo dell'Aquila", "rarity": "Raro", "bonus": {"STR": 8, "VIT": 10}}, {"name": "EROE DELL'ECLISSI", "rarity": "Unico", "bonus": {"VIT": 20, "INT": 25, "CHA": 30}}, {"name": "Primo Erudito", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "CHA": 50, "WIS": 50}}, {"name": "Portatore di Eclissi", "rarity": "Epico", "bonus": {"VIT": 12, "INT": 8, "CHA": 10}}, {"name": "Primo Maestro della Sfera del Flusso", "rarity": "Epico", "bonus": {"DEX": 10, "VIT": 8, "INT": 15}}, {"name": "Amico delle scaglie Blu", "rarity": "Raro", "bonus": {"VIT": 5, "INT": 10}}, {"name": "Pionoere di Abyssos", "rarity": "Epico", "bonus": {"VIT": 10, "INT": 10, "CHA": 15}}, {"name": "Cacciatore di Maghi", "rarity": "Epico", "bonus": {"DEX": 5, "VIT": 10, "INT": 5}}, {"name": "Portatore di Calamità", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "CHA": 50, "WIS": 50}}, {"name": "Amici dei Draghi", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "CHA": 50, "WIS": 50}}, {"name": "Maestro dell'accademia Magica di Valeria", "rarity": "Raro", "bonus": {"INT": 30}}, {"name": "Pioniere di Karak'Ktur", "rarity": "Epico", "bonus": {"VIT": 30}}, {"name": "Uccisore del Corvo", "rarity": "Leggendario", "bonus": {"STR": 30, "DEX": 30, "VIT": 30, "INT": 30, "CHA": 30, "WIS": 30}}, {"name": "Cacciatori degli Abissi", "rarity": "Unico", "bonus": {"STR": 20, "DEX": 25, "VIT": 50}}, {"name": "Mano destra e Mano sinistra del dottore", "rarity": "Raro", "bonus": {"VIT": 15}}, {"name": "Signore dei Nani", "rarity": "Unico", "bonus": {"VIT": 50, "CHA": 30}}],
+    }),
+    real(3, 3, {
+      name: "Corax", classe: "Monaco", level: 181, exp_pct: 0, regno: "Valeria", pvp: "Grigio",
+      gilda: {"nome": "Pugno di Raijin", "ruolo": "Ufficiale"}, corone: 0, scellini: 0,
+      stats: [
+        st("STR", "Forza", "base", 10, -2, 150, 185, 0, 180, "Excel: Punti Level Up 185, al livello 181 sarebbero 180"),
+        st("DEX", "Destrezza", "base", 10, 10, 300, 185, 0, 235, "Excel: Punti Level Up 185, al livello 181 sarebbero 180"),
+        st("VIT", "Vitalità", "base", 10, -3, 100, 185, 20, 193, "Excel: Punti Level Up 185, al livello 181 sarebbero 180"),
+        st("INT", "Intelligenza", "base", 10, 15, 300, 185, 62, 156, "Excel: Punti Level Up 185, al livello 181 sarebbero 180"),
+        st("SHA", "Shadow", "avanzata", 5, 0, 300, 178, 10, 220),
+        st("KI", "KI", "avanzata", 5, 10, 430, 144, 0, 140),
+        st("CHA", "Carisma", "avanzata", 10, 0, 100, 108, 30, 150, "Titoli: +150 dai bonus CHA dei titoli (nell’Excel la cella Punti Titoli era 0 senza formula)"),
+      ],
+      titles: [{"name": "La Santa del Mattatoio", "rarity": "Epico", "bonus": {"DEX": 10, "VIT": 8, "INT": 6, "SHA": 10}}, {"name": "Prima Maestra", "rarity": "Epico", "bonus": {"DEX": 25}}, {"name": "Primo Monaco", "rarity": "Epico", "bonus": {"DEX": 15, "VIT": 15, "KI": 10}}, {"name": "Il Primo Agente dei Nocturn", "rarity": "Unico", "bonus": {"VIT": -20, "INT": 15, "SHA": 30, "CHA": 20}}, {"name": "Mano DX e Mano Sx del Doc", "rarity": "Raro", "bonus": {"VIT": 15}}, {"name": "Underdog", "rarity": "Epico", "bonus": {"DEX": 50}}, {"name": "Cacciatore di Maghi", "rarity": "Epico", "bonus": {"DEX": 5, "VIT": 10, "INT": 5}}, {"name": "Portatori di Calamità", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "SHA": 50, "KI": 50, "CHA": 50}}, {"name": "Amici dei Draghi", "rarity": "Leggendario", "bonus": {"STR": 50, "DEX": 50, "VIT": 50, "INT": 50, "SHA": 50, "KI": 50, "CHA": 50}}, {"name": "Come Russel", "rarity": "Leggendario", "bonus": {"STR": 30, "DEX": 30, "VIT": 30, "INT": 30, "SHA": 30, "KI": 30, "CHA": 30}}, {"name": "Confessore della Madre", "rarity": "Raro", "bonus": {"SHA": 50}}, {"name": "Sangue di Oni", "rarity": "Epico", "bonus": {"STR": 50, "VIT": 35}}],
+    }),
+    real(4, 4, {
+      name: "Deniel", classe: "Guerriero", level: 110, exp_pct: 0, regno: "Valeria", pvp: "Bianco",
+      gilda: {"nome": "—", "ruolo": ""}, corone: 0, scellini: 0,
+      stats: [
+        st("STR", "Forza", "base", 10, 15, 600, 110, 0, 0, "Excel: Punti Level Up 110, al livello 110 sarebbero 109"),
+        st("DEX", "Destrezza", "base", 10, 5, 100, 110, 0, 0, "Excel: Punti Level Up 110, al livello 110 sarebbero 109"),
+        st("VIT", "Vitalità", "base", 10, 0, 390, 110, 0, 0, "Excel: Punti Level Up 110, al livello 110 sarebbero 109"),
+        st("INT", "Intelligenza", "base", 10, 0, 0, 110, 0, 0, "Excel: Punti Level Up 110, al livello 110 sarebbero 109"),
+      ],
+      talents: [{"name": "Rabbia del Berserker", "rarity": "Raro", "origin": "Excel", "effect": "Sotto il 25% della vita"}],
+    }),
+    real(5, 5, {
+      name: "Connor", classe: "Guerriero", level: 111, exp_pct: 0, regno: "Qadesh", pvp: "Bianco",
+      gilda: {"nome": "—", "ruolo": ""}, corone: 0, scellini: 0,
+      stats: [
+        st("STR", "Forza", "base", 10, 10, 150, 110, 0, 13),
+        st("DEX", "Destrezza", "base", 10, 5, 163, 110, 0, 0),
+        st("VIT", "Vitalità", "base", 10, 5, 731, 110, 0, 40),
+        st("INT", "Intelligenza", "base", 10, 0, 56, 110, 0, 25),
+        st("CHA", "Carisma", "avanzata", 0, 0, 0, 69, 0, 30),
+      ],
+      titles: [{"name": "Questo Matrimonio non s'ha da fare", "rarity": "Raro", "bonus": {"STR": 5, "VIT": 10}}, {"name": "Fratello d'Armi del Passo dell'Aquila", "rarity": "Raro", "bonus": {"STR": 8, "VIT": 10}}, {"name": "EROE DELL'ECLISSI", "rarity": "Unico", "bonus": {"VIT": 20, "INT": 25, "CHA": 30}}],
+    }),
+    real(6, 6, {
+      name: "Dante", classe: "Ladro", level: 120, exp_pct: 0, regno: "Valeria", pvp: "Rosso",
+      gilda: {"nome": "—", "ruolo": ""}, corone: 0, scellini: 0,
+      stats: [
+        st("STR", "Forza", "base", 10, 0, 0, 119, 0, 0),
+        st("DEX", "Destrezza", "base", 10, 10, 0, 119, 0, 0),
+        st("VIT", "Vitalità", "base", 10, 0, 0, 119, 0, 0),
+        st("INT", "Intelligenza", "base", 10, 10, 0, 119, 0, 0),
+        st("LCK", "Fortuna", "avanzata", 5, 0, 1190, 113, 25, 0, "Fortuna: la gimmick di Dante. Altro = +25 dal talento Re dei Giochi. Entra nell’Evasione: (DEX + LCK)/20"),
+      ],
+      talents: [{"name": "Re dei Giochi", "rarity": "Epico", "origin": "Evolutivo", "effect": "Fortuna +25. Talento evolutivo: cresce evolvendo. Bonus Fortuna sui tiri = LCK/100."}],
+    }),
   ] as Stored[],
   campaign: {
     id: 1, name: "Campagna di Alba Chiara", session: 15, master_name: "Il Narratore",
@@ -464,14 +550,14 @@ const db = {
       decision: "Confermata SP = 50 + (STR+DEX)×5. Va aggiunta al modello e calcolata in automatico." },
     { id: 3, title: "Scala di rarità", text: "Combat unisce Unico/Leggendario, il Crafting li separa e aggiunge Evolutivo; i titoli aggiungono Divino.", sev: "warn", resolved: true,
       decision: "Scala unica a 8 gradi: Comune, Non Comune, Raro, Epico, Unico, Leggendario, Mitico, Divino." },
-    { id: 4, title: "Punti Level Up incoerenti", text: "Corax (lv 181) ha 185 punti invece di 180 su STR, DEX, VIT e INT; Deniel (lv 110) ne ha 110 invece di 109; Eric (lv 110) ha 129 punti su WIS, più dei 109 level up.", sev: "warn", resolved: false, decision: null },
+    { id: 4, title: "Punti Level Up incoerenti", text: "Corax (lv 181) ha 185 punti invece di 180 su STR, DEX, VIT e INT; Deniel (lv 110) ne ha 110 invece di 109; Eric (lv 110) ha 129 punti su WIS, più dei 109 level up.", sev: "warn",
+      resolved: true, decision: "Si tengono come nell'Excel (deciso dal Master il 20/11/2026): i punti restano e sono annotati sulla statistica." },
     { id: 5, title: "Formule non definite", text: "Difesa, iniziativa, probabilità di critico e di blocco non hanno formula.", sev: "bad", resolved: true,
       decision: "Difesa = VIT/10 + Difesa equip × (1 + VIT/100); Iniziativa = 10 + DEX/10; Critico = 5 + DEX/40 % (max 75%); Blocco = Blocco scudo + STR/40 % (solo con scudo, max 75%)." },
   ] as Issue[],
 };
 
 /* ---------- Helper ---------- */
-const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 const ok = (data: unknown, status = 200): Res => ({ status, data: clone(data) });
 const err = (status: number, detail: string): Res => ({ status, data: { detail } });
 const dmax = (c: Stored, k: string) => derivedFor(c).find((d) => d.key === k)!.value;
@@ -527,8 +613,16 @@ export async function handle(method: string, path: string, body: unknown, token:
     let stats = (b.stats as StatRow[]) || [];
     let ib = (b.item_bonus as Record<string, number>) || {};
     let eq: Character["equip"] = { difesa: 0, difesaMagica: 0, blocco: 0, ...((b.equip || {}) as Partial<Character["equip"]>) };
-    if (Array.isArray(b.inventory)) {
-      const a = applied({ stats, item_bonus: ib, equip: eq, magia: { nucleo: 0, talenti: 0 }, inventory: (b.inventory as ItemIn[]).map(mkItem), level: 1 });
+    let inventory = Array.isArray(b.inventory) ? (b.inventory as ItemIn[]).map(mkItem) : null;
+    if (b.classe_id != null) {
+      // Creazione guidata: equipaggiamento iniziale della classe, indossato come alla creazione
+      const cls = RULES.classes.find((x) => x.id === b.classe_id);
+      if (!cls) return err(422, "Classe inesistente.");
+      const start = cls.equip.map((e) => mkItem({ ...(e as ClassItem), equip_type: (e as ClassItem).equip_type ?? null }));
+      inventory = startingEquipment({ stats, item_bonus: ib, equip: eq, magia: { nucleo: 0, talenti: 0 }, inventory: [...(inventory ?? []), ...start], level: 1 });
+    }
+    if (inventory) {
+      const a = applied({ stats, item_bonus: ib, equip: eq, magia: { nucleo: 0, talenti: 0 }, inventory, level: 1 });
       stats = a.stats; ib = a.item_bonus; eq = a.equip;
     }
     return ok({ totals: totalsOf(stats), derived: derivedOf(stats, ib, eq, b.magia as Character["magia"]) });
@@ -566,7 +660,7 @@ export async function handle(method: string, path: string, body: unknown, token:
       combat: { position: "Mischia", turn: 1, effects: [], cooldowns: [], log: [] }, death: null,
     };
     c.inventory = startingEquipment(c);
-    c.resources = { hp: dmax(c, "hp"), mp: dmax(c, "mp"), sp: dmax(c, "sp") };
+    c.resources = maxesOf(c);
     db.chars.push(c);
     return ok(full(c), 201);
   }
@@ -593,12 +687,15 @@ export async function handle(method: string, path: string, body: unknown, token:
         if (k === "stats") (v as Record<string, unknown>[]).forEach((r) => delete r.total);
         (c as unknown as Record<string, unknown>)[k] = v;
       }
+      const mx = maxesOf(c);
       if (b.resources) {
         const r = b.resources as Partial<Character["resources"]>;
-        for (const k of ["hp", "mp", "sp"] as const) {
-          if (r[k] != null) c.resources[k] = Math.max(0, Math.min(dmax(c, k), Math.round(Number(r[k]))));
+        if (r.ki != null && mx.ki == null) return err(422, "KI: il personaggio non ha la statistica KI.");
+        for (const k of RES_KEYS) {
+          if (r[k] != null && mx[k] != null) c.resources[k] = Math.max(0, Math.min(mx[k]!, Math.round(Number(r[k]))));
         }
       }
+      clampRes(c);
       const cb = b.combat as Partial<Character["combat"]> | undefined;
       if (cb?.position) { c.combat.position = cb.position; log(c, `Posizione: ${cb.position}.`); }
       return ok(full(c));
@@ -617,7 +714,7 @@ export async function handle(method: string, path: string, body: unknown, token:
         if (e instanceof EqErr) return err(422, e.message);
         throw e;
       }
-      for (const k of ["hp", "mp", "sp"] as const) c.resources[k] = Math.min(c.resources[k], dmax(c, k));
+      clampRes(c);
       return ok(full(c));
     }
     if (sub === "/level-up" && method === "POST") {
@@ -659,10 +756,13 @@ export async function handle(method: string, path: string, body: unknown, token:
       } else if (b.type === "heal") {
         const max = dmax(c, "hp"); const g = Math.max(0, Math.min(amt, max - r.hp));
         r.hp = Math.min(max, r.hp + amt); log(c, `Cura: +${nf(g)} HP. HP ${nf(r.hp)}.`);
-      } else if (b.type === "spend_mp" || b.type === "spend_sp") {
-        const k = b.type === "spend_mp" ? "mp" : "sp"; const L = k.toUpperCase();
-        if (r[k] < amt) return err(422, `${L} insufficienti: servono ${nf(amt)}, disponibili ${nf(r[k])}.`);
-        r[k] -= amt; log(c, `Spesi ${nf(amt)} ${L}. ${L} ${nf(r[k])}.`);
+      } else if (b.type === "spend_mp" || b.type === "spend_sp" || b.type === "spend_ki") {
+        const k = String(b.type).slice(6) as "mp" | "sp" | "ki"; const L = k.toUpperCase();
+        const max = maxesOf(c)[k];
+        if (max == null) return err(422, `${c.name} non ha la statistica ${L}.`);
+        const cur = r[k] ?? max;
+        if (cur < amt) return err(422, `${L} insufficienti: servono ${nf(amt)}, disponibili ${nf(cur)}.`);
+        r[k] = cur - amt; log(c, `Spesi ${nf(amt)} ${L}. ${L} ${nf(cur - amt)}.`);
       } else return err(422, "Azione sconosciuta.");
       return ok(full(c));
     }
@@ -672,7 +772,15 @@ export async function handle(method: string, path: string, body: unknown, token:
       const mpG = Math.max(0, Math.min(mpMax - r.mp, Math.round((mpMax * RULES.regen.mp_pct) / 100)));
       const spG = Math.max(0, Math.min(spMax - r.sp, Math.round((spMax * RULES.regen.sp_pct) / 100)));
       r.mp += mpG; r.sp += spG;
-      log(c, `Fine turno: MP +${nf(mpG)}, SP +${nf(spG)}.`);
+      let line = `Fine turno: MP +${nf(mpG)}, SP +${nf(spG)}`;
+      const kiMax = maxesOf(c).ki;
+      if (kiMax != null) {  // KI: VIT/30 a turno (derivata kiCombat), entro il massimo
+        const regen = derivedFor(c).find((x) => x.key === "kiCombat")?.value ?? 0;
+        const cur = r.ki ?? kiMax;
+        const kiG = Math.max(0, Math.min(kiMax - cur, Math.round(regen)));
+        r.ki = cur + kiG; line += `, KI +${nf(kiG)}`;
+      }
+      log(c, `${line}.`);
       for (const e of c.combat.effects) {
         const h = Number(e.hpPerTurn) || 0;
         if (h) { r.hp = Math.max(0, Math.min(hpMax, r.hp + h)); log(c, `${e.name}: ${h > 0 ? "+" : "−"}${nf(Math.abs(h))} HP.`); }
@@ -723,7 +831,7 @@ export async function handle(method: string, path: string, body: unknown, token:
       }
       const r = c.resources;
       if (b.respawn === "here") r.hp = 1;
-      else { r.hp = Math.round(dmax(c, "hp") / 2); r.mp = Math.round(dmax(c, "mp") / 2); r.sp = Math.round(dmax(c, "sp") / 2); }
+      else c.resources = mapRes(maxesOf(c), (m) => Math.round(m / 2));
       c.combat = { ...c.combat, turn: 1, effects: [], cooldowns: [], log: [] };
       c.death = death;
       log(c, death.protected ? "Morte (livello protetto)." : `Morte: livello ${from} → ${c.level}.`);

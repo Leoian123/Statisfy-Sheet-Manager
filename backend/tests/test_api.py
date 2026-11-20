@@ -224,7 +224,10 @@ def test_master_routes(client, master):
     r = client.post("/api/npcs", json={"name": "Gino"}, headers=master)
     assert r.status_code == 201 and r.json()["history"] == []
     issues = client.get("/api/issues", headers=master).json()
-    assert len(issues) == 5 and issues[0]["resolved"] is True and issues[3]["decision"] is None
+    assert len(issues) == 5 and issues[0]["resolved"] is True and issues[3]["resolved"] is True
+    r = client.patch(f"/api/issues/{issues[3]['id']}", json={"resolved": False, "decision": None},
+                     headers=master).json()
+    assert r["resolved"] is False and r["decision"] is None
     r = client.patch(f"/api/issues/{issues[3]['id']}", json={"resolved": True, "decision": "Corretti a 180."},
                      headers=master).json()
     assert r["resolved"] is True and r["decision"] == "Corretti a 180."

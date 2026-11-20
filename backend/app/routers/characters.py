@@ -178,6 +178,8 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
     new_max = maxes_of(rules.apply_equipment(after))  # massimi con gli oggetti indossati
     if "resources" in fields:
         errs += rules.resource_errors(fields["resources"], new_max)
+        if not errs:  # il KI non inviato resta quello salvato
+            fields["resources"] = rules.clamp_resources({**(c.resources or {}), **{k: v for k, v in fields["resources"].items() if v is not None}}, new_max)
     if errs:
         raise HTTPException(422, " ".join(errs[:3]) + (f" (e altri {len(errs) - 3})" if len(errs) > 3 else ""))
 
@@ -187,7 +189,7 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
             flag_modified(c, k)
     if "resources" not in fields and {"stats", "equip", "magia", "item_bonus", "inventory"} & set(fields):
         # Se i massimi scendono, le risorse correnti non li superano
-        res = {k: rules.clean(min(rules.num((c.resources or {}).get(k)), new_max[k])) for k in ("hp", "mp", "sp")}
+        res = rules.clamp_resources(c.resources, new_max)
         if res != (c.resources or {}):
             set_json(c, "resources", res)
     if combat_patch is not None:

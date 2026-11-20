@@ -17,8 +17,9 @@ def rules_input(c: Character) -> dict:
 
 
 def maxes_of(ri: dict) -> dict:
+    """Massimi delle risorse: hp, mp, sp e ki (solo per chi ha la statistica KI)."""
     d = {x["key"]: x["value"] for x in rules.derived(ri)}
-    return {"hp": d["hp"], "mp": d["mp"], "sp": d["sp"]}
+    return {k: d[k] for k in rules.RESOURCE_KEYS if k in d}
 
 
 def maxes(c: Character) -> dict:

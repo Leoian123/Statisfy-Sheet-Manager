@@ -17,7 +17,7 @@ const STAT_INFO: Record<Code, { name: string; desc: string }> = {
   VIT: { name: "Vitalità", desc: "Vita, rigenerazione, resistenze" },
   INT: { name: "Intelligenza", desc: "Mana, bonus EXP, danno magico" },
 };
-const PREVIEW_KEYS = ["hp", "mp", "sp", "carico", "evasione", "precisione"];
+const PREVIEW_KEYS = ["hp", "mp", "sp", "carico", "evasione", "precisione", "difesa", "critico", "blocco"];
 
 interface Wizard {
   step: number;
@@ -78,7 +78,8 @@ function Wizard({ rules }: { rules: RulesConfig }) {
   const canReach = (k: number) => { for (let j = 1; j < k; j++) if (!valid(j)) return false; return true; };
   const goStep = (k: number) => { if (k >= 1 && k <= 4 && (k === w.step || canReach(k))) { upd({ step: k }); setSubmitErr(null); } };
 
-  // Anteprima derivate dal server, con debounce
+  // Anteprima derivate dal server, con debounce. Con la classe conta anche l'equipaggiamento di partenza
+  // che verrà indossato (es. Difesa 5, Blocco 20), come per il PG creato.
   const statsKey = CODES.map((k) => w.stats[k]).join(",");
   useEffect(() => {
     if (w.step < 3) return;
@@ -88,14 +89,14 @@ function Wizard({ rules }: { rules: RulesConfig }) {
         code, name: STAT_INFO[code].name, kind: "base", iniziale: C.base, creazione: w.stats[code] - C.base,
         investiti: 0, levelup: 0, altro: 0, titoli: 0, oggetti: 0, note: null, total: w.stats[code],
       }));
-      api.preview({ stats })
+      api.preview({ stats, ...(w.classId ? { classe_id: w.classId } : {}) })
         .then((r) => { setPreview(r.derived); setPreviewErr(null); })
         .catch((e) => setPreviewErr(errorText(e)))
         .finally(() => setStale(false));
     }, 250);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statsKey, w.step >= 3]);
+  }, [statsKey, w.classId, w.step >= 3]);
 
   const pd = useMemo(() => Object.fromEntries((preview ?? []).map((d) => [d.key, d])), [preview]);
 
@@ -144,7 +145,7 @@ function Wizard({ rules }: { rules: RulesConfig }) {
           <div className="kv" key={k}>
             <span className="label">{d?.label ?? k}</span>
             <span className="v">{d ? fmt(d.value, d.fmt) : "…"}</span>
-            {d && <span className="xs muted mono">{d.formula}</span>}
+            {d && <span className="xs muted mono">{d.formula}{d.bonus ? ` · oggetti +${fmt(d.bonus, d.fmt)}` : ""}</span>}
           </div>
         );
       })}
@@ -236,7 +237,7 @@ function Wizard({ rules }: { rules: RulesConfig }) {
             <span className="label">Anteprima derivate</span>
             {previewGrid}
             {previewErr ? <p className="hint bad" role="alert">{previewErr}</p>
-              : <p className="footnote">Valori calcolati dal server sulle statistiche di creazione.</p>}
+              : <p className="footnote">Valori calcolati dal server sulle statistiche di creazione, con l'equipaggiamento di partenza della classe indossato.</p>}
           </div>
         </div>
         {foot}

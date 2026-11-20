@@ -59,8 +59,11 @@ manoPrincipale, manoSecondaria`. Tipo di equipaggiamento → slot ammessi (model
 | dueMani | manoPrincipale e blocca manoSecondaria |
 | scudo, tenuto | solo manoSecondaria |
 
-- `POST /api/rules/preview` `{stats: [StatRow...], item_bonus?: {}, equip?: {}, magia?: {}, inventory?: Item[]}`
-  (con `inventory` la colonna `oggetti`, `equip` e `item_bonus` vengono ricalcolati dall'equipaggiato, come per la scheda) → `{totals: {CODE: number}, derived: [Derived...]}`. Serve all'anteprima live (creazione, level up). Nessuna persistenza.
+- `POST /api/rules/preview` `{stats: [StatRow...], item_bonus?: {}, equip?: {}, magia?: {}, inventory?: Item[], classe_id?: string}`
+  (con `inventory` la colonna `oggetti`, `equip` e `item_bonus` vengono ricalcolati dall'equipaggiato, come per la scheda;
+  con `classe_id` si aggiunge l'equipaggiamento iniziale della classe, indossato con la stessa logica della creazione
+  (`rules.starting_equipment`: solo ciò che ha i requisiti soddisfatti), così l'anteprima della creazione guidata
+  coincide con il PG creato. Classe inesistente → 422) → `{totals: {CODE: number}, derived: [Derived...]}`. Serve all'anteprima live (creazione, level up). Nessuna persistenza.
 
 ## Tipi
 
@@ -70,6 +73,8 @@ StatRow = { code: string; name: string; kind: "base"|"avanzata"; iniziale: numbe
             oggetti: number;     // bonus degli oggetti equipaggiati: calcolato dal server, mai inserito a mano
             note?: string|null; total: number }  // total calcolato dal server (somma di tutte le colonne)
 
+// Le derivate delle statistiche avanzate compaiono solo se il PG ha quella statistica:
+// LCK → bonusFortuna; KI → ki ("KI max" = 100 + KI×8, massimo della risorsa resources.ki), kiCombat, kiFuori, kiMeditazione.
 Derived = { key: string; label: string; fmt: "int"|"int1"|"kg"|"pct"|"permin"|"mult"|"dec";
             base: number;        // valore formula (già limitato da cap)
             bonus: number;       // bonus oggetti sommato DOPO la formula (item_bonus manuale + oggetti equipaggiati).
@@ -86,7 +91,7 @@ Character = {
   gilda: {nome: string; ruolo: string}; corone: int; scellini: int;
   stats: StatRow[]; item_bonus: {[key: string]: number};
   equip: {difesa: number; difesaMagica: number; blocco: number}; magia: {nucleo: int; talenti: int};
-  resources: {hp: number; mp: number; sp: number};
+  resources: {hp: number; mp: number; sp: number; ki?: number};  // ki solo per chi ha la statistica avanzata KI
   titles:   {name; rarity; bonus: {[code]: number}}[];
   skills:   {name; lvl: int; pct: number|"MAX"; type: string; passive?: string}[];
   active_skills: {name; effect; lvl; pct; cost; cd: int}[];
@@ -144,7 +149,9 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
     `total` inviato viene ignorato (ricalcolato). La colonna **`oggetti`** è calcolata dagli oggetti equipaggiati:
     il valore salvato si conserva e inviarne uno diverso → 422. Cambiare il livello non tocca la colonna `levelup`.
   - `resources`: 0 ≤ valore ≤ massimo (calcolato sulle stat dopo la modifica), altrimenti 422.
+    `ki` è facoltativo: se manca resta quello salvato; inviarlo per un PG senza la statistica KI → 422.
     Se `stats`, `equip` o `magia` abbassano un massimo, le risorse correnti scendono al nuovo massimo.
+    Se il Master aggiunge la statistica KI il KI parte dal massimo; se la toglie, `resources.ki` sparisce.
   - Regole sulle liste (`rules.sheet_errors`):
     rarità nella scala a 8 gradi per titoli, talenti, oggetti e quest (per le quest può essere vuota);
     `lvl` (Grado) 1–10 e `pct` 0–100 o `"MAX"` per skill, skill attive e skill dei pet; `cd` ≥ 0; `lvl` dei pet ≥ 1;
@@ -178,14 +185,14 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
 - Dopo ogni modifica HP/MP/SP correnti vengono limitati ai nuovi massimi.
 
 ### Combattimento (ogni rotta → `Character`, con riga aggiunta a `combat.log`)
-- `POST /api/characters/{id}/combat/action` `{type: "damage"|"heal"|"spend_mp"|"spend_sp", amount: int>0}`
+- `POST /api/characters/{id}/combat/action` `{type: "damage"|"heal"|"spend_mp"|"spend_sp"|"spend_ki", amount: int>0}`
   damage: prima consuma gli effetti con `absorb` (rimossi a 0), poi HP (min 0). heal: HP fino al max.
-  spend_*: 422 se insufficienti.
-- `POST /api/characters/{id}/combat/end-turn` — MP +mp_pct% e SP +sp_pct% del massimo (clamp), applica `hpPerTurn`, decrementa turni di effetti e cooldown e rimuove quelli a 0, `turn`+1. HP non si rigenerano.
+  spend_*: 422 se insufficienti; spend_ki → 422 se il PG non ha la statistica KI.
+- `POST /api/characters/{id}/combat/end-turn` — MP +mp_pct% e SP +sp_pct% del massimo (clamp), KI + derivata `kiCombat` (VIT/30, arrotondata; solo con la statistica KI, entro il massimo), applica `hpPerTurn`, decrementa turni di effetti e cooldown e rimuove quelli a 0, `turn`+1. HP non si rigenerano.
 - `POST /api/characters/{id}/combat/effects` `{name, kind, turns, text?, hpPerTurn?, absorb?}`
 - `DELETE /api/characters/{id}/combat/effects/{index}`
 - `POST /api/characters/{id}/combat/reset` — turno 1, effetti/cooldown/log svuotati.
-- `POST /api/characters/{id}/death` `{hubris: bool, respawn: "checkpoint"|"here"}` — regola morte (−1,5 livelli, −3 per Hubris, lv 1–2 protetti); respawn checkpoint → risorse al 50%, here → 1 HP e MP/SP invariati; effetti e cooldown azzerati; valorizza `death`.
+- `POST /api/characters/{id}/death` `{hubris: bool, respawn: "checkpoint"|"here"}` — regola morte (−1,5 livelli, −3 per Hubris, lv 1–2 protetti); respawn checkpoint → risorse al 50% (KI incluso), here → 1 HP e MP/SP/KI invariati; effetti e cooldown azzerati; valorizza `death`.
 
 ## Master
 - `GET /api/campaign` → `{id, name, session: int, master_name, open_quests: {name, who, rarity, due}[]}`

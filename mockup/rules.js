@@ -101,7 +101,7 @@
     c.itemBonus = itemBonus;
   }
   /* Doppia impugnatura (deciso 20/11/2026): libera per tutti, il danno della mano secondaria lo decide un talento.
-     PROPOSTA sul numero: senza talento la mano secondaria fa il 50% del danno; un talento "Doppia impugnatura"
+     Deciso anche il numero: senza talento la mano secondaria fa il 50% del danno; un talento "Doppia impugnatura"
      (o "Ambidestria") porta la sua percentuale nell'effetto, es. "Mano secondaria al 75% del danno". */
   const OFFHAND_BASE_PCT = 50;
   function offHandPct(c) {
@@ -188,6 +188,7 @@
     /* Derivate delle statistiche avanzate: solo per chi ha quella statistica (formule dei fogli Excel) */
     { key: "bonusFortuna", label: "Bonus Fortuna sui tiri", fmt: "dec", src: "Excel (Dante)", onlyIf: "LCK", calc: (t) => (t.LCK || 0) / 100, formula: "LCK / 100",
       explain: (t) => `${t.LCK} / 100`, note: () => "Nel foglio di Dante la cella calcola LCK/100, ma la descrizione dice LCK/10: da confermare." },
+    { key: "ki", label: "KI max", fmt: "int", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => 100 + (t.KI || 0) * 8, formula: "100 + KI×8" },
     { key: "kiCombat", label: "Regen KI in combattimento", fmt: "dec", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => t.VIT / 30, formula: "VIT / 30 a turno" },
     { key: "kiFuori", label: "Regen KI fuori combattimento", fmt: "permin", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => t.VIT / 15, formula: "VIT / 15 al minuto" },
     { key: "kiMeditazione", label: "Regen KI in meditazione", fmt: "permin", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => t.VIT / 5, formula: "VIT / 5 al minuto" },

@@ -1,7 +1,7 @@
 import { n } from "../lib/format";
 
 interface Props {
-  kind: "hp" | "mp" | "sp" | "exp";
+  kind: "hp" | "mp" | "sp" | "ki" | "exp";
   label: string;
   cur: number;
   max: number;

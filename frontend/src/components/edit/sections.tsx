@@ -1,9 +1,10 @@
 // Moduli di modifica della scheda per il Master. Ogni modulo salva solo il proprio campo con PATCH /characters/{id}.
 import { useState, type ReactNode } from "react";
 import { api } from "../../api/client";
-import type { Character, Pvp, RulesConfig, StatRow } from "../../api/types";
+import type { Character, Pvp, ResourceKey, Resources, RulesConfig, StatRow } from "../../api/types";
 import { useAppData } from "../../auth/AppData";
 import { n, ROMAN } from "../../lib/format";
+import { RESOURCE_DEFS } from "../../lib/resources";
 import { useBusy } from "../../lib/useCharacter";
 import { useToast } from "../Toast";
 import { EditActions, NumField, SelectField, TextField } from "./fields";
@@ -70,19 +71,22 @@ export function HeaderEditor(p: Props) {
 }
 
 /* ---------- Risorse ---------- */
-export function ResourcesEditor(p: Props & { max: Record<"hp" | "mp" | "sp", number> }) {
-  const labels = { hp: "Vita (HP)", mp: "Mana (MP)", sp: "Stamina (SP)" } as const;
+export function ResourcesEditor(p: Props & { max: Partial<Record<ResourceKey, number>> }) {
+  // KI solo se il PG ha la statistica (il server calcola la derivata "ki"); se manca parte dal massimo
+  const defs = RESOURCE_DEFS.filter((r) => p.max[r.key] != null);
+  const init = (c: Character): Resources =>
+    ({ ...c.resources, ...(p.max.ki != null ? { ki: c.resources.ki ?? p.max.ki } : {}) });
   return (
-    <SectionForm<Character["resources"]> {...p} what="Risorse" init={(c) => ({ ...c.resources })} toPatch={(d) => ({ resources: d })}>
+    <SectionForm<Resources> {...p} what="Risorse" init={init} toPatch={(d) => ({ resources: d })}>
       {(d, set) => (
         <>
           <div className="ed-grid">
-            {(["hp", "mp", "sp"] as const).map((k) => (
-              <NumField key={k} label={`${labels[k]} / ${n(p.max[k])}`} value={d[k]} min={0} max={p.max[k]} onChange={(v) => set({ ...d, [k]: v })} />
+            {defs.map(({ key: k, label }) => (
+              <NumField key={k} label={`${label} / ${n(p.max[k]!)}`} value={d[k] ?? 0} min={0} max={p.max[k]!} onChange={(v) => set({ ...d, [k]: v })} />
             ))}
           </div>
           <div className="row">
-            <button type="button" className="btn ghost" onClick={() => set({ ...p.max })}>Tutto al massimo</button>
+            <button type="button" className="btn ghost" onClick={() => set({ ...d, ...p.max } as Resources)}>Tutto al massimo</button>
           </div>
         </>
       )}
