@@ -8,7 +8,16 @@
 <link rel="stylesheet" href="styles.css">
 
 <header class="topbar">
-  <div class="brand"><b>STATISFY</b><span>Gestionale schede · mockup</span></div>
+  <div class="brand-menu">
+    <button type="button" class="brand" id="brand-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="brand-pop">
+      <b>STATISFY</b><span>Gestionale schede · mockup</span><i class="caret" aria-hidden="true">▾</i>
+    </button>
+    <div class="brand-pop" id="brand-pop" role="menu" hidden>
+      <span class="label">Account</span>
+      <a role="menuitem" href="#crea" data-close>＋ Crea nuovo personaggio</a>
+      <a role="menuitem" href="#scheda" data-close>I miei personaggi</a>
+    </div>
+  </div>
   <label class="row small" for="char-select" id="char-select-wrap">
     <span class="label">Personaggio</span>
     <select class="input" id="char-select" style="width:auto"></select>
@@ -26,11 +35,12 @@
 <div class="app">
   <nav class="nav" id="nav" aria-label="Sezioni">
     <a href="#scheda" data-route="scheda">Scheda personaggio</a>
-    <a href="#crea" data-route="crea">Creazione guidata</a>
+    <a href="#inventario" data-route="inventario">Inventario</a>
     <a href="#levelup" data-route="levelup">Level up</a>
     <a href="#combattimento" data-route="combattimento">Combattimento</a>
     <div class="nav-sep"></div>
-    <a href="#master" data-route="master">Area Master <span class="lock" id="master-lock">MASTER</span></a>
+    <a href="#master" data-route="master">Area Master <span class="lock master-lock">MASTER</span></a>
+    <a href="#forgia" data-route="forgia">Forgia del Master <span class="lock master-lock">MASTER</span></a>
     <div class="nav-sep"></div>
     <p class="nav-note footnote">Prototipo di design. Dati di esempio dalla scheda Excel di Kelvin; PNG, pesi e stati di combattimento sono inventati. Le modifiche non vengono salvate.</p>
   </nav>
@@ -43,10 +53,24 @@
 <script src="screens/crea.js" charset="utf-8"></script>
 <script src="screens/levelup.js" charset="utf-8"></script>
 <script src="screens/master.js" charset="utf-8"></script>
+<script src="screens/inventario.js" charset="utf-8"></script>
+<script src="screens/forgia.js" charset="utf-8"></script>
+<script src="screens/wizards-magia.js" charset="utf-8"></script>
+<script src="screens/wizards-master.js" charset="utf-8"></script>
 <script>
 (function () {
   const S = window.STATISFY;
-  const ROUTES = ["scheda", "crea", "levelup", "combattimento", "master"];
+  const ROUTES = ["scheda", "inventario", "crea", "levelup", "combattimento", "master", "forgia"];
+  const MASTER_ONLY = ["master", "forgia"];
+
+  // Menu account in alto a sinistra (creazione personaggio: funzione dell'utente, non della scheda)
+  const brandBtn = document.getElementById("brand-btn");
+  const brandPop = document.getElementById("brand-pop");
+  function setMenu(open) { brandPop.hidden = !open; brandBtn.setAttribute("aria-expanded", String(open)); }
+  brandBtn.addEventListener("click", (e) => { e.stopPropagation(); setMenu(brandPop.hidden); });
+  brandPop.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) setMenu(false); });
+  document.addEventListener("click", (e) => { if (!brandPop.hidden && !e.target.closest(".brand-menu")) setMenu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !brandPop.hidden) { setMenu(false); brandBtn.focus(); } });
 
   // Risorse correnti: se mancano, partono dal massimo
   for (const c of S.data.characters) {
@@ -87,7 +111,7 @@
       state.role = b.dataset.role;
       if (state.role === "giocatore") state.charId = "kelvin";
       document.querySelectorAll("[data-role]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-      document.getElementById("master-lock").hidden = state.role === "master";
+      document.querySelectorAll(".master-lock").forEach((l) => { l.hidden = state.role === "master"; });
       renderCharSelect();
       render();
     })
@@ -126,7 +150,7 @@
     const active = document.querySelector("#nav a[aria-current]");
     const nav = document.getElementById("nav");
     if (active && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = active.offsetLeft - 16;
-    if (r === "master" && state.role !== "master") {
+    if (MASTER_ONLY.includes(r) && state.role !== "master") {
       view.innerHTML = S.ui.win("Accesso negato",
         `<div class="sysmsg"><span class="tag">[SISTEMA]</span><span>Area riservata al Master.</span><span>Passa al ruolo Master dalla barra in alto per vederla.</span></div>
          <div class="row"><button class="btn primary" type="button" id="to-master">Passa a Master</button></div>`);
@@ -146,7 +170,6 @@
   }
 
   window.addEventListener("hashchange", () => { render(); view.focus({ preventScroll: true }); });
-  document.getElementById("master-lock").hidden = false;
   renderCharSelect();
   render();
 })();

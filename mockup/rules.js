@@ -12,14 +12,83 @@
     { key: "levelup", label: "Level up" },
     { key: "altro", label: "Altro" },
     { key: "titoli", label: "Titoli" },
+    { key: "oggetti", label: "Oggetti" }, // calcolata dagli oggetti equipaggiati (applyEquipment), mai inserita a mano
   ];
 
   function statTotal(row) {
     return SOURCES.reduce((sum, s) => sum + (Number(row[s.key]) || 0), 0);
   }
 
+  /* ---------- Equipaggiamento stile MMORPG (proposta 20/11/2026) ----------
+     Slot del manichino. Un'arma a due mani occupa manoPrincipale e blocca manoSecondaria.
+     Oggetto: { id, name, rarity, type, slot|null, twoHanded?, weight, qty, quality?,
+                stats: {STR: n, ...},          // bonus alle statistiche → colonna "Oggetti"
+                bonus: {difesa, difesaMagica, blocco, evasione, critico, ...},  // bonus alle derivate
+                weaponBase?: number, durability?: {cur, max}, req?: {level, STR, ...}, desc?, stats_text? }
+     Personaggio: inventory: Oggetto[], equipped: { slotKey: itemId } */
+  const SLOTS = [
+    { key: "testa", label: "Testa", side: "left" },
+    { key: "collo", label: "Collo", side: "left" },
+    { key: "spalle", label: "Spalle", side: "left" },
+    { key: "mantello", label: "Mantello", side: "left" },
+    { key: "torso", label: "Torso", side: "left" },
+    { key: "polsi", label: "Polsi", side: "left" },
+    { key: "mani", label: "Mani", side: "right" },
+    { key: "cintura", label: "Cintura", side: "right" },
+    { key: "gambe", label: "Gambe", side: "right" },
+    { key: "piedi", label: "Piedi", side: "right" },
+    { key: "anello1", label: "Anello", side: "right", accepts: "anello" },
+    { key: "anello2", label: "Anello", side: "right", accepts: "anello" },
+    { key: "ninnolo1", label: "Ninnolo", side: "bottom", accepts: "ninnolo" },
+    { key: "ninnolo2", label: "Ninnolo", side: "bottom", accepts: "ninnolo" },
+    { key: "manoPrincipale", label: "Mano principale", side: "bottom" },
+    { key: "manoSecondaria", label: "Mano secondaria", side: "bottom" },
+  ];
+  /* Bonus che entrano nelle formule come "equipaggiamento" (moltiplicati dalla statistica), non sommati dopo */
+  const EQUIP_FORMULA_KEYS = ["difesa", "difesaMagica", "blocco"];
+
+  /* Lo slot generico di un oggetto ("anello", "ninnolo") può andare in più slot del manichino */
+  function slotAccepts(slot, item) {
+    if (!item || !item.slot) return false;
+    return (slot.accepts || slot.key) === item.slot;
+  }
+  function equippedItems(c) {
+    const ids = new Set(Object.values((c && c.equipped) || {}).filter(Boolean));
+    return ((c && c.inventory) || []).filter((it) => it.id && ids.has(it.id));
+  }
+  /* Ricalcola dagli oggetti equipaggiati: colonna "oggetti" delle stat, c.equip e c.itemBonus.
+     Solo per i PG con c.equipped (gli altri mantengono i valori inseriti a mano). Idempotente. */
+  function applyEquipment(c) {
+    if (!c || !c.equipped) return;
+    const statSum = {};
+    const equip = { difesa: 0, difesaMagica: 0, blocco: 0 };
+    const itemBonus = {};
+    for (const it of equippedItems(c)) {
+      for (const [k, v] of Object.entries(it.stats || {})) statSum[k] = (statSum[k] || 0) + Number(v || 0);
+      for (const [k, v] of Object.entries(it.bonus || {})) {
+        if (EQUIP_FORMULA_KEYS.includes(k)) equip[k] += Number(v || 0);
+        else itemBonus[k] = (itemBonus[k] || 0) + Number(v || 0);
+      }
+    }
+    for (const row of c.stats || []) row.oggetti = statSum[row.code] || 0;
+    c.equip = equip;
+    c.itemBonus = itemBonus;
+  }
+  /* Requisiti non soddisfatti, es. ["Livello 80", "STR 200"] */
+  function unmetRequirements(c, item) {
+    const out = [];
+    const req = (item && item.req) || {};
+    const t = totals(c);
+    for (const [k, v] of Object.entries(req)) {
+      if (k === "level") { if (c.level < v) out.push(`Livello ${v}`); }
+      else if ((t[k] ?? 0) < v) out.push(`${k} ${v}`);
+    }
+    return out;
+  }
+
   /* Ritorna { STR: 170, DEX: 492, ... } per un personaggio (stat base + avanzate) */
   function totals(char) {
+    applyEquipment(char);
     const out = {};
     for (const row of char.stats) out[row.code] = statTotal(row);
     return out;
@@ -193,6 +262,6 @@
     toastTimer = setTimeout(() => { el.innerHTML = ""; }, 4000);
   }
 
-  S.rules = { BASE_STATS, SOURCES, statTotal, totals, DERIVED, derived, formulaText, explain, magicDivisor, equip, fmt, CREATION, penaltyBand, LEVEL, freePointsTotal, deathPenalty, REGEN, GRADES, ROMAN, RARITIES, RARITY_SCALE, rarityKey, powerRank };
+  S.rules = { BASE_STATS, SOURCES, SLOTS, EQUIP_FORMULA_KEYS, slotAccepts, equippedItems, applyEquipment, unmetRequirements, statTotal, totals, DERIVED, derived, formulaText, explain, magicDivisor, equip, fmt, CREATION, penaltyBand, LEVEL, freePointsTotal, deathPenalty, REGEN, GRADES, ROMAN, RARITIES, RARITY_SCALE, rarityKey, powerRank };
   S.ui = { esc, rarityChip, bar, win, toast };
 })();

@@ -70,6 +70,7 @@
       .sc-src-levelup { background: var(--mp); }
       .sc-src-altro { background: var(--warn); }
       .sc-src-titoli { background: var(--gold); }
+      .sc-src-oggetti { background: var(--r-unico); }
       .sc-tline { display: flex; justify-content: space-between; gap: 12px; }
       .sc-tsum { border-top: 1px solid var(--line); padding-top: 3px; margin-top: 2px; color: var(--gold); }
       @media (max-width: 420px) { .sc-srow { grid-template-columns: 3em minmax(0, 1fr) 4.5em; } .sc-sbar { display: none; } }
@@ -351,7 +352,7 @@
     return `${top}<div class="table-wrap"><table class="t">
       <thead><tr><th>Oggetto</th><th>Stats</th><th>Rarità</th><th>Tipo</th><th class="num">Q.tà</th><th class="num" title="Quantità × peso unitario">Peso tot.</th></tr></thead>
       <tbody>${list.map((i) => `<tr>
-        <td>${esc(i.name)}</td><td class="small">${esc(i.stats)}</td><td>${S.ui.rarityChip(i.rarity)}</td><td class="small">${esc(i.type)}</td>
+        <td>${esc(i.name)}${Object.values(c.equipped || {}).includes(i.id) ? ` <span class="chip gold">Equipaggiato</span>` : ""}</td><td class="small">${esc(i.stats_text || (typeof i.stats === "string" ? i.stats : ""))}</td><td>${S.ui.rarityChip(i.rarity)}</td><td class="small">${esc(i.type)}</td>
         <td class="num">${n(i.qty)}</td><td class="num" style="white-space:nowrap">${kg((Number(i.qty) || 0) * (Number(i.weight) || 0))}</td>
       </tr>`).join("")}</tbody>
       <tfoot><tr><td colspan="5">Totale</td><td class="num" style="white-space:nowrap">${kg(tot)}</td></tr></tfoot>

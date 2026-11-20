@@ -32,6 +32,73 @@ export function useCurrentCharId(): number | null {
   return chars[0].id;
 }
 
+type CharLite = { id: number; name: string; level: number; owner_name: string };
+
+/** Menu account in alto a sinistra: funzioni dell'utente che non dipendono da una scheda (creazione PG, elenco PG, uscita). */
+function BrandMenu(props: {
+  chars: CharLite[];
+  showOwner: boolean;
+  onCreate: () => void;
+  onOpen: (id: number) => void;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const location = useLocation();
+
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => { if (!wrapRef.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); btnRef.current?.focus(); } };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  const pick = (fn: () => void) => () => { setOpen(false); fn(); };
+
+  return (
+    <div className="brand-menu" ref={wrapRef}>
+      <button
+        type="button"
+        ref={btnRef}
+        className="brand"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="brand-pop"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <b>STATISFY</b><span>Gestionale schede</span><i className="caret" aria-hidden="true">▾</i>
+      </button>
+      {open && (
+        <div className="brand-pop" id="brand-pop" role="menu">
+          <span className="label">Account</span>
+          <button type="button" role="menuitem" className="brand-item primary" onClick={pick(props.onCreate)}>
+            ＋ Crea nuovo personaggio
+          </button>
+          {props.chars.length > 0 && (
+            <>
+              <span className="label">{props.showOwner ? "Personaggi della campagna" : "I miei personaggi"}</span>
+              <div className="brand-list">
+                {props.chars.map((c) => (
+                  <button key={c.id} type="button" role="menuitem" className="brand-item" onClick={pick(() => props.onOpen(c.id))}>
+                    <span>{c.name}</span>
+                    <span className="muted xs num">Lv {c.level}{props.showOwner ? ` · ${c.owner_name}` : ""}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="brand-sep" />
+          <button type="button" role="menuitem" className="brand-item" onClick={pick(props.onLogout)}>Esci</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppShell() {
   const { user, logout } = useAuth();
   const { chars, error, reload } = useAppData();
@@ -74,7 +141,13 @@ export function AppShell() {
   return (
     <>
       <header className="topbar">
-        <div className="brand"><b>STATISFY</b><span>Gestionale schede</span></div>
+        <BrandMenu
+          chars={chars ?? []}
+          showOwner={isMaster}
+          onCreate={() => navigate("/crea")}
+          onOpen={(id) => navigate(`/personaggi/${id}`)}
+          onLogout={logout}
+        />
         {chars && chars.length > 0 && (
           <label className="char-pick small" htmlFor="char-select">
             <span className="label">Personaggio</span>
@@ -105,7 +178,6 @@ export function AppShell() {
       <div className="app">
         <nav className="nav" aria-label="Sezioni" ref={navRef}>
           {charLink("", "Scheda personaggio")}
-          <NavLink to="/crea">Creazione guidata</NavLink>
           {charLink("/level-up", "Level up")}
           {charLink("/combattimento", "Combattimento")}
           {isMaster && (
