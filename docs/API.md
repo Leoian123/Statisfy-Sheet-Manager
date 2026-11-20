@@ -133,14 +133,29 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
   risorse al massimo, active_skills = abilità di classe, inventory = equipaggiamento di classe (Comune) + "Corone d'Oro" ×20
   (gli oggetti di classe con requisiti soddisfatti vengono indossati subito),
   posizione "Mischia". owner = utente corrente (il master può passare `owner_id` opzionale).
-- `PATCH /api/characters/{id}` — modifica parziale. Player: solo `resources`, `combat.position`. Master: anche
-  `exp_pct, regno, pvp, gilda, corone, scellini, item_bonus, equip, magia` e le liste
-  (`titles, skills, active_skills, talents, inventory, pets, curses, quests, reputation`, sostituzione intera).
-  `name`, `classe`, stats di creazione non sono modificabili (422). → `Character`
-  `inventory` viene normalizzato (id assegnato se manca) e validato: slot ammessi dal tipo, nessuno slot occupato due
-  volte, due mani + mano secondaria, quantità 1 per gli indossati (422 con messaggio). I requisiti non sono controllati
-  qui (il Master può forzare), solo negli endpoint di equipaggiamento. `equip` e `item_bonus` restano correzioni
-  manuali del Master che si sommano a quanto viene dagli oggetti.
+- `PATCH /api/characters/{id}` — modifica parziale → `Character`. Si inviano solo le sezioni da cambiare; le liste
+  si sostituiscono per intero. Tutto viene validato prima di salvare: se un controllo fallisce (422) non cambia nulla.
+  - **Player** (solo i propri PG): `resources`, `combat.position`. Qualsiasi campo del Master → 403.
+  - **Master**: anche `level` (int ≥ 1), `exp_pct` (0–100), `regno`, `pvp`, `gilda`, `corone`, `scellini`, `stats`,
+    `item_bonus`, `equip`, `magia` e le liste `titles, skills, active_skills, talents, inventory, pets, curses, quests, reputation`.
+  - Non modificabili da nessuno: `name`, `classe`, `id`, `owner_id` → 422.
+  - `stats`: elenco completo delle righe `{code, name, kind, iniziale, creazione, investiti, levelup, altro, titoli, note}`.
+    `code` 2–5 lettere maiuscole, unico; STR, DEX, VIT, INT restano e sono le sole `kind: "base"`; totale ≥ 0.
+    `total` inviato viene ignorato (ricalcolato). La colonna **`oggetti`** è calcolata dagli oggetti equipaggiati:
+    il valore salvato si conserva e inviarne uno diverso → 422. Cambiare il livello non tocca la colonna `levelup`.
+  - `resources`: 0 ≤ valore ≤ massimo (calcolato sulle stat dopo la modifica), altrimenti 422.
+    Se `stats`, `equip` o `magia` abbassano un massimo, le risorse correnti scendono al nuovo massimo.
+  - Regole sulle liste (`rules.sheet_errors`):
+    rarità nella scala a 8 gradi per titoli, talenti, oggetti e quest (per le quest può essere vuota);
+    `lvl` (Grado) 1–10 e `pct` 0–100 o `"MAX"` per skill, skill attive e skill dei pet; `cd` ≥ 0; `lvl` dei pet ≥ 1;
+    `qty` intero ≥ 0 e `weight` ≥ 0 per gli oggetti; bonus dei titoli e `stats` a mappa degli oggetti solo su codici di
+    statistica esistenti; reputazione con `range` ≥ 0 e |`value`| ≤ `range` quando `range` > 0. `name` (e `target`
+    della reputazione) obbligatorio.
+  - `inventory` viene normalizzato (id assegnato se manca) e validato: slot ammessi dal tipo, nessuno slot occupato due
+    volte, due mani + mano secondaria, quantità 1 per gli indossati (422). I requisiti non sono controllati qui (il
+    Master può forzare), solo negli endpoint di equipaggiamento. I massimi di HP/MP/SP contano gli oggetti indossati.
+  - `equip` e `item_bonus` restano correzioni manuali del Master che si sommano a quanto viene dagli oggetti.
+  - Campi non previsti negli elementi delle liste si conservano.
 - `DELETE /api/characters/{id}` — solo master → 204
 
 ### Level up

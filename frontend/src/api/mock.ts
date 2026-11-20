@@ -584,6 +584,15 @@ export async function handle(method: string, path: string, body: unknown, token:
       return { status: 204, data: null };
     }
     if (sub === "" && method === "PATCH") {
+      const masterKeys = ["level", "exp_pct", "regno", "pvp", "gilda", "corone", "scellini", "stats", "item_bonus", "equip", "magia",
+        "titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests", "reputation"];
+      const sent = Object.keys(b).filter((k) => masterKeys.includes(k));
+      if (sent.length && !isMaster) return err(403, `Solo il Master può modificare: ${sent.join(", ")}.`);
+      for (const k of sent) {
+        const v = clone(b[k]);
+        if (k === "stats") (v as Record<string, unknown>[]).forEach((r) => delete r.total);
+        (c as unknown as Record<string, unknown>)[k] = v;
+      }
       if (b.resources) {
         const r = b.resources as Partial<Character["resources"]>;
         for (const k of ["hp", "mp", "sp"] as const) {

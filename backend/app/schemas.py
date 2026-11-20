@@ -1,5 +1,5 @@
 """Schemi Pydantic per i corpi delle richieste (le risposte sono dict costruiti in serialize.py)."""
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -76,33 +76,133 @@ class CombatPatch(BaseModel):
 
 # Campi modificabili dal player e dal solo master
 PLAYER_FIELDS = {"resources", "combat"}
-MASTER_FIELDS = {"exp_pct", "regno", "pvp", "gilda", "corone", "scellini", "item_bonus", "equip", "magia",
-                 "titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests", "reputation"}
-LOCKED_FIELDS = {"name", "classe", "stats", "level", "id", "owner_id"}
+MASTER_FIELDS = {"level", "exp_pct", "regno", "pvp", "gilda", "corone", "scellini", "stats", "item_bonus", "equip",
+                 "magia", "titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests",
+                 "reputation"}
+LOCKED_FIELDS = {"name", "classe", "id", "owner_id"}
+
+# ---------- Elementi delle sezioni modificabili dal Master ----------
+# extra="allow": i campi non previsti (es. slot, bonus e id degli oggetti dell'inventario MMORPG) restano intatti.
+# Le regole di gioco (rarità, Gradi, tetti, codici) si controllano in rules.sheet_errors.
+
+Pct = float | Literal["MAX"]
+Name = Annotated[str, Field(min_length=1, max_length=120)]
+
+
+class StatRowEdit(BaseModel):
+    """Riga di statistica inviata dal Master. `total` è calcolato e viene ignorato; `oggetti` è calcolata
+    dagli oggetti equipaggiati e non si può cambiare."""
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(pattern=r"^[A-Z]{2,5}$")
+    name: str = Field(min_length=1, max_length=40)
+    kind: Literal["base", "avanzata"] = "avanzata"
+    iniziale: float = 0
+    creazione: float = 0
+    investiti: float = 0
+    levelup: float = 0
+    altro: float = 0
+    titoli: float = 0
+    note: str | None = None
+    oggetti: float | None = None
+    total: float | None = None
+
+
+class _Item(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: Name
+
+
+class TitleIn(_Item):
+    rarity: str
+    bonus: dict[str, float] = Field(default_factory=dict)
+
+
+class SkillIn(_Item):
+    lvl: int
+    pct: Pct = 0
+    type: str = ""
+    passive: str | None = None
+
+
+class ActiveSkillIn(_Item):
+    effect: str = ""
+    lvl: int = 1
+    pct: Pct = 0
+    cost: str = ""
+    cd: int = Field(0, ge=0)
+
+
+class TalentIn(_Item):
+    rarity: str
+    origin: str = ""
+    effect: str = ""
+
+
+class InventoryItemIn(_Item):
+    rarity: str
+    type: str = ""
+    stats: str | dict[str, float] | None = ""
+    qty: int = Field(1, ge=0)
+    weight: float = Field(0, ge=0)
+
+
+class PetSkillIn(_Item):
+    lvl: int
+    pct: Pct = 0
+
+
+class PetIn(_Item):
+    species: str = ""
+    lvl: int = Field(1, ge=1)
+    passive: str = ""
+    skills: list[PetSkillIn] = Field(default_factory=list)
+
+
+class CurseIn(_Item):
+    desc: str = ""
+    bonus: str = ""
+    malus: str = ""
+
+
+class QuestIn(_Item):
+    progress: str = ""
+    reward: str = ""
+    rarity: str = ""
+
+
+class ReputationIn(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    scope: str = ""
+    target: Name
+    value: float = 0
+    range: float = Field(0, ge=0)
+    label: str = ""
 
 
 class CharacterPatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
     resources: Resources | None = None
     combat: CombatPatch | None = None
+    level: int | None = Field(None, ge=1)
     exp_pct: float | None = Field(None, ge=0, le=100)
     regno: str | None = None
     pvp: Literal["Bianco", "Grigio", "Rosso"] | None = None
     gilda: Gilda | None = None
     corone: int | None = Field(None, ge=0)
     scellini: int | None = Field(None, ge=0)
+    stats: list[StatRowEdit] | None = None
     item_bonus: dict[str, float] | None = None
     equip: Equip | None = None
     magia: Magia | None = None
-    titles: list[dict[str, Any]] | None = None
-    skills: list[dict[str, Any]] | None = None
-    active_skills: list[dict[str, Any]] | None = None
-    talents: list[dict[str, Any]] | None = None
-    inventory: list[dict[str, Any]] | None = None
-    pets: list[dict[str, Any]] | None = None
-    curses: list[dict[str, Any]] | None = None
-    quests: list[dict[str, Any]] | None = None
-    reputation: list[dict[str, Any]] | None = None
+    titles: list[TitleIn] | None = None
+    skills: list[SkillIn] | None = None
+    active_skills: list[ActiveSkillIn] | None = None
+    talents: list[TalentIn] | None = None
+    inventory: list[InventoryItemIn] | None = None
+    pets: list[PetIn] | None = None
+    curses: list[CurseIn] | None = None
+    quests: list[QuestIn] | None = None
+    reputation: list[ReputationIn] | None = None
 
 
 SlotKey = Literal["testa", "collo", "spalle", "mantello", "torso", "polsi", "mani", "cintura", "gambe", "piedi",

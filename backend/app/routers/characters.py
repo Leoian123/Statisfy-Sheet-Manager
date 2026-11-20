@@ -13,7 +13,7 @@ from ..errors import validate
 from ..models import Character, User
 from ..schemas import (LOCKED_FIELDS, MASTER_FIELDS, PLAYER_FIELDS, CharacterCreate, CharacterPatch,
                        DistributeIn)
-from ..serialize import character_out, maxes, summary_out
+from ..serialize import character_out, maxes, maxes_of, summary_out
 
 router = APIRouter(prefix="/api/characters", tags=["characters"])
 
@@ -123,6 +123,25 @@ def create_character(data: CharacterCreate, user: User = Depends(current_user), 
     return save(db, c)
 
 
+def merge_stats(old: list[dict], rows: list[dict]) -> list[dict]:
+    """Righe di statistica dal Master: tiene le colonne calcolate (oggetti) già salvate, scarta `total`."""
+    prev = {r.get("code"): r for r in old}
+    out = []
+    for r in rows:
+        before = prev.get(r["code"], {})
+        for k in rules.COMPUTED_SOURCES:
+            sent = r.pop(k, None)
+            stored = rules.num(before.get(k))
+            if sent is not None and rules.num(sent) != stored:
+                raise HTTPException(422, f"{r['code']}: la colonna «{k.capitalize()}» è calcolata e non si modifica.")
+            if k in before:
+                r[k] = before[k]
+        r.pop("total", None)
+        r["note"] = (r.get("note") or "").strip() or None
+        out.append(r)
+    return out
+
+
 @router.patch("/{char_id}")
 def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(current_user),
                     db: Session = Depends(get_db)):
@@ -135,33 +154,49 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
         if denied:
             raise HTTPException(403, f"Solo il Master può modificare: {', '.join(denied)}.")
     data = validate(CharacterPatch, body)
-    fields = data.model_dump(exclude_unset=True)
-    if "combat" in fields and fields["combat"] is not None:
-        pos = fields.pop("combat")["position"]
-        if pos not in rules.POSITIONS:
-            raise HTTPException(422, f"Posizione non valida: {pos}.")
-        combat = copy.deepcopy(c.combat or {})
-        if combat.get("position") != pos:
-            combat["position"] = pos
-            rules.add_log(combat, f"Posizione: {pos}.")
-        set_json(c, "combat", combat)
-    else:
-        fields.pop("combat", None)
-    if fields.get("inventory") is not None:
+    fields = {k: v for k, v in data.model_dump(exclude_unset=True).items() if v is not None}
+    combat_patch = fields.pop("combat", None)
+    if combat_patch is not None and combat_patch["position"] not in rules.POSITIONS:
+        raise HTTPException(422, f"Posizione non valida: {combat_patch['position']}.")
+    if "stats" in fields:
+        fields["stats"] = merge_stats(c.stats or [], fields["stats"])
+    fields = {k: tidy(v) for k, v in fields.items() if k in PLAYER_FIELDS or k in MASTER_FIELDS}
+    if "inventory" in fields:
+        # Inventario MMORPG: id agli oggetti e slot coerenti (i requisiti no: il Master può forzare)
         inv = rules.normalize_inventory(fields["inventory"])
         rules.ensure_item_ids(inv)
         problem = rules.validate_equipment(inv)
         if problem:
             raise HTTPException(422, problem)
         fields["inventory"] = inv
+
+    # Regole: controlla lo stato risultante prima di toccare il personaggio
+    errs = rules.sheet_errors({**fields, "stats": fields.get("stats", c.stats or []), "_changed": set(fields)})
+    after = {"stats": fields.get("stats", c.stats or []), "equip": fields.get("equip", c.equip or {}),
+             "magia": fields.get("magia", c.magia or {}), "item_bonus": fields.get("item_bonus", c.item_bonus or {}),
+             "inventory": fields.get("inventory", c.inventory or [])}
+    new_max = maxes_of(rules.apply_equipment(after))  # massimi con gli oggetti indossati
+    if "resources" in fields:
+        errs += rules.resource_errors(fields["resources"], new_max)
+    if errs:
+        raise HTTPException(422, " ".join(errs[:3]) + (f" (e altri {len(errs) - 3})" if len(errs) > 3 else ""))
+
     for k, v in fields.items():
-        if v is None:
-            continue
-        if k in PLAYER_FIELDS or k in MASTER_FIELDS:
-            v = tidy(v)
-            setattr(c, k, v)
-            if isinstance(v, (dict, list)):
-                flag_modified(c, k)
+        setattr(c, k, v)
+        if isinstance(v, (dict, list)):
+            flag_modified(c, k)
+    if "resources" not in fields and {"stats", "equip", "magia", "item_bonus", "inventory"} & set(fields):
+        # Se i massimi scendono, le risorse correnti non li superano
+        res = {k: rules.clean(min(rules.num((c.resources or {}).get(k)), new_max[k])) for k in ("hp", "mp", "sp")}
+        if res != (c.resources or {}):
+            set_json(c, "resources", res)
+    if combat_patch is not None:
+        pos = combat_patch["position"]
+        combat = copy.deepcopy(c.combat or {})
+        if combat.get("position") != pos:
+            combat["position"] = pos
+            rules.add_log(combat, f"Posizione: {pos}.")
+        set_json(c, "combat", combat)
     return save(db, c)
 
 

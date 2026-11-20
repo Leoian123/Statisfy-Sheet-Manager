@@ -735,6 +735,90 @@ def rules_config() -> dict:
     }
 
 
+# ---------- Modifica della scheda da parte del Master ----------
+
+# Colonne di origine che il Master scrive a mano. "oggetti" (se presente) è calcolata dagli oggetti equipaggiati.
+COMPUTED_SOURCES = {"oggetti"}
+EDITABLE_SOURCES = [k for k in SOURCE_KEYS if k not in COMPUTED_SOURCES]
+GRADE_MAX = len(GRADES)
+
+
+def _grade_errors(where: str, lvl: Any, pct: Any) -> list[str]:
+    out = []
+    if not (1 <= int(num(lvl)) <= GRADE_MAX) or num(lvl) != int(num(lvl)):
+        out.append(f"{where}: il Grado va da 1 a {GRADE_MAX} (ora {lvl}).")
+    if pct != "MAX" and not (0 <= num(pct) <= 100):
+        out.append(f"{where}: la % va da 0 a 100 oppure MAX (ora {pct}).")
+    return out
+
+
+def _rarity_errors(where: str, rarity: Any, required: bool = True) -> list[str]:
+    if not rarity and not required:
+        return []
+    if rarity not in RARITIES:
+        return [f"{where}: rarità «{rarity or '—'}» fuori scala ({', '.join(RARITIES)})."]
+    return []
+
+
+def sheet_errors(sheet: dict) -> list[str]:
+    """Controlla le regole sui dati di scheda modificati dal Master. sheet contiene solo le sezioni presenti
+    nella modifica, più "stats" (sempre, per i codici). Restituisce i messaggi d'errore in italiano."""
+    errs: list[str] = []
+    stats = sheet.get("stats") or []
+    codes = [r.get("code") for r in stats]
+    if "stats" in sheet.get("_changed", ()):
+        dup = sorted({c for c in codes if codes.count(c) > 1})
+        if dup:
+            errs.append(f"Statistiche duplicate: {', '.join(dup)}.")
+        for code in BASE_STATS:
+            row = next((r for r in stats if r.get("code") == code), None)
+            if row is None:
+                errs.append(f"La statistica base {code} non si può rimuovere.")
+            elif row.get("kind") != "base":
+                errs.append(f"{code} è una statistica base.")
+        for r in stats:
+            if r.get("code") not in BASE_STATS and r.get("kind") == "base":
+                errs.append(f"{r.get('code')}: solo {', '.join(BASE_STATS)} sono statistiche base.")
+            if stat_total(r) < 0:
+                errs.append(f"{r.get('code')}: il totale non può essere negativo.")
+    known = set(codes)
+    for t in sheet.get("titles") or []:
+        w = f"Titolo «{t.get('name')}»"
+        errs += _rarity_errors(w, t.get("rarity"))
+        unknown = sorted(k for k in (t.get("bonus") or {}) if k not in known)
+        if unknown:
+            errs.append(f"{w}: bonus a statistiche inesistenti ({', '.join(unknown)}).")
+    for sk in sheet.get("skills") or []:
+        errs += _grade_errors(f"Skill «{sk.get('name')}»", sk.get("lvl"), sk.get("pct"))
+    for sk in sheet.get("active_skills") or []:
+        errs += _grade_errors(f"Skill attiva «{sk.get('name')}»", sk.get("lvl"), sk.get("pct"))
+    for t in sheet.get("talents") or []:
+        errs += _rarity_errors(f"Talento «{t.get('name')}»", t.get("rarity"))
+    for it in sheet.get("inventory") or []:
+        w = f"Oggetto «{it.get('name')}»"
+        errs += _rarity_errors(w, it.get("rarity"))
+        if isinstance(it.get("stats"), dict):
+            unknown = sorted(k for k in it["stats"] if k not in known)
+            if unknown:
+                errs.append(f"{w}: bonus a statistiche inesistenti ({', '.join(unknown)}).")
+    for p in sheet.get("pets") or []:
+        for sk in p.get("skills") or []:
+            errs += _grade_errors(f"Pet «{p.get('name')}», skill «{sk.get('name')}»", sk.get("lvl"), sk.get("pct"))
+    for q in sheet.get("quests") or []:
+        errs += _rarity_errors(f"Quest «{q.get('name')}»", q.get("rarity"), required=False)
+    for r in sheet.get("reputation") or []:
+        rng, val = num(r.get("range")), num(r.get("value"))
+        if rng > 0 and abs(val) > rng:
+            errs.append(f"Reputazione «{r.get('target')}»: il valore deve stare tra −{fmt_n(rng)} e +{fmt_n(rng)}.")
+    return errs
+
+
+def resource_errors(resources: dict, maxes: dict) -> list[str]:
+    labels = {"hp": "HP", "mp": "MP", "sp": "SP"}
+    return [f"{labels[k]} oltre il massimo ({fmt_n(resources[k])} su {fmt_n(maxes[k])})."
+            for k in ("hp", "mp", "sp") if num(resources.get(k)) > num(maxes.get(k))]
+
+
 # ---------- Combattimento (funzioni pure su dict) ----------
 
 def fmt_n(x: float) -> str:
