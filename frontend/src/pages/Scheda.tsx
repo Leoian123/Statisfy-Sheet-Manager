@@ -119,7 +119,8 @@ function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Deri
     const cur = Math.min(curOf(k, max), max);
     const next = Math.max(0, Math.min(max, cur + dir * step));
     if (next === c.resources[k]) return;
-    const res = await run(() => api.patchCharacter(c.id, { resources: { ...c.resources, [k]: next } }));
+    // solo la risorsa cambiata: le altre restano quelle salvate (anche se un'altra sessione le ha modificate)
+    const res = await run(() => api.patchCharacter(c.id, { resources: { [k]: next } }));
     if (res) onChange(res);
   }
 

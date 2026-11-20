@@ -343,3 +343,15 @@ def test_live_encounter_and_board(client, master):
     client.post(f"/api/forge/encounters/{eid}/close", json={"mode": "intera"}, headers=master)
     b = client.get("/api/forge/board", headers=master).json()
     assert b["encounters"] == [] and b["active_encounter_id"] is None
+
+
+def test_encounter_summary_singular_plural(client, master):
+    chars = client.get("/api/forge/meta", headers=master).json()["characters"]
+    d = encounter_draft([chars[0]["id"]])
+    r = save(client, master, "encounters", d)
+    assert r.status_code == 201, r.text
+    assert " · 2 creature · " in r.json()["entry"]["summary"]
+    d["creatures"][0]["count"] = 1
+    r = save(client, master, "encounters", {**d, "name": "Lupo solitario"})
+    assert r.status_code == 201, r.text
+    assert " · 1 creatura · " in r.json()["entry"]["summary"]

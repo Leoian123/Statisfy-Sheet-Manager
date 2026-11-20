@@ -820,6 +820,12 @@ export async function handle(method: string, path: string, body: unknown, token:
         const cur = r[k] ?? max;
         if (cur < amt) return err(422, `${L} insufficienti: servono ${nf(amt)}, disponibili ${nf(cur)}.`);
         r[k] = cur - amt; log(c, `Spesi ${nf(amt)} ${L}. ${L} ${nf(cur - amt)}.`);
+      } else if (b.type === "restore_mp" || b.type === "restore_sp" || b.type === "restore_ki") {
+        const k = String(b.type).slice(8) as "mp" | "sp" | "ki";
+        const max = maxesOf(c)[k];
+        if (max == null) return err(422, `${c.name} non ha la statistica ${k.toUpperCase()}.`);
+        const cur = r[k] ?? max;
+        r[k] = Math.max(cur, Math.min(max, cur + amt));
       } else return err(422, "Azione sconosciuta.");
       return ok(full(c));
     }

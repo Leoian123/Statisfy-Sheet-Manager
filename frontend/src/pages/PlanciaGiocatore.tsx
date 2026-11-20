@@ -22,7 +22,6 @@ import { ErrorBox, InlineError, Loading } from "../components/Status";
 import { useToast } from "../components/Toast";
 import { Win } from "../components/Win";
 import { ROMAN, rarityKey } from "../lib/format";
-import { resourceMaxes } from "../lib/resources";
 import { useBusy, useCharacter } from "../lib/useCharacter";
 import { usePolling } from "../lib/usePolling";
 import "../styles/tavolo.css";
@@ -125,6 +124,8 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
   const rollBtn = useRef<HTMLButtonElement>(null);
   const callRef = useRef<HTMLDivElement>(null);
   const seenReqs = useRef<Set<number> | null>(null);
+  // Mutazioni avviate da questa scheda: un polling partito prima non deve sovrascrivere la risposta più recente
+  const mutations = useRef(0);
 
   /* Combattimento: aperto se in corso (effetti, cooldown o turno > 1), altrimenti come l'ultima scelta */
   const active = c.combat.effects.length > 0 || c.combat.cooldowns.length > 0 || c.combat.turn > 1;
@@ -145,12 +146,15 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
 
   const refresh = useCallback(async () => {
     try {
-      const [rs, qs] = await Promise.all([api.rolls({ charId: c.id, limit: 30 }), api.rollRequests("aperta")]);
+      const seq = mutations.current;
+      const [rs, qs, fresh] = await Promise.all([api.rolls({ charId: c.id, limit: 30 }), api.rollRequests("aperta"), api.character(c.id)]);
+      // Scheda aggiornata (HP cambiati dal Master, effetti, livello) se nel frattempo qui non è partita un'azione
+      if (seq === mutations.current) setChar(fresh);
       const mine = qs.filter((x) => x.char_id === c.id);
       // Nuova richiesta del Master arrivata col polling: avviso
       if (seenReqs.current) {
-        const fresh = mine.filter((x) => !seenReqs.current!.has(x.id));
-        if (fresh.length) toast("RICHIESTA DEL MASTER", fresh.map((x) => `Tiro d100: ${x.what}${x.note ? ` — ${x.note}` : ""}`), { gold: true });
+        const nuove = mine.filter((x) => !seenReqs.current!.has(x.id));
+        if (nuove.length) toast("RICHIESTA DEL MASTER", nuove.map((x) => `Tiro d100: ${x.what}${x.note ? ` — ${x.note}` : ""}`), { gold: true });
       }
       seenReqs.current = new Set(mine.map((x) => x.id));
       setRolls(rs);
@@ -158,25 +162,22 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
       setPollErr(null);
       setRequestId((rid) => (rid != null && !mine.some((x) => x.id === rid) ? null : rid));
     } catch (e) { setPollErr(errorText(e)); }
-  }, [c.id, toast]);
+  }, [c.id, toast, setChar]);
   usePolling(refresh, 5000, [refresh]);
 
   /* ---------- Combattimento (HUD e sezione condividono quantità, stato "in corso" ed errore) ---------- */
   const apply = useCallback(async (fn: () => Promise<Character>) => {
+    mutations.current += 1;
     const out = await run(fn);
+    mutations.current += 1;
     if (out) setChar(out);
     return out;
   }, [run, setChar]);
   const amount = Math.floor(Number(amt));
   const onAction = (type: CombatActionType) => { if (Number.isFinite(amount) && amount > 0) apply(() => api.combatAction(c.id, type, amount)); };
+  // Recupero relativo calcolato dal server sul valore salvato: non riscrive HP/MP/SP cambiati da un'altra sessione
   const onRestore = (key: Exclude<ResourceKey, "hp">) => {
-    const mx = resourceMaxes(c.derived);
-    const max = mx[key] ?? 0;
-    const cur = c.resources[key] ?? max;
-    if (!(amount > 0)) return;
-    // PATCH vuole hp/mp/sp tutti presenti: si rimandano gli attuali e cambia solo la risorsa scelta (il server limita al massimo)
-    const base = { hp: c.resources.hp ?? mx.hp ?? 0, mp: c.resources.mp ?? mx.mp ?? 0, sp: c.resources.sp ?? mx.sp ?? 0 };
-    apply(() => api.patchCharacter(c.id, { resources: { ...base, [key]: Math.min(max, cur + amount) } }));
+    if (amount > 0) apply(() => api.combatAction(c.id, `restore_${key}`, amount));
   };
   const onPosition = (p: string) => apply(() => api.patchCharacter(c.id, { combat: { position: p } }));
 

@@ -203,7 +203,7 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
   spend_*: 422 se insufficienti; spend_ki → 422 se il PG non ha la statistica KI.
 - `POST /api/characters/{id}/combat/end-turn` — MP +mp_pct% e SP +sp_pct% del massimo (clamp), KI + derivata `kiCombat` (VIT/30, arrotondata; solo con la statistica KI, entro il massimo), applica `hpPerTurn`, decrementa turni di effetti e cooldown e rimuove quelli a 0, `turn`+1. HP non si rigenerano.
 - `POST /api/characters/{id}/combat/effects` `{name, kind, turns, text?, hpPerTurn?, absorb?}`
-- `DELETE /api/characters/{id}/combat/effects/{index}`
+- `DELETE /api/characters/{id}/combat/effects/{index}?name=` — `name` facoltativo: il nome dell'effetto che il client vede in quella posizione; se non corrisponde (lista cambiata in un'altra sessione) → 409 e nessuna rimozione
 - `POST /api/characters/{id}/combat/reset` — turno 1, effetti/cooldown/log svuotati.
 - `POST /api/characters/{id}/death` `{hubris: bool, respawn: "checkpoint"|"here"}` — regola morte (−1,5 livelli, −3 per Hubris, lv 1–2 protetti); respawn checkpoint → risorse al 50% (KI incluso), here → 1 HP e MP/SP/KI invariati; effetti e cooldown azzerati; valorizza `death`.
 

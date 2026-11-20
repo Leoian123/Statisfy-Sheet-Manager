@@ -1,6 +1,6 @@
 import copy
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import rules
@@ -44,6 +44,14 @@ def combat_action(char_id: int, data: CombatActionIn, user: User = Depends(curre
         gain = max(0, min(amt, mx["hp"] - cur))
         r["hp"] = min(mx["hp"], cur + amt) if cur < mx["hp"] else cur
         rules.add_log(combat, f"Cura: +{n(gain)} HP. HP {n(r['hp'])}.")
+    elif data.type.startswith("restore_"):
+        k = data.type.removeprefix("restore_")
+        if k not in mx:
+            raise HTTPException(422, f"{c.name} non ha la statistica {k.upper()}.")
+        cur = rules.num(r.get(k, mx[k]))
+        r[k] = max(cur, min(mx[k], cur + amt))
+        _store(c, combat, r)
+        return save(db, c)
     else:
         k = data.type.removeprefix("spend_")
         L = k.upper()
@@ -92,12 +100,15 @@ def combat_add_effect(char_id: int, data: EffectIn, user: User = Depends(current
 
 
 @router.delete("/combat/effects/{index}")
-def combat_remove_effect(char_id: int, index: int, user: User = Depends(current_user),
-                         db: Session = Depends(get_db)):
+def combat_remove_effect(char_id: int, index: int, name: str | None = Query(None, max_length=200),
+                         user: User = Depends(current_user), db: Session = Depends(get_db)):
     c = get_char(char_id, user, db)
     combat, r = _state(c)
     if not (0 <= index < len(combat["effects"])):
         raise HTTPException(404, "Effetto non trovato.")
+    # Con `name` il client dice quale effetto vede in quella posizione: se un'altra sessione ha cambiato la lista, 409
+    if name is not None and combat["effects"][index].get("name") != name:
+        raise HTTPException(409, "Gli effetti sono cambiati in un'altra sessione: ricarica e riprova.")
     e = combat["effects"].pop(index)
     rules.add_log(combat, f"Effetto rimosso: {e.get('name', '')}.")
     _store(c, combat, r)

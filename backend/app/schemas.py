@@ -61,9 +61,10 @@ class Gilda(BaseModel):
 
 
 class Resources(BaseModel):
-    hp: float = Field(ge=0)
-    mp: float = Field(ge=0)
-    sp: float = Field(ge=0)
+    # Una risorsa assente resta quella salvata: chi cambia solo l'MP non riscrive HP magari vecchi di un'altra sessione
+    hp: float | None = Field(default=None, ge=0)
+    mp: float | None = Field(default=None, ge=0)
+    sp: float | None = Field(default=None, ge=0)
     ki: float | None = Field(default=None, ge=0)  # solo per i PG con la statistica avanzata KI
 
 
@@ -240,7 +241,8 @@ class DistributeIn(BaseModel):
 
 
 class CombatActionIn(BaseModel):
-    type: Literal["damage", "heal", "spend_mp", "spend_sp", "spend_ki"]
+    # restore_*: recupero relativo fino al massimo, non registrato (i +/- della plancia), calcolato sul valore salvato
+    type: Literal["damage", "heal", "spend_mp", "spend_sp", "spend_ki", "restore_mp", "restore_sp", "restore_ki"]
     amount: int = Field(gt=0, le=MAX_AMOUNT)
 
 

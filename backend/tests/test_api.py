@@ -182,6 +182,13 @@ def test_effects_and_reset(client, p1):
     r = client.delete(f"/api/characters/{kid}/combat/effects/0", headers=p1).json()
     assert r["combat"]["effects"][0]["name"] == "Scudo Magico"
     assert client.delete(f"/api/characters/{kid}/combat/effects/9", headers=p1).status_code == 404
+    # il client dice quale effetto vede: se la lista è cambiata in un'altra sessione, 409 e nessuna rimozione
+    eff = client.get(f"/api/characters/{kid}", headers=p1).json()["combat"]["effects"]
+    r = client.delete(f"/api/characters/{kid}/combat/effects/0?name=Non%20questo", headers=p1)
+    assert r.status_code == 409
+    assert client.get(f"/api/characters/{kid}", headers=p1).json()["combat"]["effects"] == eff
+    r = client.delete(f"/api/characters/{kid}/combat/effects/0?name={eff[0]['name']}", headers=p1)
+    assert r.status_code == 200 and len(r.json()["combat"]["effects"]) == len(eff) - 1
     r = client.post(f"/api/characters/{kid}/combat/reset", headers=p1).json()
     assert r["combat"]["turn"] == 1 and r["combat"]["effects"] == [] and r["combat"]["log"] == []
 
@@ -240,3 +247,27 @@ def test_master_creates_for_player(client, master):
     assert r.status_code == 201 and r.json()["owner_name"] == "Giocatore 3"
     p3 = login(client, "giocatore3")
     assert {c["name"] for c in client.get("/api/characters", headers=p3).json()} == {"Corax", "Ombra"}
+
+
+def test_two_sessions_no_lost_resource_update(client, master, p1):
+    """Il Master toglie HP mentre la plancia del giocatore è aperta con valori vecchi: il recupero MP/SP del
+    giocatore (relativo, o PATCH con la sola risorsa cambiata) non deve riscrivere gli HP che non ha toccato."""
+    kid = kelvin_id(client, p1)
+    url = f"/api/characters/{kid}/combat/action"
+    r = client.post(url, json={"type": "damage", "amount": 500}, headers=master).json()  # 50 sullo scudo
+    hp = r["resources"]["hp"]
+    assert hp == 2410 - 450
+    # il giocatore recupera MP con il +: relativo al valore salvato, fino al massimo, senza riga nel registro
+    log_before = r["combat"]["log"]
+    r = client.post(url, json={"type": "restore_mp", "amount": 100}, headers=p1).json()
+    assert r["resources"] == {"hp": hp, "mp": 740, "sp": 2900}
+    assert r["combat"]["log"] == log_before
+    r = client.post(url, json={"type": "restore_sp", "amount": 99999}, headers=p1).json()
+    assert r["resources"]["sp"] == 3360 and r["resources"]["hp"] == hp
+    assert client.post(url, json={"type": "restore_ki", "amount": 10}, headers=p1).status_code == 422
+    # PATCH parziale: le risorse non inviate restano quelle salvate
+    r = client.patch(f"/api/characters/{kid}", json={"resources": {"mp": 100}}, headers=p1)
+    assert r.status_code == 200, r.text
+    assert r.json()["resources"] == {"hp": hp, "mp": 100, "sp": 3360}
+    r = client.patch(f"/api/characters/{kid}", json={"resources": {"mp": 99999}}, headers=p1)
+    assert r.status_code == 422

@@ -123,7 +123,7 @@ export function CombatPanel({ c, rules, busy, amt, setAmt, apply, onDied, open, 
                 <span className="small pg-list-txt">{e.text || ""}</span>
                 <span className="lu-turns">{n(e.turns)} {plural(e.turns, "turno", "turni")}</span>
                 <button type="button" className="btn icon ghost" disabled={busy} aria-label={`Rimuovi ${e.name}`}
-                  onClick={() => apply(() => api.removeEffect(c.id, i))}>✕</button>
+                  onClick={() => apply(() => api.removeEffect(c.id, i, e.name))}>✕</button>
               </li>
             ))}</ul>
           ) : <p className="small muted">Nessun effetto attivo.</p>}

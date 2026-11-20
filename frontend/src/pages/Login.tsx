@@ -10,7 +10,13 @@ export function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Dopo un 401 il client lascia un segno: qui si spiega perché si è tornati al login
+  const [error, setError] = useState<string | null>(() => {
+    try {
+      if (sessionStorage.getItem("statisfy-expired")) { sessionStorage.removeItem("statisfy-expired"); return "Sessione scaduta: accedi di nuovo."; }
+    } catch { /* storage non disponibile */ }
+    return null;
+  });
 
   async function submit(e: FormEvent) {
     e.preventDefault();

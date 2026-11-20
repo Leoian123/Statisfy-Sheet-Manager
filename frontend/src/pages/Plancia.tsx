@@ -44,12 +44,13 @@ export function Plancia() {
   const [tableErr, setTableErr] = useState<string | null>(null);
   const [askPc, setAskPc] = useState<{ id: number; n: number } | null>(null);
 
-  // Tavolo: tiri e richieste di tutti, aggiornati ogni 5 s con la pagina visibile
+  // Tavolo: tiri, richieste e gruppo (HP, livelli, stati cambiati dai giocatori), aggiornati ogni 5 s con la pagina visibile
   const refreshTable = useCallback(async () => {
     try {
-      const [rs, qs] = await Promise.all([api.rolls({ limit: 100 }), api.rollRequests()]);
+      const [rs, qs, b] = await Promise.all([api.rolls({ limit: 100 }), api.rollRequests(), forgeApi.board()]);
       setRolls(rs);
       setReqs(qs);
+      setBoard(b);
       setTableErr(null);
     } catch (e) { setTableErr(errorText(e)); }
   }, []);

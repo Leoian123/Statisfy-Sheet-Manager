@@ -78,6 +78,7 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   }
 
   if (status === 401 && path !== "/auth/login") {
+    try { sessionStorage.setItem("statisfy-expired", "1"); } catch { /* storage non disponibile */ }
     setToken(null);
     onUnauthorized?.();
   }
@@ -117,7 +118,8 @@ export const api = {
     request<Character>("POST", `/characters/${enc(id)}/combat/action`, { type, amount }),
   endTurn: (id: number) => request<Character>("POST", `/characters/${enc(id)}/combat/end-turn`),
   addEffect: (id: number, eff: NewEffect) => request<Character>("POST", `/characters/${enc(id)}/combat/effects`, eff),
-  removeEffect: (id: number, index: number) => request<Character>("DELETE", `/characters/${enc(id)}/combat/effects/${enc(index)}`),
+  removeEffect: (id: number, index: number, name?: string) =>
+    request<Character>("DELETE", `/characters/${enc(id)}/combat/effects/${enc(index)}${name != null ? `?name=${encodeURIComponent(name)}` : ""}`),
   resetCombat: (id: number) => request<Character>("POST", `/characters/${enc(id)}/combat/reset`),
   death: (id: number, hubris: boolean, respawn: "checkpoint" | "here") =>
     request<Character>("POST", `/characters/${enc(id)}/death`, { hubris, respawn }),

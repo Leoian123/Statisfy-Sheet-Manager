@@ -249,7 +249,7 @@ export interface CreateCharacterRequest {
   owner_id?: number;
 }
 
-export type CombatActionType = "damage" | "heal" | "spend_mp" | "spend_sp" | "spend_ki";
+export type CombatActionType = "damage" | "heal" | "spend_mp" | "spend_sp" | "spend_ki" | "restore_mp" | "restore_sp" | "restore_ki";
 
 export interface NewEffect {
   name: string;

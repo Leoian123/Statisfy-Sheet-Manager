@@ -589,6 +589,7 @@ def encounter_build(d: dict, ctx: dict) -> dict:
     top = R.top_rarity(cs)
     label = d.get("masterDiff") or diff["label"]
     profile = d.get("drop") if isinstance(d.get("drop"), dict) else None
+    n_cr = sum(c['count'] for c in cs)
     return {
         "name": txt(d.get("name")), "place": txt(d.get("place")), "env": d.get("env") or "", "conditions": txt(d.get("conditions")),
         "party": [p["id"] for p in pcs], "level": lv, "creatures": cs,
@@ -596,7 +597,7 @@ def encounter_build(d: dict, ctx: dict) -> dict:
         "expPct": exp["pct"], "expByPc": {str(p["id"]): R.exp_for(p["level"], cs)["pct"] for p in pcs},
         "loot": {"rarity": top, "weaponBase": list(R.rarity_info(top)["weapon_base"]), "profile": profile, "note": txt(d.get("lootNote"))},
         "hooks": txt(d.get("hooks")),
-        "summary": f"{txt(d.get('place'))} · {sum(c['count'] for c in cs)} creature · {label}{'' if d.get('masterDiff') else ' (stima)'}"
+        "summary": f"{txt(d.get('place'))} · {n_cr} {'creatura' if n_cr == 1 else 'creature'} · {label}{'' if d.get('masterDiff') else ' (stima)'}"
                    f" · EXP {R.fmt_it(exp['pct'])}% a lv {lv}",
     }
 
