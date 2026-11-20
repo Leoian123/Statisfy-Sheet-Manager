@@ -13,6 +13,7 @@ import { LevelUp } from "./pages/LevelUp";
 import { Combattimento } from "./pages/Combattimento";
 import { Master } from "./pages/Master";
 import { Forgia } from "./pages/Forgia";
+import { Plancia } from "./pages/Plancia";
 
 export function App() {
   return (
@@ -47,6 +48,7 @@ function Gate() {
           <Route path="/crea" element={<Crea />} />
           <Route path="/master" element={<MasterOnly><Master /></MasterOnly>} />
           <Route path="/master/forgia" element={<MasterOnly><Forgia /></MasterOnly>} />
+          <Route path="/master/plancia" element={<MasterOnly><Plancia /></MasterOnly>} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
@@ -58,7 +60,7 @@ function Home() {
   const { user } = useAuth();
   const { chars } = useAppData();
   const id = useCurrentCharId();
-  if (user?.role === "master") return <Navigate to="/master" replace />;
+  if (user?.role === "master") return <Navigate to="/master/plancia" replace />;
   if (!chars) return <Loading />;
   if (id == null) return <Navigate to="/crea" replace />;
   return <Navigate to={`/personaggi/${id}`} replace />;

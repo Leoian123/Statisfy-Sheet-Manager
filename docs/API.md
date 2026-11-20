@@ -244,12 +244,12 @@ Wizard di creazione dei contenuti (porting di `mockup/screens/forgia.js`, `wizar
 Tutte le rotte `/api/forge/*` sono solo master (403 per i player). Regole e costanti in `backend/app/rules.py` (sezione «Forgia del Master»),
 logica dei wizard (validazione per passo, anteprima, voce, assegnazione) in `backend/app/forge.py`. Decisioni del 20/11/2026: `docs/PROPOSTE.md`.
 
-`ForgeKind = "skills"|"classes"|"races"|"titles"|"npcs"|"encounters"|"spells"|"miracles"` (wizard Skill, Classe, Razza, Titolo, PNG, Incontro, Incantesimo, Miracolo).
+`ForgeKind = "skills"|"classes"|"races"|"titles"|"npcs"|"encounters"|"spells"|"miracles"|"items"` (wizard Skill, Classe, Razza, Titolo, PNG, Incontro, Incantesimo, Miracolo, Oggetto).
 
 - `GET /api/forge/meta` → opzioni dei wizard: costanti (`skill_types`, `weapon_grade_rows`, `class_types`, `race_templates`, `relations`,
   `sizes`, `environments`, `difficulty`, `drop_kinds`, `spheres`, `metamagic`, `sphere_meta`, `zones`, `ley_lines`, `backlash_bands`,
   `gods`, `natures`, `favor`, `against`, …), `steps: {ForgeKind: [etichette dei passi]}`, `rarities`, `roman`, `grades`,
-  `stat_codes` (codici delle statistiche dei PG), `characters: [{id, name, level, classe, exp_pct}]`,
+  `stat_codes` (codici delle statistiche dei PG), `item_bonus` (valori derivati che un oggetto può aumentare), `equip_types`, `assignable`, `characters: [{id, name, level, classe, exp_pct}]`,
   `library_skills`, `known_titles` (libreria + titoli dei PG), `classes` (base + libreria), `races`, `kingdoms`, `session`.
 - `GET /api/forge/library[?kind=ForgeKind]` → `ForgeEntry[]` (ordine di creazione).
 - `POST /api/forge/preview` `{kind, draft}` → `{kind, steps: [str], first_bad: int, computed: {...}}`.
@@ -264,6 +264,7 @@ logica dei wizard (validazione per passo, anteprima, voce, assegnazione) in `bac
     e ne toglie i bonus; bonus su statistiche che il PG non ha: ignorati e segnalati;
   - incantesimo (`assign`, origine grimorio o pratica) e miracolo (`assign`): nuova skill attiva Grado I · 1% con `kind` "Incantesimo"/"Miracolo";
     sfere mancanti (incantesimo) o classe/Fede/favore insufficienti (miracolo) richiedono `force: true`.
+  - oggetto: va nella borsa del PG (`inventory`, `slot` null, nuovo `id`); si equipaggia dalla scheda se i requisiti sono soddisfatti;
   - PNG: crea anche il PNG nell'archivio (`/api/npcs`, `entry.npc_id`); i campi in più (personalità, background, combattimento) restano in `entry.data.npc`.
 - `DELETE /api/forge/entries/{id}` → 204. Toglie la voce dalla libreria; non annulla assegnazioni né cancella il PNG.
 - `POST /api/forge/drop-profile` `{creatures: [{name, level, rarity, size, count}], kind?: "Avaro"|"Normale"|"Generoso"|"Tesoro", seed?: int}` → `DropProfile`.
@@ -274,6 +275,22 @@ logica dei wizard (validazione per passo, anteprima, voce, assegnazione) in `bac
 - `POST /api/forge/encounters/{id}/close` `{mode: "intera"|"divisa"}` → `{entry, results: ExpRow[], messages}`; 409 se già chiuso.
   Assegna l'EXP a ogni PG che partecipa e applica i level up (come `POST /characters/{id}/level-up`: +1 a ogni statistica e 10 punti liberi
   per livello, riga nel registro di combattimento). `entry.closed = {mode, at, session, results, text}`.
+
+- `GET /api/forge/entries/{id}/assign-preview?char_id=` → `AssignPreview`: cosa succede assegnando una voce già salvata
+  (`titles`, `items`, `skills`, `spells`, `miracles`) al PG: `{error, issues, replaces, lines: [{code, missing, delta, before, after, total_before, total_after}], unmet}`.
+  `error` blocca (titolo già posseduto o incompatibile, skill omonima, incantesimo improvvisato); `issues` richiedono `force`
+  (sfere mancanti, classe/Fede/favore insufficienti); `lines` = variazioni della colonna «Titoli» (con l'evoluzione che toglie il precedente);
+  `unmet` = requisiti dell'oggetto non soddisfatti (l'oggetto va comunque nella borsa).
+- `POST /api/forge/entries/{id}/assign` `{char_id, force?}` → `{entry, messages}`; 422 con `error` o con il primo avviso senza `force`.
+  Stesse regole del wizard; l'assegnazione si aggiunge a `entry.data.assignments` `[{char_id, name, at, session, forced}]`.
+- `POST /api/forge/encounters/{id}/live` `{action: "start"|"stop"|"next_turn"|"damage"|"heal", index?, amount?}` → `{entry, message}`.
+  Incontro in corso sulla plancia: `start` lo avvia (e sospende l'altro in corso), poi turni e Vita delle creature per riga
+  (`index` della creatura, Vita = numero × Vita di una, tra 0 e il massimo). Stato in `entry.data.live = {active, turn, hp: [...]}`;
+  409 se l'incontro è chiuso o non è in corso. La chiusura lo ferma.
+- `GET /api/forge/board` → dati della **Plancia di comando** del Master in una chiamata: `{campaign, party: [{id, name, classe, owner_name,
+  level, exp_pct, power_rank, resources, maxes, dead, effects}], npcs, encounters: [ForgeEntry + {live, creatures: [{name, count, rarity,
+  level, max, hp}]}] (non chiusi), active_encounter_id, library (voci assegnabili), counts: {ForgeKind: n}, log: [{at, text, entry_id, kind}]}`.
+  `log` = registro della sessione corrente (creazioni, assegnazioni, turni, chiusure: `entry.data.events`), dal più recente.
 
 ```
 ForgeEntry = {id, kind: ForgeKind, name, summary, data: {...voce del wizard}, assigned_to: int|null, assigned_name: str|null,

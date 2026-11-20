@@ -2,7 +2,7 @@
 // il frontend tiene la bozza del wizard e chiede al server validazione per passo e valori dell'anteprima.
 import { request } from "./client";
 
-export type ForgeKind = "skills" | "classes" | "races" | "titles" | "npcs" | "encounters" | "spells" | "miracles";
+export type ForgeKind = "skills" | "classes" | "races" | "titles" | "npcs" | "encounters" | "spells" | "miracles" | "items";
 export type ExpMode = "intera" | "divisa";
 /** Bozza libera di un wizard (campi del modulo). */
 export type Draft = Record<string, any>;
@@ -65,6 +65,9 @@ export interface ForgeMeta {
   races: string[];
   kingdoms: string[];
   session: number;
+  item_bonus: { v: string; l: string }[];
+  equip_types: { key: string; label: string; slots: string[]; two_handed: boolean }[];
+  assignable: ForgeKind[];
 }
 
 export interface ForgePreview { kind: ForgeKind; steps: string[]; first_bad: number; computed: Computed }
@@ -88,6 +91,29 @@ export interface ExpRow {
   after_level: number; after_exp: number; ups: number;
 }
 
+export interface AssignPreview {
+  error: string; issues: string[]; replaces: string | null; unmet: string[];
+  lines: { code: string; missing: boolean; delta: number; before?: number; after?: number; total_before?: number; total_after?: number }[];
+}
+export interface BoardPc {
+  id: number; name: string; classe: string; owner_name: string; level: number; exp_pct: number; power_rank: string;
+  resources: Record<string, number>; maxes: Record<string, number>; dead: boolean;
+  effects: { name: string; kind: "good" | "bad"; turns: number }[];
+}
+export interface LiveCreature { name: string; count: number; rarity: string; level: number; max: number; hp: number }
+export interface BoardEncounter extends ForgeEntry { live: { active?: boolean; turn?: number; hp?: number[] }; creatures: LiveCreature[] }
+export interface Board {
+  campaign: { name: string; session: number; master_name: string; open_quests: { name: string; who: string; rarity: string; due: string }[] } | null;
+  party: BoardPc[];
+  npcs: { id: number; name: string; level: number; role: string; place: string; trust: string; last: string }[];
+  encounters: BoardEncounter[];
+  active_encounter_id: number | null;
+  library: ForgeEntry[];
+  counts: Record<ForgeKind, number>;
+  log: { at: string; text: string; entry_id: number; kind: ForgeKind }[];
+}
+export type LiveAction = "start" | "stop" | "next_turn" | "damage" | "heal";
+
 const enc = encodeURIComponent;
 
 export const forgeApi = {
@@ -99,6 +125,12 @@ export const forgeApi = {
   dropProfile: (creatures: Draft[]) => request<DropProfile>("POST", "/forge/drop-profile", { creatures }),
   dropRoll: (profile: DropProfile) => request<{ rolls: { d100: number; what: string; rarity: string }[]; text: string }>("POST", "/forge/drop-roll", { profile }),
   encounterExp: (id: number, mode: ExpMode) => request<{ mode: ExpMode; party: number; rows: ExpRow[] }>("GET", `/forge/encounters/${enc(id)}/exp?mode=${enc(mode)}`),
+  board: () => request<Board>("GET", "/forge/board"),
+  assignPreview: (id: number, charId: number) => request<AssignPreview>("GET", `/forge/entries/${enc(id)}/assign-preview?char_id=${enc(charId)}`),
+  assign: (id: number, charId: number, force = false) =>
+    request<{ entry: ForgeEntry; messages: string[] }>("POST", `/forge/entries/${enc(id)}/assign`, { char_id: charId, force }),
+  live: (id: number, action: LiveAction, index?: number, amount?: number) =>
+    request<{ entry: ForgeEntry; message: string }>("POST", `/forge/encounters/${enc(id)}/live`, { action, index, amount }),
   closeEncounter: (id: number, mode: ExpMode) =>
     request<{ entry: ForgeEntry; results: ExpRow[]; messages: string[] }>("POST", `/forge/encounters/${enc(id)}/close`, { mode }),
 };

@@ -15,11 +15,11 @@ from .. import forge, rules
 from ..auth import require_master
 from ..db import get_db
 from ..models import Campaign, Character, ForgeEntry, Npc
-from ..serialize import rules_input
+from ..serialize import maxes_of, npc_out, rules_input
 
 router = APIRouter(prefix="/api/forge", tags=["forge"], dependencies=[Depends(require_master)])
 
-Kind = Literal["skills", "classes", "races", "titles", "npcs", "encounters", "spells", "miracles"]
+Kind = Literal["skills", "classes", "races", "titles", "npcs", "encounters", "spells", "miracles", "items"]
 
 
 class DraftIn(BaseModel):
@@ -39,6 +39,19 @@ class DropRollIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     profile: dict[str, Any]
     seed: int | None = None
+
+
+class AssignIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    char_id: int
+    force: bool = False
+
+
+class LiveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    action: Literal["start", "stop", "next_turn", "damage", "heal"]
+    index: int | None = None
+    amount: int | None = Field(None, ge=0, le=10 ** 9)
 
 
 class CloseIn(BaseModel):
@@ -124,6 +137,10 @@ def meta(db: Session = Depends(get_db)):
         "races": [e.name for e in lib if e.kind == "races"],
         "kingdoms": [k["name"] for k in rules.KINGDOMS],
         "session": _session(db),
+        "item_bonus": forge.item_bonus_options(),
+        "equip_types": [{"key": k, "label": v["label"], "slots": [rules.SLOT_LABELS[x] for x in v["slots"]],
+                         "two_handed": bool(v.get("two_handed"))} for k, v in rules.EQUIP_TYPES.items()],
+        "assignable": list(forge.ASSIGNABLE),
     }
 
 
@@ -155,12 +172,9 @@ def create_entry(data: DraftIn, db: Session = Depends(get_db)):
         c = db.get(Character, target)
         if c is None:
             raise HTTPException(404, "Personaggio non trovato.")
-        pg = {"name": c.name, "stats": copy.deepcopy(c.stats or []), "skills": copy.deepcopy(c.skills or []),
-              "active_skills": copy.deepcopy(c.active_skills or []), "titles": copy.deepcopy(c.titles or [])}
-        messages += apply(entry, pg)
-        for f in ("stats", "skills", "active_skills", "titles"):
-            _set_json(c, f, pg[f])
+        messages += _apply_to(c, entry, apply)
         e.assigned_to = c.id
+        entry["assignments"] = [{"char_id": c.id, "name": c.name, "at": _now(), "session": session}]
     if data.kind == "npcs":
         n = entry["npc"]
         npc = Npc(name=n["name"][:100], level=n["level"], race=n["race"][:100], place=n["place"][:200], role=n["role"][:200],
@@ -172,6 +186,7 @@ def create_entry(data: DraftIn, db: Session = Depends(get_db)):
         entry["npc"]["id"] = npc.id
         messages.append(f"«{n['name']}» aggiunto all'archivio PNG.")
     e.summary = entry.get("summary", "")
+    entry["events"] = [{"at": _now(), "session": session, "text": m} for m in messages]
     e.data = entry
     db.add(e)
     db.commit()
@@ -208,6 +223,171 @@ def drop_roll(data: DropRollIn):
     if not isinstance(rows, list) or not rows:
         raise HTTPException(422, "Profilo di drop non valido: manca la tabella d100.")
     return rules.roll_drop(data.profile, _rng(data.seed))
+
+
+PG_FIELDS = ("stats", "skills", "active_skills", "titles", "inventory")
+
+
+def _apply_to(c: Character, entry: dict, apply) -> list[str]:
+    """Applica una voce al PG su copie dei campi, poi salva i JSON modificati."""
+    pg = {"name": c.name, **{f: copy.deepcopy(getattr(c, f) or []) for f in PG_FIELDS}}
+    msgs = apply(entry, pg)
+    rules.ensure_item_ids(pg["inventory"])
+    for f in PG_FIELDS:
+        if pg[f] != (getattr(c, f) or []):
+            _set_json(c, f, pg[f])
+    return msgs
+
+
+def _event(db: Session, e: ForgeEntry, text: str) -> None:
+    data = dict(e.data or {})
+    data["events"] = [*(data.get("events") or []), {"at": _now(), "session": _session(db), "text": text}][-50:]
+    e.data = data
+    flag_modified(e, "data")
+
+
+def _entry(db: Session, entry_id: int) -> ForgeEntry:
+    e = db.get(ForgeEntry, entry_id)
+    if e is None:
+        raise HTTPException(404, "Voce della libreria non trovata.")
+    return e
+
+
+def _char(db: Session, char_id: int) -> Character:
+    c = db.get(Character, char_id)
+    if c is None:
+        raise HTTPException(404, "Personaggio non trovato.")
+    return c
+
+
+@router.get("/entries/{entry_id}/assign-preview")
+def assign_preview(entry_id: int, char_id: int, db: Session = Depends(get_db)):
+    """Cosa succede assegnando la voce al PG: errore bloccante, avvisi (servono `force`), variazioni dei titoli,
+    requisiti degli oggetti non soddisfatti."""
+    e = _entry(db, entry_id)
+    if e.kind not in forge.ASSIGNABLE:
+        raise HTTPException(422, "Questo tipo di voce non si assegna a un PG.")
+    return forge.assign_preview(e.kind, e.data or {}, _char_ctx(_char(db, char_id)))
+
+
+@router.post("/entries/{entry_id}/assign")
+def assign_entry(entry_id: int, data: AssignIn, db: Session = Depends(get_db)):
+    """Assegna a un PG una voce già salvata (titolo, oggetto, skill, incantesimo, miracolo) con le regole del wizard:
+    i bonus dei titoli vanno nella colonna «Titoli» e l'evoluzione sostituisce il precedente; l'oggetto va nella borsa."""
+    e = _entry(db, entry_id)
+    if e.kind not in forge.ASSIGNABLE:
+        raise HTTPException(422, "Questo tipo di voce non si assegna a un PG.")
+    c = _char(db, data.char_id)
+    pv = forge.assign_preview(e.kind, e.data or {}, _char_ctx(c))
+    if pv["error"]:
+        raise HTTPException(422, pv["error"])
+    if pv["issues"] and not data.force:
+        raise HTTPException(422, f"{pv['issues'][0]}: conferma per forzare l'assegnazione.")
+    entry = copy.deepcopy(e.data or {})
+    messages = _apply_to(c, entry, forge.apply_fn(e.kind))
+    entry["assignments"] = [*(entry.get("assignments") or []),
+                            {"char_id": c.id, "name": c.name, "at": _now(), "session": _session(db), "forced": bool(pv["issues"])}]
+    if e.assigned_to is None:
+        e.assigned_to = c.id
+    e.data = entry
+    flag_modified(e, "data")
+    _event(db, e, messages[0])
+    db.commit()
+    db.refresh(e)
+    return {"entry": entry_out(e, _names(db)), "messages": messages}
+
+
+def _live(e: ForgeEntry) -> dict:
+    return dict((e.data or {}).get("live") or {})
+
+
+def _creature_rows(e: ForgeEntry) -> list[dict]:
+    return [{"name": c.get("name"), "count": c.get("count", 1), "rarity": c.get("rarity"), "level": c.get("level"),
+             "max": rules.clean(rules.num(c.get("hp")) * (int(rules.num(c.get("count"))) or 1))}
+            for c in (e.data or {}).get("creatures") or []]
+
+
+@router.post("/encounters/{entry_id}/live")
+def encounter_live(entry_id: int, data: LiveIn, db: Session = Depends(get_db)):
+    """Incontro in corso sulla plancia: avvio (uno alla volta), sospensione, turni, Vita delle creature
+    (per riga: numero × Vita)."""
+    e = _encounter(db, entry_id)
+    if e.closed:
+        raise HTTPException(409, "Incontro già chiuso.")
+    live = _live(e)
+    rows = _creature_rows(e)
+    if data.action == "start":
+        for other in _entries(db, "encounters"):
+            if other.id != e.id and _live(other).get("active"):
+                other.data = {**(other.data or {}), "live": {**_live(other), "active": False}}
+                flag_modified(other, "data")
+        live = {"active": True, "turn": live.get("turn") or 1, "hp": live.get("hp") or [r["max"] for r in rows]}
+        text = f"Incontro «{e.name}» in corso (turno {live['turn']})."
+    elif not live.get("active"):
+        raise HTTPException(409, "L'incontro non è in corso: avvialo prima.")
+    elif data.action == "stop":
+        live["active"] = False
+        text = f"Incontro «{e.name}» sospeso al turno {live.get('turn', 1)}."
+    elif data.action == "next_turn":
+        live["turn"] = int(live.get("turn") or 1) + 1
+        text = f"«{e.name}»: turno {live['turn']}."
+    else:
+        i = data.index
+        if i is None or not 0 <= i < len(rows):
+            raise HTTPException(422, "Creatura non valida.")
+        if not data.amount:
+            raise HTTPException(422, "Indica un valore maggiore di 0.")
+        hp = list(live.get("hp") or [r["max"] for r in rows])
+        sign = -1 if data.action == "damage" else 1
+        hp[i] = rules.clean(max(0, min(rows[i]["max"], rules.num(hp[i]) + sign * data.amount)))
+        live["hp"] = hp
+        text = (f"«{rows[i]['name']}» {'−' if sign < 0 else '+'}{rules.fmt_n(data.amount)} Vita"
+                f" ({rules.fmt_n(hp[i])} / {rules.fmt_n(rows[i]['max'])})." + (" Sconfitta." if hp[i] == 0 else ""))
+    e.data = {**(e.data or {}), "live": live}
+    flag_modified(e, "data")
+    _event(db, e, text)
+    db.commit()
+    db.refresh(e)
+    return {"entry": entry_out(e, _names(db)), "message": text}
+
+
+@router.get("/board")
+def board(db: Session = Depends(get_db)):
+    """Tutto ciò che serve alla plancia di comando del Master in una chiamata."""
+    camp = db.scalar(select(Campaign).order_by(Campaign.id))
+    session = camp.session if camp else 1
+    party = []
+    for c in _chars(db):
+        mx = maxes_of(rules_input(c))
+        party.append({"id": c.id, "name": c.name, "classe": c.classe, "owner_name": c.owner.display_name if c.owner else "",
+                      "level": c.level, "exp_pct": rules.clean(rules.num(c.exp_pct)), "power_rank": rules.power_rank(c.level),
+                      "resources": rules.clamp_resources(c.resources, mx), "maxes": mx, "dead": bool(c.death),
+                      "effects": [{"name": x.get("name"), "kind": x.get("kind"), "turns": x.get("turns")}
+                                  for x in (c.combat or {}).get("effects") or []]})
+    entries = _entries(db)
+    names = _names(db)
+    encounters = []
+    for e in entries:
+        if e.kind != "encounters" or e.closed:
+            continue
+        rows = _creature_rows(e)
+        live = _live(e)
+        hp = live.get("hp") or [r["max"] for r in rows]
+        encounters.append({**entry_out(e, names), "live": live,
+                           "creatures": [{**r, "hp": hp[i] if i < len(hp) else r["max"]} for i, r in enumerate(rows)]})
+    log = sorted(((ev, e) for e in entries for ev in (e.data or {}).get("events") or [] if ev.get("session") == session),
+                 key=lambda x: x[0].get("at") or "", reverse=True)[:20]
+    return {
+        "campaign": {"name": camp.name, "session": session, "master_name": camp.master_name,
+                     "open_quests": camp.open_quests or []} if camp else None,
+        "party": party,
+        "npcs": [npc_out(n) for n in db.scalars(select(Npc).order_by(Npc.id))],
+        "encounters": encounters,
+        "active_encounter_id": next((x["id"] for x in encounters if x["live"].get("active")), None),
+        "library": [entry_out(e, names) for e in entries if e.kind in forge.ASSIGNABLE],
+        "counts": {k: sum(1 for e in entries if e.kind == k) for k in forge.KINDS},
+        "log": [{"at": ev.get("at"), "text": ev.get("text"), "entry_id": e.id, "kind": e.kind} for ev, e in log],
+    }
 
 
 def _encounter(db: Session, entry_id: int) -> ForgeEntry:
@@ -271,6 +451,9 @@ def close_encounter(entry_id: int, data: CloseIn, db: Session = Depends(get_db))
         lines.append(line)
     e.closed = {"mode": data.mode, "at": _now(), "session": _session(db), "results": rows, "text": "\n".join(lines)}
     flag_modified(e, "closed")
+    if _live(e):
+        e.data = {**(e.data or {}), "live": {**_live(e), "active": False}}
+    _event(db, e, f"Incontro «{e.name}» chiuso, EXP {data.mode}.")
     db.commit()
     db.refresh(e)
     head = f"Incontro «{e.name}» chiuso, EXP {'divisa nel gruppo' if data.mode == 'divisa' else 'intera a ogni PG'}."

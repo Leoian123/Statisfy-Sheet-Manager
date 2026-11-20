@@ -183,6 +183,7 @@ export function AppShell() {
           {isMaster && (
             <>
               <div className="nav-sep" />
+              <NavLink to="/master/plancia">Plancia di comando</NavLink>
               <NavLink to="/master" end>Area Master</NavLink>
               <NavLink to="/master/forgia">Forgia del Master</NavLink>
             </>
