@@ -6,15 +6,16 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api, errorText } from "../api/client";
-import type { Roll, RollRequest } from "../api/types";
+import type { Roll, RollCall, RollRequest } from "../api/types";
 import { forgeApi, type AssignPreview, type Board, type BoardEncounter, type BoardPc, type ForgeEntry, type ForgeKind, type ForgeMeta } from "../api/forge";
 import { useAppData } from "../auth/AppData";
 import { RarityChip } from "../components/RarityChip";
 import { ErrorBox, InlineError, Loading } from "../components/Status";
 import { TipRow } from "../components/TipRow";
 import { useToast } from "../components/Toast";
-import { DiceTray, useDiceSound, type DiceTrayHandle, type ThrowOpts } from "../components/DiceTray";
-import { RollLog, RollResult } from "../components/RollViews";
+import { DiceTray, useDiceSound, useFastRoll, type DiceTrayHandle, type ThrowOpts } from "../components/DiceTray";
+import { CritChip, RollLog, RollResult } from "../components/RollViews";
+import { CallPicker } from "../components/CallPicker";
 import { usePolling } from "../lib/usePolling";
 import { CloseEncounter, WIZARDS } from "./Forgia";
 import "../styles/forge.css";
@@ -244,8 +245,8 @@ function PcCard({ p, last, open: openReqs, onAsk, onAssign, onChanged }: PcProps
         </div>
       </TipRow>
       <div className="pl-pc-roll xs">
-        <span className="muted" title={last ? `${last.reason || "Tiro libero"}: d100 ${last.natural} → ${nf(last.total)}` : undefined}>
-          Ultimo tiro: {last ? <b className={`num${last.natural === 100 ? " pl-gold" : last.natural === 1 ? " pl-bad" : " pl-fg"}`}>{nf(last.total)}</b> : "—"}</span>
+        <span className="muted" title={last ? `${last.reason || "Tiro libero"}: d100 ${last.natural} → ${nf(last.total)}${last.call ? ` · ${last.call}` : ""}${last.crit ? ` · ${last.crit}` : ""}` : undefined}>
+          Ultimo tiro: {last ? <><b className={`num${last.crit ? " pl-gold" : " pl-fg"}`}>{nf(last.total)}</b> <CritChip crit={last.crit} /></> : "—"}</span>
         <button type="button" className="btn" onClick={() => onAsk(p.id)}>{openReqs ? `Richiesta aperta (${openReqs})` : "Chiedi un tiro"}</button>
       </div>
       {open ? (
@@ -494,10 +495,12 @@ function MasterRoll({ onRolled }: { onRolled: () => void }) {
   const toast = useToast();
   const [reason, setReason] = useState("");
   const [secret, setSecret] = useState(false);
+  const [call, setCall] = useState<RollCall | null>(null);
   const [last, setLast] = useState<Roll | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sound, toggleSound] = useDiceSound();
+  const [fast, toggleFast] = useFastRoll();
   const tray = useRef<DiceTrayHandle>(null);
   const btn = useRef<HTMLButtonElement>(null);
 
@@ -505,11 +508,12 @@ function MasterRoll({ onRolled }: { onRolled: () => void }) {
     if (busy || tray.current?.isRolling()) return;
     setBusy(true); setErr(null);
     try {
-      const r = await api.masterRoll(reason.trim().slice(0, 120), secret);
+      const r = await api.masterRoll(reason.trim().slice(0, 120), secret, call);
       setLast(null);
-      await tray.current?.throwTo(r.tens, r.units, opts);
+      await tray.current?.throwTo(r.tens, r.units, { ...opts, instant: fast });
       setLast(r);
-      toast("TIRO", [`Master${r.secret ? " (segreto)" : ""}: d100 ${r.natural}${r.reason ? ` · ${r.reason}` : ""}`], { gold: r.natural === 100 });
+      toast("TIRO", [`Master${r.secret ? " (segreto)" : ""}: d100 ${r.natural}${r.crit ? ` · ${r.crit === "supercritico" ? "SUPERCRITICO" : "critico"}` : ""}${r.reason ? ` · ${r.reason}` : ""}`],
+        { gold: r.crit != null });
       onRolled();
       btn.current?.focus({ preventScroll: true });
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
@@ -523,11 +527,15 @@ function MasterRoll({ onRolled }: { onRolled: () => void }) {
           <label className="label" htmlFor="pl-mr-reason">Per cosa tiri</label>
           <input className="input" id="pl-mr-reason" maxLength={80} placeholder="es. La guardia nota il furto?" value={reason} onChange={(e) => setReason(e.target.value)} />
         </div>
+        <CallPicker id="pl-mr-call" value={call} onChange={setCall} allowNone disabled={busy} />
         <DiceTray ref={tray} hint={!last} disabled={busy} onFling={(o) => doRoll(o)} />
         <div className="row tv-actions">
           <button type="button" ref={btn} className="btn primary tv-roll" disabled={busy} onClick={() => doRoll()}>{busy ? "I dadi rotolano…" : "Lancia d100"}</button>
           <label className="row small tv-secret"><input type="checkbox" checked={secret} onChange={(e) => setSecret(e.target.checked)} /> Tiro segreto</label>
-          <button type="button" className="btn ghost tv-mini" aria-pressed={sound} onClick={toggleSound}>{sound ? "Suono: sì" : "Suono: no"}</button>
+          <span className="row tv-toggles">
+            <button type="button" className="btn ghost tv-mini" aria-pressed={fast} onClick={toggleFast} title="Mostra subito il risultato, senza animazione">{fast ? "Tiro veloce: sì" : "Tiro veloce: no"}</button>
+            <button type="button" className="btn ghost tv-mini" aria-pressed={sound} onClick={toggleSound}>{sound ? "Suono: sì" : "Suono: no"}</button>
+          </span>
         </div>
         <InlineError message={err} />
         <div aria-live="polite">
@@ -602,10 +610,10 @@ function AskPanel({ board, reqs, ask, onChanged }: { board: Board; reqs: RollReq
         {reqs.length > 0 && (
           <div className="tv-reqs">
             {reqs.slice(0, 12).map((q) => (
-              <div key={q.id} className="tv-req-row" title={`${q.char_name} · ${q.what}${q.note ? `\n${q.note}` : ""}${q.roll_total != null ? `\nd100 ${q.roll_natural} → ${nf(q.roll_total)}` : ""}`}>
+              <div key={q.id} className="tv-req-row" title={`${q.char_name} · ${q.what}${q.note ? `\n${q.note}` : ""}${q.roll_total != null ? `\nd100 ${q.roll_natural} → ${nf(q.roll_total)}${q.roll_crit ? ` · ${q.roll_crit}` : ""}` : ""}`}>
                 <span className="tv-req-t"><b>{q.char_name}</b> · {q.what}</span>
                 {q.status === "risolta"
-                  ? <span className="chip good">{q.roll_total != null ? nf(q.roll_total) : "risolta"}</span>
+                  ? <><CritChip crit={q.roll_crit} /><span className="chip good">{q.roll_total != null ? nf(q.roll_total) : "risolta"}</span></>
                   : <><span className="chip warn">in attesa</span>
                     <button type="button" className="btn ghost icon" aria-label={`Annulla la richiesta a ${q.char_name}: ${q.what}`} title="Annulla richiesta" onClick={() => cancel(q)}>✕</button></>}
               </div>

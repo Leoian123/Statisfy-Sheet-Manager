@@ -5,6 +5,7 @@ import copy
 import math
 import re
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 BASE_STATS = ["STR", "DEX", "VIT", "INT"]
@@ -1561,9 +1562,17 @@ def fmt_n(x: float) -> str:
 
 
 def add_log(combat: dict, text: str, limit: int = 20) -> None:
+    """Aggiunge una riga al registro del combattimento. `log_at` è parallelo a `log` (ora ISO UTC di ogni riga, "" per
+    le righe di prima che non l'avevano): si riallinea dalla fine, così resta corretto anche dopo che `log` è stato
+    svuotato (nuovo scontro, morte) senza toccare `log_at`."""
     log = list(combat.get("log") or [])
+    at = [str(x) for x in (combat.get("log_at") or [])]
+    at = at[-len(log):] if log else []
+    at = [""] * (len(log) - len(at)) + at
     log.append(f"T{combat.get('turn', 1)} · {text}")
+    at.append(datetime.now(timezone.utc).isoformat(timespec="seconds"))
     combat["log"] = log[-limit:]
+    combat["log_at"] = at[-limit:]
 
 
 def apply_damage(resources: dict, combat: dict, amount: int) -> None:

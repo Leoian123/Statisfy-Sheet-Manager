@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { AppDataProvider, useAppData } from "./auth/AppData";
 import { ToastProvider } from "./components/Toast";
@@ -10,7 +10,6 @@ import { Login } from "./pages/Login";
 import { Scheda } from "./pages/Scheda";
 import { Crea } from "./pages/Crea";
 import { LevelUp } from "./pages/LevelUp";
-import { Combattimento } from "./pages/Combattimento";
 import { Master } from "./pages/Master";
 import { Forgia } from "./pages/Forgia";
 import { Plancia } from "./pages/Plancia";
@@ -46,7 +45,7 @@ function Gate() {
           <Route path="/personaggi/:id" element={<Scheda />} />
           <Route path="/personaggi/:id/plancia" element={<PlanciaGiocatore />} />
           <Route path="/personaggi/:id/level-up" element={<LevelUp />} />
-          <Route path="/personaggi/:id/combattimento" element={<Combattimento />} />
+          <Route path="/personaggi/:id/combattimento" element={<ToPlancia />} />
           <Route path="/crea" element={<Crea />} />
           <Route path="/master" element={<MasterOnly><Master /></MasterOnly>} />
           <Route path="/master/forgia" element={<MasterOnly><Forgia /></MasterOnly>} />
@@ -66,6 +65,12 @@ function Home() {
   if (!chars) return <Loading />;
   if (id == null) return <Navigate to="/crea" replace />;
   return <Navigate to={`/personaggi/${id}`} replace />;
+}
+
+/** La vecchia pagina Combattimento è dentro la Plancia di gioco: i link e i preferiti vecchi ci portano lì. */
+function ToPlancia() {
+  const { id } = useParams();
+  return <Navigate to={`/personaggi/${id}/plancia`} replace />;
 }
 
 function MasterOnly({ children }: { children: ReactNode }) {

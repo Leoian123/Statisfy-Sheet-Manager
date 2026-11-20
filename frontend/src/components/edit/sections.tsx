@@ -186,7 +186,13 @@ function listDefs(c: Character): Record<ListKey, ListDef> {
       noun: "Skill attiva", blank: () => ({ name: "", effect: "", lvl: 1, pct: 0, cost: "", cd: 0 }),
       summary: (s) => <>{gradeText(s.lvl)} · {pctText(s.pct)} · {s.cost || "—"} · CD {s.cd}</>,
       fields: [...skillFields, { key: "cost", label: "Costo", kind: "text", hint: "es. 20 MP" },
-        { key: "cd", label: "Cooldown (turni)", kind: "int", min: 0 }, { key: "effect", label: "Effetto", kind: "area" }],
+        { key: "cd", label: "Cooldown (turni)", kind: "int", min: 0 },
+        { key: "kind", label: "Tipo", kind: "select", options: ["", "Skill", "Incantesimo", "Miracolo"],
+          hint: "Decide il tab: Skill attive, Incantesimi o Miracoli (vuoto = skill attiva)" },
+        { key: "god", label: "Divinità", kind: "text", when: (s) => s.kind === "Miracolo" || !!s.god },
+        { key: "spheres", label: "Sfere", kind: "static", when: (s) => Array.isArray(s.spheres) && s.spheres.length > 0,
+          render: (s) => (s.spheres as string[]).join(", "), hint: "Dalla Forgia (wizard Incantesimo)" },
+        { key: "effect", label: "Effetto", kind: "area" }],
     },
     talents: {
       noun: "Talento", blank: () => ({ name: "", rarity: "Comune", origin: `Lvl ${String(c.level).padStart(2, "0")}`, effect: "" }),
@@ -249,10 +255,30 @@ function listDefs(c: Character): Record<ListKey, ListDef> {
   };
 }
 
-export function ListSectionEditor({ field, what, ...p }: Props & { field: ListKey; what: string }) {
-  const def = listDefs(p.c)[field];
+/** Parte di una lista modificata da sola (es. gli incantesimi dentro `active_skills`): le altre voci restano
+    al loro posto, le voci nuove prendono i campi di `blank`. */
+export interface ListSubset { match: (it: Item) => boolean; blank?: Item; noun?: string }
+
+function mergeSubset(all: Item[], edited: Item[], match: (it: Item) => boolean): Item[] {
+  const queue = [...edited];
+  const out: Item[] = [];
+  for (const it of all) {
+    if (!match(it)) out.push(it);
+    else if (queue.length) out.push(queue.shift()!);
+  }
+  return [...out, ...queue];
+}
+
+export function ListSectionEditor({ field, what, subset, ...p }: Props & { field: ListKey; what: string; subset?: ListSubset }) {
+  const base = listDefs(p.c)[field];
+  const def: ListDef = subset
+    ? { ...base, noun: subset.noun ?? base.noun, blank: () => ({ ...base.blank(), ...(subset.blank ?? {}) }) }
+    : base;
+  const all = (p.c[field] ?? []) as Item[];
   return (
-    <SectionForm<Item[]> {...p} what={what} init={(c) => clone(c[field]) as Item[]} toPatch={(d) => ({ [field]: d })}>
+    <SectionForm<Item[]> {...p} what={what}
+      init={(c) => clone((c[field] as Item[]).filter((it) => !subset || subset.match(it)))}
+      toPatch={(d) => ({ [field]: subset ? mergeSubset(all, d, subset.match) : d })}>
       {(d, set) => <ListEditor items={d} onChange={set} def={def} />}
     </SectionForm>
   );

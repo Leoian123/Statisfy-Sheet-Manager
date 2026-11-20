@@ -1,7 +1,8 @@
 """Dati iniziali (da mockup/data.js). Uso: python -m app.seed [--reset]"""
 import sys
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -372,8 +373,32 @@ def migrate(db: Session) -> int:
     return changed
 
 
+# Colonne aggiunte dopo la creazione della tabella: `create_all` crea le tabelle mancanti ma non aggiunge colonne a
+# quelle esistenti, quindi qui un ALTER TABLE ADD COLUMN (tutte nullable, senza default: le righe vecchie restano NULL).
+ADDED_COLUMNS: dict[str, list[tuple[str, str]]] = {
+    "rolls": [("call", "VARCHAR(10)"), ("crit", "VARCHAR(15)")],
+}
+
+
+def migrate_schema(bind: Engine) -> list[str]:
+    """Aggiunge alle tabelle esistenti le colonne nuove di `ADDED_COLUMNS`. Ritorna le colonne aggiunte ("tab.col")."""
+    insp = inspect(bind)
+    added = []
+    with bind.begin() as conn:
+        for table, cols in ADDED_COLUMNS.items():
+            if not insp.has_table(table):
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for name, ddl in cols:
+                if name not in have:
+                    conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{name}" {ddl}'))
+                    added.append(f"{table}.{name}")
+    return added
+
+
 def seed_if_empty(db: Session) -> bool:
     Base.metadata.create_all(bind=db.get_bind())
+    migrate_schema(db.get_bind())
     if db.scalar(select(User).limit(1)) is not None:
         migrate(db)
         return False

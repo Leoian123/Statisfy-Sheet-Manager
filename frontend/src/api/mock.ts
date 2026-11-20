@@ -2,7 +2,7 @@
 // Simula il server: qui (e solo qui) le regole sono replicate dal mockup per poter sviluppare senza backend.
 import type {
   Campaign, Character, CharacterSummary, Derived, DerivedFmt, Effect, EquipTypeDef, InventoryItem, ItemPreview, Issue, Npc,
-  Resources, Roll, RollMod, RollRequest, RulesConfig, SlotDef, SlotKey, StatRow, User,
+  Resources, Roll, RollCall, RollCrit, RollMod, RollRequest, RulesConfig, SlotDef, SlotKey, StatRow, User,
 } from "./types";
 
 type Res = { status: number; data: unknown };
@@ -584,21 +584,35 @@ function summary(c: Stored): CharacterSummary {
     regno: c.regno, pvp: c.pvp, gilda: c.gilda, power_rank: powerRank(c.level), hp: c.resources.hp, hp_max: dmax(c, "hp") };
 }
 function log(c: Stored, text: string) {
+  const n = c.combat.log.length;
+  const at = (c.combat.log_at ?? []).slice(n ? -n : 0, n ? undefined : 0);
+  c.combat.log_at = [...Array(n - at.length).fill(""), ...at, new Date().toISOString()].slice(-20);
   c.combat.log.push(`T${c.combat.turn} · ${text}`);
   if (c.combat.log.length > 20) c.combat.log = c.combat.log.slice(-20);
 }
 
 /* ---------- Tavolo: tiri d100 (come backend/app/routers/table.py) ---------- */
-const table = { rolls: [] as (Roll & { secret: boolean })[], requests: [] as Omit<RollRequest, "char_name" | "roll_total" | "roll_natural">[], seq: 1 };
+const table = { rolls: [] as (Roll & { secret: boolean })[], requests: [] as Omit<RollRequest, "char_name" | "roll_total" | "roll_natural" | "roll_crit">[], seq: 1 };
 const MOD_KINDS = ["Skill", "Skill attiva", "Titolo", "Talento", "Fortuna"] as const;
+/* Dadi forzati per le prove (solo mock): da console `__mockDice(9, 9)` → il prossimo tiro dà 99 (decine 9, unità 9). */
+const forcedDice: number[] = [];
+(globalThis as unknown as { __mockDice: (...v: number[]) => void }).__mockDice = (...v: number[]) => { forcedDice.push(...v.map((x) => Math.abs(Math.trunc(x)) % 10)); };
 function d10(): number {
+  if (forcedDice.length) return forcedDice.shift()!;
   const a = new Uint32Array(1);
   for (;;) { crypto.getRandomValues(a); if (a[0] < 4294967290) return a[0] % 10; }
 }
+/** Critici del d100 (come table.crit_of): conta il naturale. Sopra: 100 super, 91–99 critico. Sotto: 1 super, 2–9 critico. */
+export function critOf(natural: number, call: RollCall | null): RollCrit {
+  if (call === "sopra") return natural === 100 ? "supercritico" : natural > 90 ? "critico" : null;
+  if (call === "sotto") return natural === 1 ? "supercritico" : natural < 10 ? "critico" : null;
+  return null;
+}
+const isCall = (v: unknown): v is RollCall => v === "sopra" || v === "sotto";
 const charName = (id: number) => db.chars.find((c) => c.id === id)?.name ?? "PG eliminato";
 function requestOut(q: (typeof table.requests)[number]): RollRequest {
   const r = q.roll_id ? table.rolls.find((x) => x.id === q.roll_id) : undefined;
-  return { ...q, char_name: charName(q.char_id), roll_total: r ? r.total : null, roll_natural: r ? r.natural : null };
+  return { ...q, char_name: charName(q.char_id), roll_total: r ? r.total : null, roll_natural: r ? r.natural : null, roll_crit: r ? r.crit : null };
 }
 function checkMods(c: Stored, raw: unknown): RollMod[] | string {
   if (raw == null) return [];
@@ -619,13 +633,13 @@ function checkMods(c: Stored, raw: unknown): RollMod[] | string {
   }
   return out;
 }
-function newRoll(charId: number | null, me: User, reason: string, mods: RollMod[], secret: boolean, requestId: number | null) {
+function newRoll(charId: number | null, me: User, reason: string, mods: RollMod[], secret: boolean, requestId: number | null, call: RollCall | null) {
   const tens = d10(), units = d10();
   const natural = tens * 10 + units || 100;
   const r = {
     id: table.seq++, char_id: charId, char_name: charId == null ? "Master" : charName(charId), by: charId == null ? "master" as const : "giocatore" as const,
     author_id: me.id, author_name: me.display_name, reason: reason.trim().slice(0, 120), tens, units, natural, mods,
-    total: natural + mods.reduce((s, m) => s + m.mod, 0), secret, request_id: requestId, created_at: new Date().toISOString(),
+    total: natural + mods.reduce((s, m) => s + m.mod, 0), call, crit: critOf(natural, call), secret, request_id: requestId, created_at: new Date().toISOString(),
   };
   table.rolls.push(r);
   return r;
@@ -890,10 +904,11 @@ export async function handle(method: string, path: string, body: unknown, token:
   if (m && method === "POST") {
     const c = db.chars.find((x) => x.id === Number(m![1]));
     if (!c || (!isMaster && c.owner_id !== me.id)) return err(404, "Personaggio non trovato.");
+    if (!isCall(b.call)) return err(422, "Dati non validi — call: campo obbligatorio mancante (ammessi: 'sopra' o 'sotto').");
     const mods = checkMods(c, b.mods);
     if (typeof mods === "string") return err(422, mods);
     const q = typeof b.request_id === "number" ? table.requests.find((x) => x.id === b.request_id && x.char_id === c.id && x.status === "aperta") : undefined;
-    const r = newRoll(c.id, me, String(b.reason ?? ""), mods, false, q ? q.id : null);
+    const r = newRoll(c.id, me, String(b.reason ?? ""), mods, false, q ? q.id : null, b.call);
     if (q) { q.status = "risolta"; q.roll_id = r.id; }
     return ok(r, 201);
   }
@@ -902,7 +917,8 @@ export async function handle(method: string, path: string, body: unknown, token:
     const qs = new URLSearchParams(path.split("?")[1] || "");
     if (method === "POST" && path === "/table/rolls") {
       if (!isMaster) return err(403, "Operazione riservata al Master.");
-      return ok(newRoll(null, me, String(b.reason ?? ""), [], !!b.secret, null), 201);
+      if (b.call != null && !isCall(b.call)) return err(422, "Dati non validi — call: valore non ammesso (ammessi: 'sopra' o 'sotto').");
+      return ok(newRoll(null, me, String(b.reason ?? ""), [], !!b.secret, null, isCall(b.call) ? b.call : null), 201);
     }
     if (method === "GET") {
       const ids = mine();

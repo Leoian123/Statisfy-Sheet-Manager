@@ -95,6 +95,27 @@
       .sc-list li { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; background: var(--panel-2);
         display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
       .sc-list li .sc-grow { flex: 1 1 200px; min-width: 0; }
+      /* Tab OG (titoli, skill, incantesimi, miracoli, talenti): righe compatte, dettaglio nel tooltip #inv-tip */
+      .sc-og { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+      .sc-og > .win { margin: 0; min-width: 0; }
+      .sc-og .og-row { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 0 10px; padding: 4px 8px; }
+      .sc-og .og-row .inv-ico { grid-row: 1 / span 2; }
+      .sc-og .og-row[aria-describedby] { background: color-mix(in srgb, currentColor 9%, var(--panel-2)); border-color: color-mix(in srgb, currentColor 35%, transparent); }
+      .sc-og .og-iqty { font-family: var(--font-display); font-weight: 700; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+      .sc-og .og-imeta .og-good { color: var(--good); }
+      .og-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .og-filters .btn { padding: 4px 10px; font-size: var(--fs-xs); }
+      .og-filters .btn[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+      .og-sortsel { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+      .og-sortsel select { width: auto; padding: 4px 8px; font-size: var(--fs-xs); }
+      .og-mastery { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; white-space: nowrap; }
+      .og-mtrack { display: block; width: 56px; height: 4px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); overflow: hidden; }
+      .og-mtrack > i { display: block; height: 100%; background: var(--violet); }
+      .og-mastery.max .og-mtrack > i { background: var(--gold); }
+      .og-mastery > b { font-weight: 600; font-size: var(--fs-xs); color: var(--fg); font-family: var(--font-mono); min-width: 3.2em; text-align: right; }
+      .og-mastery.max > b { color: var(--gold); }
+      #inv-tip .og-mastery > b { text-align: left; min-width: 0; }
+      @media (max-width: 420px) { .sc-og .og-row .og-mtrack { display: none; } .sc-og .og-row .og-mastery > b { min-width: 0; } }
     `;
     document.head.appendChild(st);
   }
@@ -102,12 +123,21 @@
   /* ---------- Stato locale ---------- */
   let tab = "titoli";
   let skillFilter = "Tutti";
+  let skillSort = "grado";
+  let titleFilter = "Tutte";
+  let queries = {};          // ricerca per tab
+  let docBound = false;      // chiusura del tooltip con Esc o toccando fuori
+  let ogHide = null;         // chiude il tooltip OG della scheda montata
+  let ogFocus = null;        // mostra/nasconde il tooltip al focus da tastiera
+  const focusBound = new WeakSet();
   let lastCharId = null;
 
   const TABS = [
     { key: "titoli", label: "Titoli", list: "titles" },
     { key: "skill", label: "Skill", list: "skills" },
-    { key: "attive", label: "Skill attive", list: "activeSkills" },
+    { key: "attive", label: "Skill attive", list: "activeSkills", kind: "Skill" },
+    { key: "incantesimi", label: "Incantesimi", list: "activeSkills", kind: "Incantesimo" },
+    { key: "miracoli", label: "Miracoli", list: "activeSkills", kind: "Miracolo" },
     { key: "talenti", label: "Talenti", list: "talents" },
     { key: "inventario", label: "Inventario", list: "inventory" },
     { key: "pet", label: "Pet", list: "pets" },
@@ -278,52 +308,150 @@
     return S.ui.win("Statistiche derivate", `<div class="sc-dgrid">${cells}</div>${legend}`);
   }
 
-  /* ---------- Tab ---------- */
+  /* ---------- Tab in stile finestra di stato Overgeared (kit S.og esposto da inventario.js) ----------
+     Una finestra OG per tab, una riga compatta per voce; il dettaglio compare nel tooltip #inv-tip
+     al passaggio del mouse, al focus da tastiera e al tocco (che lo fissa). */
+  const SEARCH_FROM = 7;
+  /* Colore del Grado I–X sulla scala delle rarità: I–II Comune … IX Leggendario, X Mitico */
+  const GRADE_RARITY = ["comune", "comune", "comune", "noncomune", "noncomune", "raro", "raro", "epico", "epico", "leggendario", "mitico"];
+  function gradeRarity(l) { return GRADE_RARITY[Math.max(0, Math.min(10, Math.round(Number(l) || 0)))]; }
+  function roman(l) { return S.rules.ROMAN[Number(l) || 0] || String(l); }
+  function gradeName(l) { return S.rules.GRADES[(Number(l) || 0) - 1] || ""; }
+  function rk(r) { return S.rules.rarityKey(r); }
+  function rarGrade(r) { const e = S.rules.RARITY_SCALE.find((x) => rk(x.name) === rk(r)); return e ? e.grade : 0; }
+  function norm(x) { return String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  function signedN(v) { return `${v < 0 ? "−" : "+"}${n(Math.abs(Number(v) || 0))}`; }
+  function bonusList(b) { return Object.entries(b || {}).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${signedN(v)}`); }
+  function activeKind(s) { return s.kind === "Incantesimo" || s.kind === "Miracolo" ? s.kind : "Skill"; }
+  function isEvolving(t) { return /evolutiv/i.test(`${t.origin} ${t.effect}`); }
+  function mastery(pct) {
+    const max = pct === "MAX";
+    const p = max ? 100 : Math.max(0, Math.min(100, Number(pct) || 0));
+    return `<span class="og-mastery${max ? " max" : ""}"><span class="og-mtrack" aria-hidden="true"><i style="width:${p}%"></i></span><b class="num">${max ? "MAX" : `${p}%`}</b></span>`;
+  }
+  function opts(lines) { return lines.length ? `<div class="og-lines">${lines.map((l) => `<span class="og-opt">· ${S.ui.esc(l)}</span>`).join("")}</div>` : ""; }
+  function tipHead(name, rar) { return `<div class="og-h">${S.og.ornament()}<div class="og-iname-big" data-rarity="${rar}">[${S.ui.esc(name)}]</div></div>`; }
+  const kv = (k, v, cls) => S.og.kv(k, v, cls);
+  function ogRow(list, i, rar, name, label, meta, right) {
+    const esc = S.ui.esc;
+    return `<button type="button" class="og-item og-row" data-og="${list}" data-i="${i}" data-rarity="${rar}" aria-label="${esc(label)}">
+      <span class="inv-ico" aria-hidden="true">${esc(S.og.initials(name))}</span>
+      <span class="og-iname">[${esc(name)}]</span><span class="og-iqty">${right || ""}</span>
+      <span class="og-imeta">${meta}</span></button>`;
+  }
+  function searchBox(key, placeholder) {
+    const esc = S.ui.esc;
+    return `<input class="input og-search" type="search" id="sc-q-${key}" data-q="${key}" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}" autocomplete="off" value="${esc(queries[key] || "")}">`;
+  }
+  function chips(attr, options, active, label, count, render) {
+    const esc = S.ui.esc;
+    return `<div class="og-filters" role="group" aria-label="${esc(label)}">${options.map((o) => `<button type="button" class="btn ghost" ${attr}="${esc(o)}" aria-pressed="${o === active}">${render ? render(o) : esc(o)} <span class="xs muted num">${count(o)}</span></button>`).join("")}</div>`;
+  }
+  function listBody(rows, emptyText) {
+    return `<div class="og-list">${rows.length ? rows.join("") : `<div class="og-empty">${S.ui.esc(emptyText)}</div>`}</div>`;
+  }
+  function ogTab(title, body, before) { return `<div class="sc-og">${before || ""}${S.og.ogWin(title, body)}</div>`; }
+
   function tabTitoli(c) {
+    const esc = S.ui.esc;
     const list = arr(c, "titles");
-    if (!list.length) return empty();
-    return `<div class="table-wrap"><table class="t">
-      <thead><tr><th>Titolo</th><th>Rarità</th><th>Bonus</th></tr></thead>
-      <tbody>${list.map((t) => `<tr><td>${S.ui.esc(t.name)}</td><td>${S.ui.rarityChip(t.rarity)}</td><td class="mono small">${S.ui.esc(bonusText(t.bonus) || "—")}</td></tr>`).join("")}</tbody>
-    </table></div>`;
+    const rars = ["Tutte", ...Array.from(new Set(list.map((t) => t.rarity))).sort((a, b) => rarGrade(b) - rarGrade(a))];
+    if (!rars.includes(titleFilter)) titleFilter = "Tutte";
+    const q = norm((queries.titoli || "").trim());
+    const shown = list.map((t, i) => ({ t, i }))
+      .filter(({ t }) => titleFilter === "Tutte" || t.rarity === titleFilter)
+      .filter(({ t }) => !q || norm(t.name).includes(q))
+      .sort((a, b) => rarGrade(b.t.rarity) - rarGrade(a.t.rarity) || a.t.name.localeCompare(b.t.name, "it"));
+    const tot = {};
+    for (const t of list) for (const [k, v] of Object.entries(t.bonus || {})) tot[k] = (tot[k] || 0) + (Number(v) || 0);
+    const totL = bonusList(tot);
+    const body = `<div class="og-info">${kv("Titoli posseduti", n(list.length))}${kv("Bonus totali", esc(totL.join(" · ") || "Nessuno"), totL.length ? "good" : "")}</div>
+      ${list.length >= SEARCH_FROM ? `<div class="og-tools">${searchBox("titoli", "Cerca un titolo…")}</div>` : ""}
+      ${rars.length > 2 ? chips("data-title-filter", rars, titleFilter, "Filtra per rarità",
+        (r) => (r === "Tutte" ? list.length : list.filter((t) => t.rarity === r).length), (r) => (r === "Tutte" ? r : `<span data-rarity="${rk(r)}">${esc(r)}</span>`)) : ""}
+      ${listBody(shown.map(({ t, i }) => {
+        const b = bonusList(t.bonus);
+        return ogRow("titles", i, rk(t.rarity), t.name, `Titolo ${t.name}, ${t.rarity}${b.length ? `, ${b.join(", ")}` : ""}`,
+          `${esc(t.rarity)}${b.length ? ` · <span class="og-good">${esc(b.join(" · "))}</span>` : ""}`);
+      }), list.length ? "Nessun titolo trovato." : (c.summary ? EMPTY : "Nessun titolo."))}
+      <p class="footnote">Passa sopra un titolo (o toccalo) per la finestra del titolo. I bonus sono già nella colonna Titoli delle statistiche.</p>`;
+    return ogTab("Titoli", body);
+  }
+  function titleTip(t) {
+    const esc = S.ui.esc;
+    const r = rk(t.rarity), b = bonusList(t.bonus);
+    const eff = typeof t.effect === "string" ? t.effect : t.effect && t.effect.text;
+    return tipHead(t.name, r) + kv("Rarità", `<span data-rarity="${r}">${esc(t.rarity)}</span>`) + kv("Tipo", "Titolo")
+      + (t.how ? kv("Condizione", esc(t.how)) : "")
+      + `<div class="og-sep">Effetti</div>` + (b.length ? opts(b) : `<span class="muted">Nessun bonus alle statistiche.</span>`)
+      + (eff ? opts([eff]) : "")
+      + (t.prev ? kv("Evoluzione di", esc(t.prev)) : "")
+      + (t.next ? kv("Evolve in", `${esc(t.next)}${t.evoCond ? ` <span class="muted">(${esc(t.evoCond)})</span>` : ""}`) : "");
   }
 
   function tabSkill(c) {
     const esc = S.ui.esc;
     const list = arr(c, "skills");
-    if (!list.length) return empty();
-    const types = ["Tutti", ...Array.from(new Set(list.map((s) => s.type)))];
+    const types = ["Tutti", ...Array.from(new Set(list.map((s) => s.type || "—")))];
     if (!types.includes(skillFilter)) skillFilter = "Tutti";
-    const shown = skillFilter === "Tutti" ? list : list.filter((s) => s.type === skillFilter);
-    const filter = `<div class="row sc-filter" role="group" aria-label="Filtra per tipo">
-      ${types.map((t) => `<button type="button" class="btn ghost" data-skill-filter="${esc(t)}" aria-pressed="${t === skillFilter}">${esc(t)}${t !== "Tutti" ? ` <span class="xs muted num">${list.filter((s) => s.type === t).length}</span>` : ""}</button>`).join("")}
-    </div>`;
-    return `${filter}<div class="table-wrap"><table class="t">
-      <thead><tr><th>Skill</th><th>Tipo</th><th title="Grado di maestria I–X">Grado</th><th title="Progresso verso il grado successivo">Progresso</th><th>Passiva</th></tr></thead>
-      <tbody>${shown.map((s) => `<tr>
-        <td>${esc(s.name)}</td>
-        <td><span class="chip violet">${esc(s.type)}</span></td>
-        <td style="white-space:nowrap">${grade(s.lvl)}</td>
-        <td>${progress(s.pct)}</td>
-        <td class="small">${s.passive ? esc(s.passive) : `<span class="muted">—</span>`}</td>
-      </tr>`).join("")}</tbody>
-    </table></div>`;
+    const q = norm((queries.skill || "").trim());
+    const pctN = (s) => (s.pct === "MAX" ? 100 : Number(s.pct) || 0);
+    const shown = list.map((s, i) => ({ s, i }))
+      .filter(({ s }) => skillFilter === "Tutti" || (s.type || "—") === skillFilter)
+      .filter(({ s }) => !q || norm(s.name).includes(q) || norm(s.type).includes(q))
+      .sort((a, b) => skillSort === "nome" ? a.s.name.localeCompare(b.s.name, "it")
+        : skillSort === "tipo" ? String(a.s.type).localeCompare(String(b.s.type), "it") || b.s.lvl - a.s.lvl
+          : b.s.lvl - a.s.lvl || pctN(b.s) - pctN(a.s) || a.s.name.localeCompare(b.s.name, "it"));
+    const body = `<div class="og-pair">${kv("Skill", n(list.length))}${kv("Al Grado X", n(list.filter((s) => s.lvl >= 10).length))}${kv("Passive sbloccate", n(list.filter((s) => s.passive).length))}</div>
+      ${list.length >= SEARCH_FROM ? `<div class="og-tools">${searchBox("skill", "Cerca una skill…")}
+        <label class="og-sortsel small"><span class="label">Ordina</span><select class="input" id="sc-skill-sort">
+          ${[["grado", "Grado"], ["nome", "Nome"], ["tipo", "Tipo"]].map(([v, l]) => `<option value="${v}" ${v === skillSort ? "selected" : ""}>${l}</option>`).join("")}
+        </select></label></div>` : ""}
+      ${types.length > 2 ? chips("data-skill-filter", types, skillFilter, "Filtra per tipo", (t) => (t === "Tutti" ? list.length : list.filter((s) => (s.type || "—") === t).length)) : ""}
+      ${listBody(shown.map(({ s, i }) => ogRow("skills", i, gradeRarity(s.lvl), s.name,
+        `Skill ${s.name}, Grado ${roman(s.lvl)} ${gradeName(s.lvl)}, maestria ${s.pct === "MAX" ? "massima" : `${s.pct}%`}`,
+        `${esc(s.type || "—")} · ${esc(gradeName(s.lvl) || `Grado ${roman(s.lvl)}`)}${s.passive ? ` · <span class="og-good">Passiva</span>` : ""}`,
+        `<span>${roman(s.lvl)}</span>${mastery(s.pct)}`)), list.length ? "Nessuna skill trovata." : (c.summary ? EMPTY : "Nessuna skill."))}
+      <p class="footnote">Grado di maestria da I a X: al 100% la skill sale di grado. Passa sopra una skill (o toccala) per i dettagli.</p>`;
+    return ogTab("Skill", body);
+  }
+  function gradeKv(l) { return kv("Grado", `<span data-rarity="${gradeRarity(l)}">${roman(l)}</span>${gradeName(l) ? ` · ${S.ui.esc(gradeName(l))}` : ""}`); }
+  function skillTip(s) {
+    return tipHead(s.name, gradeRarity(s.lvl)) + gradeKv(s.lvl) + kv("Maestria", mastery(s.pct)) + kv("Tipo", `Passiva${s.type ? ` · ${S.ui.esc(s.type)}` : ""}`)
+      + `<div class="og-sep">Passiva del Grado X</div>`
+      + (s.passive ? opts([s.passive]) : `<span class="muted">${s.lvl >= 10 ? "Nessuna passiva registrata." : `Si sblocca al Grado X (ora ${roman(s.lvl)}).`}</span>`)
+      + `<span class="inv-tsep"></span><span class="inv-hint">Le skill passive non hanno costo né cooldown.</span>`;
   }
 
-  function tabAttive(c) {
+  /* Skill attive, incantesimi e miracoli stanno tutti in activeSkills: li distingue `kind` (assente = skill attiva) */
+  const ACTIVE_TEXT = {
+    Skill: { title: "Skill attive", one: "Skill attiva", empty: "Nessuna skill attiva.", search: "Cerca una skill attiva…", type: "Attiva" },
+    Incantesimo: { title: "Incantesimi", one: "Incantesimo", empty: "Nessun incantesimo nel grimorio.", search: "Cerca un incantesimo…", type: "Incantesimo (attivo)" },
+    Miracolo: { title: "Miracoli", one: "Miracolo", empty: "Nessun miracolo concesso.", search: "Cerca un miracolo…", type: "Miracolo (attivo)" },
+  };
+  function tabActive(c, kind, key) {
+    const esc = S.ui.esc, T = ACTIVE_TEXT[kind];
+    const all = arr(c, "activeSkills").map((s, i) => ({ s, i })).filter(({ s }) => activeKind(s) === kind);
+    const q = norm((queries[key] || "").trim());
+    const shown = all.filter(({ s }) => !q || norm(s.name).includes(q) || norm(s.effect).includes(q) || (s.spheres || []).some((x) => norm(x).includes(q)) || norm(s.god).includes(q));
+    const spheres = Array.from(new Set(all.flatMap(({ s }) => s.spheres || [])));
+    const gods = Array.from(new Set(all.map(({ s }) => s.god).filter(Boolean)));
+    const body = `<div class="og-info">${kv(T.title, n(all.length))}${spheres.length ? kv("Sfere", esc(spheres.join(", "))) : ""}${gods.length ? kv("Divinità", esc(gods.join(", "))) : ""}</div>
+      ${all.length >= SEARCH_FROM ? `<div class="og-tools">${searchBox(key, T.search)}</div>` : ""}
+      ${listBody(shown.map(({ s, i }) => {
+        const extra = kind === "Incantesimo" ? (s.spheres || []).join(" + ") : kind === "Miracolo" ? s.god || "" : "";
+        return ogRow("activeSkills", i, gradeRarity(s.lvl), s.name, `${T.one} ${s.name}, Grado ${roman(s.lvl)}, costo ${s.cost || "nessuno"}, cooldown ${s.cd} turni`,
+          `${esc(s.cost || "—")} · CD ${esc(s.cd)}${extra ? ` · ${esc(extra)}` : ""}`, `<span>${roman(s.lvl)}</span>${mastery(s.pct)}`);
+      }), all.length ? "Nessun risultato." : (c.summary ? EMPTY : T.empty))}
+      <p class="footnote">Cooldown in turni. Passa sopra una voce (o toccala) per i dettagli.</p>`;
+    return ogTab(T.title, body);
+  }
+  function activeTip(s) {
     const esc = S.ui.esc;
-    const list = arr(c, "activeSkills");
-    if (!list.length) return empty();
-    return `<div class="sc-cards">${list.map((s) => `<article class="sc-card">
-      <h4>${esc(s.name)}</h4>
-      <p class="small">${esc(s.effect)}</p>
-      <div class="row">
-        <span class="chip" style="color:var(--mp)">Costo ${esc(s.cost)}</span>
-        <span class="chip muted">Cooldown ${esc(s.cd)} turni</span>
-      </div>
-      <div class="row small"><span>Grado ${grade(s.lvl)}</span></div>
-      ${progress(s.pct)}
-    </article>`).join("")}</div>`;
+    return tipHead(s.name, gradeRarity(s.lvl)) + gradeKv(s.lvl) + kv("Maestria", mastery(s.pct)) + kv("Tipo", ACTIVE_TEXT[activeKind(s)].type)
+      + `<div class="og-pair">${kv("Costo", `<span class="num">${esc(s.cost || "—")}</span>`)}${kv("Cooldown", `<span class="num">${esc(s.cd)} ${Number(s.cd) === 1 ? "turno" : "turni"}</span>`)}</div>`
+      + ((s.spheres || []).length ? kv("Sfere", esc(s.spheres.join(", "))) : "") + (s.god ? kv("Divinità", esc(s.god)) : "")
+      + `<div class="og-sep">Effetto</div>` + (s.effect ? opts([s.effect]) : `<span class="muted">Nessun effetto descritto.</span>`);
   }
 
   function tabTalenti(c) {
@@ -332,11 +460,30 @@
     const next = (Math.floor(c.level / every) + 1) * every;
     const msg = `<div class="sysmsg"><span class="tag">[SISTEMA]</span><span>Prossimo talento al Lv ${next} (ogni ${every} livelli).</span></div>`;
     const list = arr(c, "talents");
-    if (!list.length) return msg + empty();
-    return `${msg}<div class="table-wrap"><table class="t">
-      <thead><tr><th>Talento</th><th>Rarità</th><th>Origine</th><th>Effetto</th></tr></thead>
-      <tbody>${list.map((t) => `<tr><td>${esc(t.name)}</td><td>${S.ui.rarityChip(t.rarity)}</td><td class="mono small" style="white-space:nowrap">${esc(t.origin)}</td><td class="small">${esc(t.effect)}</td></tr>`).join("")}</tbody>
-    </table></div>`;
+    const q = norm((queries.talenti || "").trim());
+    const shown = list.map((t, i) => ({ t, i })).filter(({ t }) => !q || norm(t.name).includes(q) || norm(t.effect).includes(q));
+    const body = `<div class="og-info">${kv("Talenti", n(list.length))}</div>
+      ${list.length >= SEARCH_FROM ? `<div class="og-tools">${searchBox("talenti", "Cerca un talento…")}</div>` : ""}
+      ${listBody(shown.map(({ t, i }) => ogRow("talents", i, rk(t.rarity), t.name, `Talento ${t.name}, ${t.rarity}, ${t.origin}${isEvolving(t) ? ", evolutivo" : ""}`,
+        `${esc(t.rarity)} · ${esc(t.origin || "—")}${t.effect ? ` · ${esc(t.effect)}` : ""}`, isEvolving(t) ? `<span class="og-v xs">EVO</span>` : "")),
+        list.length ? "Nessun talento trovato." : (c.summary ? EMPTY : "Nessun talento."))}`;
+    return ogTab("Talenti", body, msg);
+  }
+  function talentTip(t) {
+    const esc = S.ui.esc, r = rk(t.rarity), evo = isEvolving(t);
+    return tipHead(t.name, r) + kv("Rarità", `<span data-rarity="${r}">${esc(t.rarity)}</span>`) + kv("Tipo", `Talento${evo ? " evolutivo" : ""}`)
+      + (t.origin ? kv("Origine", esc(t.origin)) : "") + `<div class="og-sep">Effetto</div>`
+      + (t.effect ? opts(String(t.effect).split(/(?<=\.)\s+/).filter(Boolean)) : `<span class="muted">Nessun effetto descritto.</span>`)
+      + (evo ? kv("Evoluzione", "Cresce evolvendo") : "");
+  }
+  function ogTip(c, row) {
+    const it = arr(c, row.dataset.og)[Number(row.dataset.i)];
+    if (!it) return null;
+    const list = row.dataset.og;
+    if (list === "titles") return { html: titleTip(it), border: `var(--r-${rk(it.rarity)})` };
+    if (list === "talents") return { html: talentTip(it), border: `var(--r-${rk(it.rarity)})` };
+    if (list === "skills") return { html: skillTip(it), border: `var(--r-${gradeRarity(it.lvl)})` };
+    return { html: activeTip(it), border: `var(--r-${gradeRarity(it.lvl)})` };
   }
 
   function tabInventario(c, d) {
@@ -423,12 +570,14 @@
   function tabsPanel(c, d) {
     const esc = S.ui.esc;
     const renderers = {
-      titoli: tabTitoli, skill: tabSkill, attive: tabAttive, talenti: tabTalenti, inventario: tabInventario,
+      titoli: tabTitoli, skill: tabSkill, talenti: tabTalenti, inventario: tabInventario,
+      attive: (x) => tabActive(x, "Skill", "attive"), incantesimi: (x) => tabActive(x, "Incantesimo", "incantesimi"),
+      miracoli: (x) => tabActive(x, "Miracolo", "miracoli"),
       pet: tabPet, maledizioni: tabMaledizioni, quest: tabQuest, reputazione: tabReputazione,
     };
     const bar = `<div class="tabs" role="tablist" aria-label="Sezioni della scheda">${TABS.map((t) => `
       <button type="button" role="tab" id="sc-tab-${t.key}" aria-controls="sc-panel" data-tab="${t.key}"
-        aria-selected="${t.key === tab}" tabindex="${t.key === tab ? 0 : -1}">${esc(t.label)}<span class="count">${arr(c, t.list).length}</span></button>`).join("")}
+        aria-selected="${t.key === tab}" tabindex="${t.key === tab ? 0 : -1}">${esc(t.label)}<span class="count">${(t.kind ? arr(c, t.list).filter((x) => activeKind(x) === t.kind) : arr(c, t.list)).length}</span></button>`).join("")}
     </div>`;
     const panel = `<div class="sc-tabpanel" role="tabpanel" id="sc-panel" aria-labelledby="sc-tab-${tab}" tabindex="0">${renderers[tab](c, d)}</div>`;
     return S.ui.win("Dettagli", bar + panel);
@@ -438,7 +587,9 @@
   function render(root, state) {
     injectStyle();
     const c = state.char;
-    if (c.id !== lastCharId) { lastCharId = c.id; skillFilter = "Tutti"; }
+    if (c.id !== lastCharId) { lastCharId = c.id; skillFilter = "Tutti"; titleFilter = "Tutte"; queries = {}; }
+    if (S.og) S.og.injectStyle();   // stile delle finestre OG (inventario.js)
+    if (S.og) S.og.hideTip();
     const d = S.rules.derived(c);
     if (!c.resources) c.resources = { hp: d.hp, mp: d.mp, sp: d.sp };
 
@@ -482,8 +633,75 @@
       if (f && root.contains(f)) {
         skillFilter = f.dataset.skillFilter;
         rerender(`[data-skill-filter="${CSS.escape(skillFilter)}"]`);
+        return;
+      }
+      const tf = e.target.closest("[data-title-filter]");
+      if (tf && root.contains(tf)) {
+        titleFilter = tf.dataset.titleFilter;
+        rerender(`[data-title-filter="${CSS.escape(titleFilter)}"]`);
+        return;
+      }
+      /* Tocco o clic su una riga OG: fissa il tooltip (un secondo tocco lo chiude) */
+      const row = e.target.closest("[data-og]");
+      if (row && root.contains(row)) {
+        if (pinnedRow === row) { hideOgTip(); return; }
+        showOgTip(row);
+        pinnedRow = row;
       }
     };
+
+    /* Tooltip OG delle tab: passaggio del mouse, focus da tastiera, tocco */
+    let pinnedRow = null;
+    function showOgTip(row) {
+      const t = ogTip(c, row);
+      if (!t || !S.og) return;
+      root.querySelectorAll("[data-og][aria-describedby]").forEach((x) => x.removeAttribute("aria-describedby"));
+      S.og.showTip(t.html, row, t.border);
+      row.setAttribute("aria-describedby", "inv-tip");
+      pinnedRow = null;
+    }
+    function hideOgTip() {
+      if (S.og) S.og.hideTip();
+      root.querySelectorAll("[data-og][aria-describedby]").forEach((x) => x.removeAttribute("aria-describedby"));
+      pinnedRow = null;
+    }
+    root.onpointerover = (e) => {
+      if (e.pointerType !== "mouse") return;
+      const row = e.target.closest("[data-og]");
+      if (row && root.contains(row) && !row.hasAttribute("aria-describedby")) showOgTip(row);
+    };
+    root.onpointerout = (e) => {
+      if (e.pointerType !== "mouse" || pinnedRow) return;
+      const row = e.target.closest("[data-og]");
+      if (row && !row.contains(e.relatedTarget)) hideOgTip();
+    };
+    /* focusin/focusout non hanno la proprietà on… in tutti i browser: listener una sola volta per root */
+    ogFocus = { show: showOgTip, hide: hideOgTip };
+    if (!focusBound.has(root)) {
+      focusBound.add(root);
+      root.addEventListener("focusin", (e) => { const row = e.target.closest("[data-og]"); if (row && ogFocus) ogFocus.show(row); });
+      root.addEventListener("focusout", (e) => { if (e.target.closest("[data-og]") && ogFocus) ogFocus.hide(); });
+    }
+    root.oninput = (e) => {
+      const q = e.target.dataset && e.target.dataset.q;
+      if (!q) return;
+      queries[q] = e.target.value;
+      const pos = e.target.selectionStart;
+      rerender(`#sc-q-${q}`);
+      const inp = root.querySelector(`#sc-q-${q}`);
+      if (inp && pos != null) inp.setSelectionRange(pos, pos);
+    };
+    root.onchange = (e) => {
+      if (e.target.id === "sc-skill-sort") { skillSort = e.target.value; rerender("#sc-skill-sort"); }
+    };
+    if (!docBound) {
+      docBound = true;
+      document.addEventListener("pointerdown", (e) => { if (!e.target.closest("[data-og]") && ogHide) ogHide(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ogHide) ogHide(); });
+      window.addEventListener("scroll", () => { if (ogHide) ogHide(); }, { passive: true, capture: true });
+      window.addEventListener("hashchange", () => { if (ogHide) ogHide(); });
+    }
+    ogHide = hideOgTip;
 
     root.onkeydown = (e) => {
       const t = e.target.closest && e.target.closest('[role="tab"]');

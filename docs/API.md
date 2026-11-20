@@ -102,7 +102,9 @@ Character = {
   quests:   {name; progress; reward; rarity}[];
   reputation: {scope; target; value: number; range: number; label}[];
   combat: { position: string; turn: int; effects: {name; kind: "good"|"bad"; text; turns: int; hpPerTurn?: number; absorb?: number}[];
-            cooldowns: {name; turns: int}[]; log: string[] };   // log: ultime 20 righe, più recente per ultima
+            cooldowns: {name; turns: int}[]; log: string[]; log_at?: string[] };   // log: ultime 20 righe, più recente per ultima
+            // log_at: ora ISO (UTC) di ogni riga di log, parallelo dalla fine; "" per le righe scritte prima che esistesse.
+            // Serve alla plancia per unire tiri e combattimento in un solo registro ordinato.
   death?: { lost: number; malus: string; bonus: string; protected: boolean } | null;  // ultimo esito, se appena morto
   // calcolati dal server a ogni risposta:
   equipped: {[slot: string]: string};   // slot → id oggetto; un'arma a due mani compare in entrambe le mani
@@ -313,16 +315,28 @@ Regole usate (tutte nel backend):
 ## Tavolo: tiri d100 e richieste del Master
 Plancia del giocatore e parte «tavolo» della plancia del Master (porting di `mockup/screens/plancia.js`). Rotte in `backend/app/routers/table.py`.
 Il d100 sono due d10, decine (0–9 → 00–90) e unità (0–9); **00 + 0 = 100**. **Il risultato lo genera il server** con `secrets.randbelow(10)`
-(crittografico): il client chiede il tiro, riceve `tens/units/natural/total` e anima i dadi fino a quei valori. Il regolamento non dà regole sul d100:
-il tiro somma i modificatori allegati e l'esito lo legge il Master.
+(crittografico): il client chiede il tiro, riceve `tens/units/natural/total` e anima i dadi fino a quei valori. Il tiro somma i modificatori
+allegati e l'esito lo legge il Master.
 
-- `POST /api/table/characters/{id}/rolls` `{reason?: str ≤120, mods?: Mod[] (max 30), request_id?: int}` → 201 `Roll`.
+**Critici (regola decisa dal Master).** Prima di tirare il giocatore dichiara `call`: `"sopra"` o `"sotto"`. Conta il **naturale**, non il totale:
+
+| `call` | supercritico | critico | resto |
+|---|---|---|---|
+| `"sopra"` | 100 | 91–99 | null |
+| `"sotto"` | 1 | 2–9 | null |
+
+Un 100 dichiarato «sotto» o un 1 dichiarato «sopra» non è critico. Il server calcola `crit` (`null` | `"critico"` | `"supercritico"`) e lo salva
+col tiro; il client non lo invia.
+
+- `POST /api/table/characters/{id}/rolls` `{call: "sopra"|"sotto", reason?: str ≤120, mods?: Mod[] (max 30), request_id?: int}` → 201 `Roll`.
+  `call` è **obbligatorio** (422 se manca o non è uno dei due valori), anche quando tira il Master per conto del PG.
   Player solo sui propri PG (404 altrimenti), master su tutti. Ogni `Mod` è validato (422 con messaggio): `kind` tra
   `"Skill"|"Skill attiva"|"Titolo"|"Talento"|"Fortuna"`, `name` presente nella scheda del PG per quel tipo (`skills`, `active_skills`, `titles`,
   `talents`; per `Fortuna` solo `"Bonus Fortuna sui tiri"` e solo se il PG ha la derivata `bonusFortuna`), `mod` intero tra −999 e 999,
   `text` facoltativo ≤300. Il server calcola `natural` e `total = natural + Σ mod`. Se `request_id` è una richiesta **aperta di quel PG**
   diventa `risolta` con `roll_id`; altrimenti viene ignorata (`Roll.request_id` null).
-- `POST /api/table/rolls` `{reason?: str, secret?: bool}` → 201 `Roll` (solo master; `char_id` null, `by` "master", nessun allegato).
+- `POST /api/table/rolls` `{reason?: str, call?: "sopra"|"sotto", secret?: bool}` → 201 `Roll` (solo master; `char_id` null, `by` "master",
+  nessun allegato). `call` facoltativo: senza dichiarazione `crit` è sempre null.
 - `GET /api/table/rolls[?char_id=&limit=50]` → `Roll[]` dal più recente (`limit` 1–200). Player: solo i tiri dei suoi PG, mai i segreti
   (né i tiri del Master); master: tutti, segreti compresi.
 - `POST /api/table/requests` `{char_id, what: str 2–80, note?: str ≤200}` → 201 `RollRequest` (solo master; 404 PG inesistente).
@@ -332,9 +346,10 @@ il tiro somma i modificatori allegati e l'esito lo legge il Master.
 ```
 Mod = {kind, name, mod: int, text: str}
 Roll = {id, char_id: int|null, char_name: str ("Master" se char_id null), by: "giocatore"|"master", author_id, author_name,
-        reason, tens: 0–9, units: 0–9, natural: 1–100, mods: Mod[], total: int, secret: bool, request_id: int|null, created_at: ISO}
+        reason, tens: 0–9, units: 0–9, natural: 1–100, mods: Mod[], total: int, call: "sopra"|"sotto"|null,
+        crit: "critico"|"supercritico"|null, secret: bool, request_id: int|null, created_at: ISO}
 RollRequest = {id, char_id, char_name, what, note, status: "aperta"|"risolta", roll_id: int|null,
-               roll_total: int|null, roll_natural: int|null, created_at: ISO}
+               roll_total: int|null, roll_natural: int|null, roll_crit: "critico"|"supercritico"|null, created_at: ISO}
 ```
 Il frontend aggiorna tiri e richieste ogni 5 s solo con la pagina visibile (polling leggero), così Master e giocatori si vedono a vicenda.
 
@@ -346,3 +361,6 @@ testuale `stats` in `stats_text` (gli oggetti restano nella borsa; nessuna colon
 Per avere gli oggetti di esempio di Kelvin: `python -m app.seed --reset`.
 La tabella della libreria della Forgia (`forge_entries`) viene creata all'avvio anche sui DB esistenti; parte vuota.
 Lo stesso vale per le tabelle del tavolo (`rolls`, `roll_requests`): create all'avvio (`create_all`), vuote, senza toccare i dati esistenti.
+`create_all` però non aggiunge colonne a tabelle già esistenti: per quelle c'è `seed.migrate_schema` (lista `ADDED_COLUMNS`), che all'avvio
+fa `ALTER TABLE … ADD COLUMN` per le colonne mancanti. Così `rolls.call` e `rolls.crit` compaiono nei DB creati prima dei critici; i tiri
+vecchi restano con `call`/`crit` null.

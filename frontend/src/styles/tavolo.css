@@ -39,24 +39,52 @@
 .dt-res-op { font-family: var(--font-mono); color: var(--muted); font-size: 1.1rem; }
 .dt-res-main .chip { align-self: center; }
 .dt-res-why { overflow-wrap: anywhere; }
-.dt-res.is-crit-hi { border-color: var(--gold); box-shadow: 0 0 22px var(--gold-soft); }
-.dt-res.is-crit-lo { border-color: var(--bad); }
+.dt-res.is-crit { border-color: var(--gold); }
+.dt-res.is-supercrit { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px var(--gold-soft); }
+
+/* ---------- Critici e dichiarazione ---------- */
+.crit-chip { color: var(--gold); background: var(--gold-soft); }
+.crit-chip.is-super { background: var(--gold); border-color: var(--gold); color: var(--on-accent); letter-spacing: 0.06em; }
+.crit-t { color: var(--gold); font-weight: 600; }
+.call-tag { display: inline-flex; align-items: center; gap: 2px; font-family: var(--font-display); font-size: var(--fs-xs); font-weight: 600;
+  color: var(--muted); white-space: nowrap; letter-spacing: 0.04em; }
+.call-tag.is-sopra { color: var(--violet); } .call-tag.is-sotto { color: var(--mp); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Selettore Sopra / Sotto: obbligatorio, ben visibile, prima del Lancia */
+.call-pick { display: flex; flex-direction: column; gap: 6px; min-width: 0; border: 0; margin: 0; padding: 0; }
+.call-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
+.call-seg.has-none { grid-template-columns: auto 1fr 1fr; }
+.call-seg button { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 7px 8px; min-height: 44px; border: 0;
+  background: var(--panel-2); cursor: pointer; color: var(--muted); font-family: var(--font-display); font-weight: 600; letter-spacing: 0.06em; }
+.call-seg button + button { border-left: 1px solid var(--line-strong); }
+.call-seg button b { font-size: var(--fs-md); text-transform: uppercase; }
+.call-seg button span { font-family: var(--font-body); font-weight: 400; font-size: var(--fs-xs); letter-spacing: 0; }
+.call-seg button:hover { color: var(--fg); }
+.call-seg button[aria-pressed="true"] { background: var(--violet-soft); color: var(--fg); box-shadow: inset 0 -3px 0 var(--violet); }
+.call-seg button[aria-pressed="true"] span { color: var(--muted); }
+.call-pick.is-missing .call-seg { border-color: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 20%, transparent); }
+.call-pick .hint.warn { color: var(--warn); }
 .dt-res-empty { padding: 4px 2px; margin: 0; }
 
 /* ---------- Registro ---------- */
 .dt-log { display: flex; flex-direction: column; }
 .dt-log-row {
-  display: grid; grid-template-columns: 44px minmax(0, 1fr) 36px 56px; gap: 8px; align-items: center;
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 16px 32px 52px; gap: 8px; align-items: center;
   padding: 6px 4px; border-bottom: 1px solid var(--line);
 }
 .dt-log-row:last-child { border-bottom: 0; }
-.dt-log-row.has-who { grid-template-columns: 44px minmax(0, 0.8fr) minmax(0, 2fr) 36px 56px; }
+.dt-log-row.has-who { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1.6fr) 12px 30px 48px; gap: 6px; }
 .dt-log-who { font-weight: 600; font-size: var(--fs-sm); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dt-log-who .chip { margin-left: 4px; }
-.dt-log-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-log-what { min-width: 0; display: flex; align-items: center; gap: 6px; }
+.dt-log-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-log-what .chip { flex: none; padding: 0 6px; }
+.dt-log-row .call-tag { justify-content: center; }
 .dt-log-nat { text-align: right; color: var(--muted); font-size: var(--fs-sm); }
 .dt-log-tot { text-align: right; }
-.dt-log-row.is-crit-hi .dt-log-tot { color: var(--gold); } .dt-log-row.is-crit-lo .dt-log-tot { color: var(--bad); }
+.dt-log-row.is-crit .dt-log-nat, .dt-log-row.is-supercrit .dt-log-nat { color: var(--gold); font-weight: 600; }
+.dt-log-row.is-supercrit { box-shadow: inset 2px 0 0 var(--gold); }
 .dt-log-row.tip-up > .tip { top: auto; bottom: calc(100% + 4px); }
 
 /* ---------- Plancia del giocatore ---------- */
@@ -104,7 +132,8 @@
 
 @media (max-width: 560px) {
   .dt-tray { height: 200px; }
-  .dt-log-row.has-who { grid-template-columns: 40px minmax(0, 0.9fr) minmax(0, 1.4fr) 30px 46px; }
+  .dt-log-row.has-who { grid-template-columns: 40px minmax(0, 0.9fr) minmax(0, 1.4fr) 14px 28px 44px; }
+  .dt-log-row { grid-template-columns: 40px minmax(0, 1fr) 14px 28px 46px; gap: 6px; }
   .tv-roll { flex: 1 1 100%; }
 }
 /* Telefono: la sezione "Tiri" della barra in basso della plancia del Master (le altre sono in plancia.css) */

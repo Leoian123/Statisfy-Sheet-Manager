@@ -101,7 +101,8 @@ class ForgeEntry(Base):
 
 class Roll(Base):
     """Tiro d100 al tavolo (plancia). Il risultato lo genera il server: tens/units dai d10, natural 1–100
-    (00 + 0 = 100), total = natural + somma dei `mods` allegati. `char_id` None = tiro del Master (anche segreto)."""
+    (00 + 0 = 100), total = natural + somma dei `mods` allegati.
+    `call` = dichiarazione prima del tiro, `crit` = critico calcolato dal server sul naturale (vedi `table.crit_of`). `char_id` None = tiro del Master (anche segreto)."""
     __tablename__ = "rolls"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     char_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True, default=None)  # id del PG, senza FK
@@ -112,6 +113,8 @@ class Roll(Base):
     natural: Mapped[int] = mapped_column(Integer)
     mods: Mapped[list] = mapped_column(JSON, default=list)  # [{kind, name, mod, text}]
     total: Mapped[int] = mapped_column(Integer)
+    call: Mapped[str | None] = mapped_column(String(10), nullable=True, default=None)  # "sopra" | "sotto" dichiarato prima
+    crit: Mapped[str | None] = mapped_column(String(15), nullable=True, default=None)  # None | "critico" | "supercritico"
     secret: Mapped[bool] = mapped_column(Boolean, default=False)
     request_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     created_at: Mapped[str] = mapped_column(String(40), default="")

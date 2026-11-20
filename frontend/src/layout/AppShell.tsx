@@ -110,6 +110,19 @@ export function AppShell() {
   const currentId = useCurrentCharId();
   const m = useMatch("/personaggi/:id/*");
   const suffix = m ? (m.params["*"] ? `/${m.params["*"]}` : "") : "";
+  const topRef = useRef<HTMLElement>(null);
+
+  // Altezza della barra in alto (cambia quando va a capo): serve agli elementi sticky sotto di lei (HUD della plancia)
+  useEffect(() => {
+    const el = topRef.current;
+    if (!el) return;
+    const set = () => document.documentElement.style.setProperty("--topbar-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+    set();
+    if (typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => { if (currentId) writeLast(currentId); }, [currentId]);
 
@@ -140,7 +153,7 @@ export function AppShell() {
 
   return (
     <>
-      <header className="topbar">
+      <header className="topbar" ref={topRef}>
         <BrandMenu
           chars={chars ?? []}
           showOwner={isMaster}
@@ -180,7 +193,6 @@ export function AppShell() {
           {charLink("", "Scheda personaggio")}
           {charLink("/plancia", "Plancia di gioco")}
           {charLink("/level-up", "Level up")}
-          {charLink("/combattimento", "Combattimento")}
           {isMaster && (
             <>
               <div className="nav-sep" />

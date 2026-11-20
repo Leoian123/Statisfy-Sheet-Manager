@@ -52,9 +52,18 @@ export interface Derived {
 
 export type Pvp = "Bianco" | "Grigio" | "Rosso";
 
-export interface Title { name: string; rarity: string; bonus: Record<string, number> }
+export interface Title {
+  name: string; rarity: string; bonus: Record<string, number>;
+  /** Campi facoltativi (voci della Forgia o aggiunte a mano): come si ottiene, effetto, evoluzione */
+  how?: string; effect?: { type: string | null; text: string } | string | null; next?: string | null; evoCond?: string; prev?: string | null;
+}
 export interface Skill { name: string; lvl: number; pct: number | "MAX"; type: string; passive?: string | null }
-export interface ActiveSkill { name: string; effect: string; lvl: number; pct: number | "MAX"; cost: string; cd: number }
+/** Skill attive, incantesimi e miracoli stanno tutti in `active_skills`: li distingue `kind` (assente = skill attiva). */
+export type ActiveKind = "Skill" | "Incantesimo" | "Miracolo";
+export interface ActiveSkill {
+  name: string; effect: string; lvl: number; pct: number | "MAX"; cost: string; cd: number;
+  kind?: ActiveKind | string; spheres?: string[]; god?: string;
+}
 export interface Talent { name: string; rarity: string; origin: string; effect: string }
 export type SlotKey =
   | "testa" | "collo" | "spalle" | "mantello" | "torso" | "polsi" | "mani" | "cintura" | "gambe" | "piedi"
@@ -115,6 +124,8 @@ export interface Combat {
   effects: Effect[];
   cooldowns: { name: string; turns: number }[];
   log: string[];
+  /** Ora ISO di ogni riga di `log` (parallelo dalla fine; "" = riga senza ora). */
+  log_at?: string[];
 }
 
 export interface Death {
@@ -287,6 +298,10 @@ export interface Issue {
 export type RollModKind = "Skill" | "Skill attiva" | "Titolo" | "Talento" | "Fortuna";
 /** Allegato a un tiro: modificatore intero tra −999 e 999, `name` presente nella scheda del PG. */
 export interface RollMod { kind: RollModKind; name: string; mod: number; text: string }
+/** Dichiarazione prima del tiro: "sopra" (critico 91–99, supercritico 100) o "sotto" (critico 2–9, supercritico 1). */
+export type RollCall = "sopra" | "sotto";
+/** Critico calcolato dal server sul naturale e sulla dichiarazione; null = nessun critico. */
+export type RollCrit = "critico" | "supercritico" | null;
 /** Tiro d100 generato dal server: decine 0–9 (00–90), unità 0–9, naturale 1–100 (00 + 0 = 100). */
 export interface Roll {
   id: number;
@@ -301,6 +316,9 @@ export interface Roll {
   natural: number;
   mods: RollMod[];
   total: number;
+  /** null solo per i tiri del Master senza dichiarazione (e per i tiri di prima dei critici). */
+  call: RollCall | null;
+  crit: RollCrit;
   secret: boolean;
   request_id: number | null;
   created_at: string;
@@ -316,6 +334,7 @@ export interface RollRequest {
   roll_id: number | null;
   roll_total: number | null;
   roll_natural: number | null;
+  roll_crit: RollCrit;
   created_at: string;
 }
-export interface CharRollRequest { reason?: string; mods?: RollMod[]; request_id?: number | null }
+export interface CharRollRequest { call: RollCall; reason?: string; mods?: RollMod[]; request_id?: number | null }

@@ -150,7 +150,7 @@ function PcsWin() {
               <Bar kind="hp" label={low ? "HP · critici" : "HP"} cur={c.hp} max={c.hp_max} />
               <div className="row">
                 <Link className="btn" to={`/personaggi/${c.id}`}>Apri scheda</Link>
-                <Link className="btn ghost" to={`/personaggi/${c.id}/combattimento`}>Combattimento</Link>
+                <Link className="btn ghost" to={`/personaggi/${c.id}/plancia`}>Plancia di gioco</Link>
               </div>
             </article>
           );

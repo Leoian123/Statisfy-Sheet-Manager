@@ -1019,5 +1019,19 @@
   }
 
   S.screens.inventario = { title: "Inventario", render };
+  /* Kit "finestra di stato" Overgeared riusato dalle tab della Scheda (titoli, skill, incantesimi, miracoli, talenti) */
+  S.og = {
+    injectStyle, ornament, ogWin, kv, initials,
+    showTip(html, anchor, border) {
+      bindGlobals();
+      if (!html) { hideTip(); return; }
+      const el = tipEl();
+      el.innerHTML = html;
+      el.classList.add("on");
+      el.style.borderColor = border || "";
+      placeTip(el, anchor);
+    },
+    hideTip,
+  };
   S.inv = { mount: (el, state, opts) => render(el, state, Object.assign({ embedded: true }, opts)), hasDemo };
 })();

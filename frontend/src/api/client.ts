@@ -1,7 +1,7 @@
 // Client HTTP: token da localStorage, 401 -> logout, errori `detail` leggibili.
 import type {
   Campaign, Character, CharacterSummary, CombatActionType, CreateCharacterRequest, Issue, LoginResponse,
-  CharRollRequest, NewEffect, Npc, PreviewRequest, PreviewResponse, Roll, RollRequest, RollRequestStatus, RulesConfig, SlotKey, User,
+  CharRollRequest, NewEffect, Npc, PreviewRequest, PreviewResponse, Roll, RollCall, RollRequest, RollRequestStatus, RulesConfig, SlotKey, User,
 } from "./types";
 
 const TOKEN_KEY = "statisfy-token";
@@ -132,7 +132,8 @@ export const api = {
 
   // Tavolo: il d100 lo tira il server
   rollForChar: (id: number, req: CharRollRequest) => request<Roll>("POST", `/table/characters/${enc(id)}/rolls`, req),
-  masterRoll: (reason: string, secret: boolean) => request<Roll>("POST", "/table/rolls", { reason, secret }),
+  masterRoll: (reason: string, secret: boolean, call: RollCall | null = null) =>
+    request<Roll>("POST", "/table/rolls", { reason, secret, ...(call ? { call } : {}) }),
   rolls: (opts: { charId?: number; limit?: number } = {}) => {
     const q = new URLSearchParams();
     if (opts.charId != null) q.set("char_id", String(opts.charId));

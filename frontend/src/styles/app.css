@@ -199,8 +199,6 @@ table.t td { overflow-wrap: anywhere; }
 .lu-check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .lu-check input { width: 18px; height: 18px; accent-color: var(--bad); }
 .lu-level-wrap { max-width: 760px; }
-.lu-combat-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); gap: 20px; align-items: start; }
-@media (max-width: 960px) { .lu-combat-grid { grid-template-columns: minmax(0, 1fr); } }
 .lu-cs { display: flex; flex-direction: column; }
 
 /* ---------- Master ---------- */

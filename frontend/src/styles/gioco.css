@@ -1,0 +1,124 @@
+/* Plancia di gioco del PG (pg-*): HUD sticky, tiro al centro, combattimento e allegati a lato, registro unico.
+   Telefono (≤ 760px): HUD sticky, selettore di sezione Tiro / Combattimento / Allegati, una sezione alla volta.
+   Solo variabili del tema: funziona uguale in chiaro e in scuro. */
+.pg-root { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* Il focus da tastiera non finisce sotto l'HUD sticky */
+.pg-root :is(button, input, select, summary, .tiprow) { scroll-margin-top: calc(var(--topbar-h, 0px) + 140px); }
+
+/* ---------- HUD ---------- */
+.pg-hud {
+  position: sticky; top: var(--topbar-h, 0px); z-index: 4;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+  padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 6px 16px -10px #0006;
+}
+.pg-hud-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pg-hud-id { display: flex; align-items: baseline; gap: 8px; flex: 1 1 auto; min-width: 0; }
+.pg-hud-name { font-family: var(--font-display); font-size: var(--fs-lg); color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 2.5em; }
+.pg-hud-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pg-hud-top .chip { flex: none; }
+.pg-hud-pos { flex: 0 1 160px; min-width: 92px; }
+.pg-hud-pos select, .pg-hud-amt input { padding: 3px 6px; font-size: var(--fs-xs); height: 28px; }
+.pg-hud-amt { display: flex; align-items: center; gap: 4px; flex: none; }
+.pg-hud-amt input { width: 64px; text-align: right; }
+.pg-hud-amt input[aria-invalid="true"] { border-color: var(--bad); }
+.pg-hud-bars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 14px; }
+.pg-hud-bars.has-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pg-res { display: grid; grid-template-columns: 26px minmax(0, 1fr) 26px; gap: 6px; align-items: center; }
+.pg-res-mid { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pg-res-t { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: var(--fs-xs); line-height: 1.2; }
+.pg-res-t .label { font-size: 0.6875rem; color: var(--c); }
+.pg-res-t .num { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pg-res .bar-track { height: 6px; }
+.pg-res.is-low .pg-res-t .num { color: var(--bad); font-weight: 600; }
+.pg-res-btn {
+  width: 26px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--panel-2); cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--fs-md); line-height: 1; color: var(--fg);
+}
+.pg-res-btn:hover:not(:disabled) { border-color: var(--c, var(--violet)); color: var(--c, var(--violet)); }
+.pg-res-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pg-hud-err .hint { margin: 0; }
+
+/* ---------- Selettore di sezione (solo telefono) ---------- */
+.pg-tabs { display: none; }
+.pg-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--violet); margin-left: 6px; vertical-align: middle; }
+.pg-tab-n { margin-left: 6px; color: var(--gold); }
+
+/* ---------- Griglia ---------- */
+.pg-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
+.pg-main, .pg-side { gap: 20px; }
+@media (max-width: 1100px) { .pg-grid { grid-template-columns: minmax(0, 1fr); } }
+.pg-req .btn { margin-top: 6px; }
+
+/* Tiro */
+.pg-roll-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 560px) { .pg-roll-top { grid-template-columns: minmax(0, 1fr); } }
+.pg-reason { align-self: stretch; }
+.tv-toggles { gap: 6px; }
+.pg-att-sum { padding: 0; color: var(--muted); text-decoration: none; }
+.pg-att-sum b { color: var(--gold); }
+.pg-att-sum:hover { color: var(--fg); text-decoration: underline; }
+
+/* ---------- Combattimento (progressive disclosure) ---------- */
+.pg-combat-h { padding: 0 0 0 16px; }
+.pg-combat:not(.is-open) .pg-combat-h { border-bottom: 0; }
+.pg-disclose {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 0;
+  background: transparent; border: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left;
+}
+button.pg-disclose { cursor: pointer; }
+button.pg-disclose:hover .pg-caret { color: var(--fg); }
+.pg-disclose-sum { margin-left: auto; text-transform: none; letter-spacing: 0; font-family: var(--font-body); font-weight: 400;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pg-caret { color: var(--muted); transition: transform .2s ease; flex: none; }
+.pg-combat.is-open .pg-caret { transform: rotate(180deg); }
+.pg-combat-body[hidden] { display: none; }
+.pg-amt-row { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px; align-items: end; }
+.pg-actions { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); }
+.pg-list li { flex-wrap: nowrap; }
+.pg-list-txt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-list .chip { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+.pg-cs summary { cursor: pointer; padding: 2px 0; }
+.pg-cs[open] summary { margin-bottom: 6px; }
+
+/* ---------- Registro unico ---------- */
+.pg-filter { flex: none; text-transform: none; letter-spacing: 0; }
+.pg-filter button { padding: 4px 10px; font-size: var(--fs-xs); font-family: var(--font-display); font-weight: 600; }
+.pg-row-cb { grid-template-columns: 44px minmax(0, 1fr) auto; }
+.pg-cb-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-cb-turn { padding: 0 6px; }
+.pg-more { align-self: flex-start; }
+
+@media (max-width: 420px) { .pg-hud-shield { display: none; } }  /* lo scudo resta visibile negli effetti del Combattimento */
+
+/* ---------- Telefono ---------- */
+@media (max-width: 760px) {
+  .pg-root { gap: 12px; }
+  .pg-hud { padding: 6px 8px; gap: 5px; }
+  .pg-hud-name { font-size: var(--fs-md); }
+  .pg-hud-sub { display: none; }
+  .pg-hud-name { min-width: 4em; }
+  .pg-hud-pos { flex: 0 1 120px; min-width: 84px; }
+  .pg-hud-amt > span { display: none; }
+  .pg-hud-amt input { width: 56px; }
+  .pg-hud-bars, .pg-hud-bars.has-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 10px; }
+  .pg-res { grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 4px; }
+  .pg-res-btn { width: 30px; height: 30px; }
+
+  .pg-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .pg-tabs button { min-height: 40px; padding: 6px 4px; font-family: var(--font-display); font-weight: 600; white-space: nowrap; }
+
+  .pg-grid { display: flex; flex-direction: column; gap: 12px; }
+  .pg-main, .pg-side { display: contents; }
+  .pg-combat-wrap { order: 1; }
+  .pg-log-wrap { order: 2; }
+  .pg-root[data-tab="tiro"] .pg-sec:not(.sec-tiro),
+  .pg-root[data-tab="combattimento"] .pg-sec:not(.sec-combattimento),
+  .pg-root[data-tab="allegati"] .pg-sec:not(.sec-allegati) { display: none; }
+
+  .pg-amt-row { grid-template-columns: minmax(0, 1fr); }
+  .pg-actions .btn, .pg-combat-body .btn { min-height: 40px; }
+  .pg-row-cb { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 6px; }
+  .tv-actions { gap: 8px; }
+}

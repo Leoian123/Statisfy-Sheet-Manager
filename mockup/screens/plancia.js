@@ -2,8 +2,10 @@
    Giocatore: allega skill, skill attive, titoli e talenti al tiro, poi lancia un d100 vero
    (due d10 — decine e unità — che rotolano nel vassoio con fisica, rimbalzi e suono).
    Master: il gruppo a colpo d'occhio, richieste di tiro ai PG, registro di tutti i tiri e un tiro proprio (anche segreto).
-   Il regolamento non dà regole sul d100 ("niente dadi, decide il narratore"): il tiro somma i modificatori allegati
-   e l'esito lo legge il Master. I valori suggeriti per gli allegati sono proposte, modificabili a ogni tiro. */
+   Critici (regola decisa dal Master): prima di tirare il giocatore dichiara Sopra o Sotto (obbligatorio per i PG,
+   facoltativo per il Master). Sopra: naturale 91–99 critico, 100 supercritico. Sotto: 2–9 critico, 1 supercritico.
+   Conta il naturale, non il totale; il resto non è critico. Il tiro somma i modificatori allegati e l'esito lo legge
+   il Master. I valori suggeriti per gli allegati sono proposte, modificabili a ogni tiro. */
 (function () {
   const S = (window.STATISFY = window.STATISFY || { screens: {} });
   S.screens = S.screens || {};
@@ -21,9 +23,9 @@
     seeded = true;
     const t = Date.now();
     S.data.rolls.push(
-      { id: "r-ex1", charId: "dante", charName: "Dante", reason: "Svuotare la tasca della guardia", tens: 7, units: 1, natural: 71,
+      { id: "r-ex1", charId: "dante", charName: "Dante", reason: "Svuotare la tasca della guardia", tens: 7, units: 1, natural: 71, call: "sopra", crit: null,
         mods: [{ kind: "Talento", name: "Re dei Giochi", mod: 13, text: "Bonus Fortuna sui tiri = LCK/100" }], total: 84, by: "giocatore", at: t - 9 * 60000 },
-      { id: "r-ex2", charId: "corax", charName: "Corax", reason: "Restare in equilibrio sul tetto", tens: 0, units: 4, natural: 4,
+      { id: "r-ex2", charId: "corax", charName: "Corax", reason: "Restare in equilibrio sul tetto", tens: 0, units: 4, natural: 4, call: "sotto", crit: "critico",
         mods: [{ kind: "Titolo", name: "Prima Maestra", mod: 5, text: "DEX +25" }], total: 9, by: "giocatore", at: t - 4 * 60000 },
     );
     S.data.rollRequests.push({ id: "q-ex1", charId: "kelvin", what: "Domare il lupo ferito", note: "Il lupo è spaventato, non aggressivo.", status: "aperta", at: t - 60000 });
@@ -34,6 +36,10 @@
   let reason = "";
   let requestId = null;
   let secret = false;
+  let call = null;                // dichiarazione del giocatore: resta finché non la cambia
+  let masterCall = null;          // il Master può non dichiarare
+  let callMissing = false;
+  try { const v = localStorage.getItem("statisfy-roll-call"); if (v === "sopra" || v === "sotto") call = v; } catch (e) { /* storage non disponibile */ }
   let pickerQ = "";
   let lastResult = null;          // ultimo tiro mostrato sotto il vassoio
   let sound = true;
@@ -257,30 +263,60 @@
       place(d, W / 2 + (i ? 46 : -46), H / 2, 0, i ? 8 : -10);
     });
   }
+  /* ---------- Critici: dichiarazione Sopra/Sotto, conta il naturale ---------- */
+  function critOf(natural, c) {
+    if (c === "sopra") return natural === 100 ? "supercritico" : natural > 90 ? "critico" : null;
+    if (c === "sotto") return natural === 1 ? "supercritico" : natural < 10 ? "critico" : null;
+    return null;
+  }
+  const CALL_HINT = { sopra: "Sopra: 91–99 critico, 100 supercritico (conta il naturale)", sotto: "Sotto: 2–9 critico, 1 supercritico (conta il naturale)" };
+  const critChip = (c) => (c === "supercritico" ? `<span class="chip pl-crit-chip is-super">✦ Supercritico</span>` : c === "critico" ? `<span class="chip pl-crit-chip">Critico</span>` : "");
+  const callTag = (c, compact) => (!c ? (compact ? `<span></span>` : "")
+    : `<span class="pl-call-tag is-${c}" title="Dichiarato: ${c === "sopra" ? "Sopra" : "Sotto"}">${c === "sopra" ? "↑" : "↓"}${compact ? "" : c === "sopra" ? " Sopra" : " Sotto"}</span>`);
+  const critCls = (r) => (r.crit === "supercritico" ? "pl-supercrit" : r.crit === "critico" ? "pl-crit" : "");
+  function callPickerHtml(value, allowNone) {
+    const miss = !allowNone && callMissing && !value;
+    const btn = (v, label, sub, hint) => `<button type="button" data-call="${v}" aria-pressed="${value === v || (v === "" && !value)}" title="${esc(hint)}"><b>${label}</b><span>${sub}</span></button>`;
+    return `<div class="pl-call ${miss ? "is-missing" : ""}" role="group" aria-labelledby="pl-call-l">
+      <span class="label" id="pl-call-l">Dichiara prima di tirare${allowNone ? " (facoltativo)" : ""}</span>
+      <div class="pl-call-seg ${allowNone ? "has-none" : ""}">
+        ${allowNone ? btn("", "—", "nessuna", "Nessuna dichiarazione: nessun critico") : ""}
+        ${btn("sopra", "↑ Sopra", "91–99 · 100", CALL_HINT.sopra)}
+        ${btn("sotto", "↓ Sotto", "2–9 · 1", CALL_HINT.sotto)}
+      </div>
+      <span class="hint ${miss ? "pl-warn" : ""}" aria-live="polite">${miss ? "Scegli Sopra o Sotto per lanciare."
+        : value ? esc(CALL_HINT[value]) + "." : allowNone ? "Senza dichiarazione il tiro non ha critici." : "Conta il naturale, non il totale."}</span>
+    </div>`;
+  }
+
   function resultHtml(res) {
     if (!res) return `<p class="small muted pl-res-empty">Allega quello che serve, scrivi per cosa tiri e lancia.</p>`;
-    const crit = res.natural === 100 ? "pl-crit-hi" : res.natural === 1 ? "pl-crit-lo" : "";
-    const tip = [`Decine ${faceLabel("tens", res.tens)} + unità ${res.units} = ${res.natural}${res.natural === 100 ? " (00 + 0 = 100)" : ""}`,
+    const crit = critCls(res);
+    const tip = [`Dichiarato: ${res.call ? (res.call === "sopra" ? "Sopra" : "Sotto") : "nessuna dichiarazione"}`,
+      `Decine ${faceLabel("tens", res.tens)} + unità ${res.units} = ${res.natural}${res.natural === 100 ? " (00 + 0 = 100)" : ""}`,
+      ...(res.crit ? [`Esito sul naturale: ${res.crit}`] : []),
       ...res.mods.map((m) => `${m.kind} · ${m.name}: ${signed(m.mod)}${m.text ? ` — ${m.text}` : ""}`)].join("\n");
     return `<div class="pl-res ${crit}" tabindex="0" title="${esc(tip)}">
       <div class="pl-res-main">
         <span class="pl-res-nat"><span class="label">d100</span><b class="num">${res.natural}</b></span>
         ${res.mods.length ? `<span class="pl-res-op">${signed(res.mods.reduce((s, m) => s + m.mod, 0))}</span>` : ""}
         <span class="pl-res-tot"><span class="label">Totale</span><b class="num">${nf(res.total)}</b></span>
+        ${callTag(res.call)} ${critChip(res.crit)}
       </div>
-      ${res.natural === 100 ? `<span class="chip gold">100 naturale</span>` : res.natural === 1 ? `<span class="chip bad">01 naturale</span>` : ""}
       <span class="small">${esc(res.reason || "Tiro libero")}${res.mods.length ? ` · ${res.mods.map((m) => esc(m.name)).join(", ")}` : ""}</span>
     </div>`;
   }
   function logRow(r, showWho) {
-    const tip = [`${r.charName} · ${r.reason || "Tiro libero"}`, `d100 ${r.natural} (decine ${faceLabel("tens", r.tens)}, unità ${r.units})`,
+    const tip = [`${r.charName} · ${r.reason || "Tiro libero"}`, `Dichiarato: ${r.call ? (r.call === "sopra" ? "Sopra" : "Sotto") : "nessuna dichiarazione"}`,
+      `d100 ${r.natural} (decine ${faceLabel("tens", r.tens)}, unità ${r.units})${r.crit ? ` · ${r.crit}` : ""}`,
       ...r.mods.map((m) => `${m.kind} · ${m.name}: ${signed(m.mod)}${m.text ? ` — ${m.text}` : ""}`), `Totale ${nf(r.total)}`].join("\n");
     const time = new Date(r.at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-    const crit = r.natural === 100 ? "pl-crit-hi" : r.natural === 1 ? "pl-crit-lo" : "";
+    const crit = critCls(r);
     return `<li class="pl-log-row ${showWho ? "has-who" : ""} ${crit}" tabindex="0" title="${esc(tip)}">
       <span class="xs muted num">${time}</span>
       ${showWho ? `<span class="pl-log-who">${esc(r.charName)}${r.secret ? ` <span class="chip muted">segreto</span>` : ""}</span>` : ""}
-      <span class="pl-log-what small">${esc(r.reason || "Tiro libero")}${r.mods.length ? ` <span class="xs muted">· ${r.mods.length} allegat${r.mods.length === 1 ? "o" : "i"}</span>` : ""}</span>
+      <span class="pl-log-what small"><span class="pl-log-txt">${esc(r.reason || "Tiro libero")}${r.mods.length ? ` <span class="xs muted">· ${r.mods.length} allegat${r.mods.length === 1 ? "o" : "i"}</span>` : ""}</span>${critChip(r.crit)}</span>
+      ${callTag(r.call, true)}
       <span class="num pl-log-nat">${r.natural}</span>
       <b class="num pl-log-tot">${nf(r.total)}</b>
     </li>`;
@@ -297,11 +333,12 @@
         <span><button type="button" class="btn primary pl-mini" data-answer="${q.id}">${requestId === q.id ? "In risposta ✓" : "Rispondi con un tiro"}</button></span></div>`).join("")}
       <div class="pl-grid">
         ${S.ui.win(`Tavolo · ${c.name}`, `
+          ${callPickerHtml(call, false)}
           <div class="field"><label class="label" for="pl-reason">Per cosa tiri</label>
             <input class="input" id="pl-reason" maxlength="80" placeholder="es. Scassinare la serratura del forziere" value="${esc(reason)}"></div>
           ${trayHtml("pl-tray", !(lastResult && lastResult.charId === c.id))}
           <div class="row pl-actions">
-            <button type="button" class="btn primary pl-roll" id="pl-roll">Lancia d100</button>
+            <button type="button" class="btn primary pl-roll" id="pl-roll">Lancia d100${call ? ` · ${call === "sopra" ? "↑ Sopra" : "↓ Sotto"}` : ""}</button>
             <span class="small muted" id="pl-modsum">Allegati: <b class="num">${signed(modsSum(c))}</b></span>
             <button type="button" class="btn ghost pl-mini" id="pl-sound" aria-pressed="${sound}">${sound ? "Suono: sì" : "Suono: no"}</button>
           </div>
@@ -371,6 +408,7 @@
       ${S.ui.win("Il gruppo", `<div class="pl-party">${cards}</div>`)}
       <div class="pl-grid">
         ${S.ui.win("Tiro del Master", `
+          ${callPickerHtml(masterCall, true)}
           <div class="field"><label class="label" for="pl-reason">Per cosa tiri</label>
             <input class="input" id="pl-reason" maxlength="80" placeholder="es. La guardia nota il furto?" value="${esc(reason)}"></div>
           ${trayHtml("pl-tray", !(lastResult && lastResult.charId === "master"))}
@@ -413,6 +451,14 @@
 
     const doRoll = (opts) => {
       if (rolling) return;
+      if (!master && !call) {
+        callMissing = true;
+        redraw();
+        const b = root.querySelector("[data-call]");
+        if (b) b.focus();
+        return;
+      }
+      const decl = master ? masterCall : call;
       const by = master ? "master" : "giocatore";
       const who = master ? { id: "master", name: "Master" } : { id: c.id, name: c.name };
       const mods = master ? [] : Object.values(mine(c)).map((a) => ({ kind: a.kind, name: a.name, mod: Number(a.mod) || 0, text: a.text }));
@@ -422,6 +468,7 @@
       throwDice(tray, opts || {}, ({ tens, units }) => {
         const natural = tens * 10 + units || 100;
         const res = { id: "r-" + Date.now(), charId: who.id, charName: who.name, reason: why.trim(), tens, units, natural, mods,
+          call: decl, crit: critOf(natural, decl),
           total: natural + mods.reduce((s, m) => s + m.mod, 0), by, secret: master && secret, at: Date.now(), requestId };
         S.data.rolls.push(res);
         if (requestId) {
@@ -430,7 +477,8 @@
           requestId = null;
         }
         lastResult = res;
-        S.ui.toast("TIRO", [`${who.name}: d100 ${natural}${mods.length ? ` ${signed(res.total - natural)} = ${nf(res.total)}` : ""}${res.reason ? ` · ${res.reason}` : ""}`], natural === 100);
+        S.ui.toast("TIRO", [`${who.name}: d100 ${natural}${mods.length ? ` ${signed(res.total - natural)} = ${nf(res.total)}` : ""}${res.reason ? ` · ${res.reason}` : ""}`,
+          ...(res.crit ? [`${res.crit === "supercritico" ? "SUPERCRITICO" : "Critico"} (${res.call})`] : [])], !!res.crit);
         // ridisegna senza rimettere i dadi al centro: il risultato resta dove sono caduti
         const keep = [...tray.querySelectorAll(".pl-die, .pl-shadow")].map((el) => [el.style.transform, el.style.opacity]);
         const faces = [tens, units];
@@ -447,6 +495,18 @@
     };
 
     root.querySelector("#pl-roll").addEventListener("click", () => doRoll());
+    root.querySelectorAll("[data-call]").forEach((b) => b.addEventListener("click", () => {
+      const v = b.dataset.call || null;
+      if (master) masterCall = v;
+      else {
+        call = v;
+        callMissing = false;
+        try { localStorage.setItem("statisfy-roll-call", v); } catch (e) { /* facoltativo */ }
+      }
+      redraw();
+      const again = root.querySelector(`[data-call="${b.dataset.call}"]`);
+      if (again) again.focus({ preventScroll: true });
+    }));
     root.querySelector("#pl-sound").addEventListener("click", () => {
       sound = !sound;
       try { localStorage.setItem("statisfy-dice-sound", sound ? "on" : "off"); } catch (e) { /* facoltativo */ }
@@ -597,8 +657,27 @@
       .pl-res-nat, .pl-res-tot { display: flex; flex-direction: column; }
       .pl-res-nat b { font-size: 1.6rem; } .pl-res-tot b { font-size: 2.2rem; color: var(--gold); }
       .pl-res-op { font-family: var(--font-mono); color: var(--muted); font-size: 1.1rem; }
-      .pl-res.pl-crit-hi { border-color: var(--gold); box-shadow: 0 0 22px var(--gold-soft); }
-      .pl-res.pl-crit-lo { border-color: var(--bad); }
+      .pl-res.pl-crit { border-color: var(--gold); }
+      .pl-res.pl-supercrit { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px var(--gold-soft); }
+      .pl-res-main .chip { align-self: center; }
+
+      /* Critici e dichiarazione Sopra / Sotto */
+      .pl-crit-chip { color: var(--gold); background: var(--gold-soft); }
+      .pl-crit-chip.is-super { background: var(--gold); border-color: var(--gold); color: var(--on-accent, #120f1f); letter-spacing: 0.06em; }
+      .pl-call-tag { font-family: var(--font-display); font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; align-self: center; }
+      .pl-call-tag.is-sopra { color: var(--violet); } .pl-call-tag.is-sotto { color: var(--mp, var(--violet)); }
+      .pl-call { display: flex; flex-direction: column; gap: 6px; }
+      .pl-call-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
+      .pl-call-seg.has-none { grid-template-columns: auto 1fr 1fr; }
+      .pl-call-seg button { display: flex; flex-direction: column; align-items: center; padding: 7px 8px; min-height: 44px; border: 0; background: var(--panel-2);
+        cursor: pointer; color: var(--muted); font-family: var(--font-display); font-weight: 600; letter-spacing: 0.06em; }
+      .pl-call-seg button + button { border-left: 1px solid var(--line-strong); }
+      .pl-call-seg button b { font-size: var(--fs-md); text-transform: uppercase; }
+      .pl-call-seg button span { font-family: var(--font-body); font-weight: 400; font-size: var(--fs-xs); letter-spacing: 0; }
+      .pl-call-seg button:hover { color: var(--fg); }
+      .pl-call-seg button[aria-pressed="true"] { background: var(--violet-soft); color: var(--fg); box-shadow: inset 0 -3px 0 var(--violet); }
+      .pl-call.is-missing .pl-call-seg { border-color: var(--warn); }
+      .pl-warn { color: var(--warn); }
       .pl-res-empty { padding: 4px 2px; }
 
       /* Allegati e scelta */
@@ -620,14 +699,17 @@
 
       /* Registro */
       .pl-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-      .pl-log-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 36px 56px; gap: 8px; align-items: center;
+      .pl-log-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 16px 32px 52px; gap: 8px; align-items: center;
         padding: 6px 4px; border-bottom: 1px solid var(--line); }
-      .pl-log-row.has-who { grid-template-columns: 44px minmax(0, 0.8fr) minmax(0, 2fr) 36px 56px; }
+      .pl-log-row.has-who { grid-template-columns: 44px minmax(0, 0.8fr) minmax(0, 2fr) 16px 32px 52px; }
       .pl-log-who { font-weight: 600; font-size: var(--fs-sm); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .pl-log-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pl-log-what { min-width: 0; display: flex; align-items: center; gap: 6px; }
+      .pl-log-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pl-log-what .chip { flex: none; padding: 0 6px; }
       .pl-log-nat { text-align: right; color: var(--muted); font-size: var(--fs-sm); }
       .pl-log-tot { text-align: right; }
-      .pl-log-row.pl-crit-hi .pl-log-tot { color: var(--gold); } .pl-log-row.pl-crit-lo .pl-log-tot { color: var(--bad); }
+      .pl-log-row.pl-crit .pl-log-nat, .pl-log-row.pl-supercrit .pl-log-nat { color: var(--gold); font-weight: 600; }
+      .pl-log-row.pl-supercrit { box-shadow: inset 2px 0 0 var(--gold); }
 
       /* Master */
       .pl-party { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
@@ -638,7 +720,8 @@
       @media (max-width: 480px) { .pl-ask-row { grid-template-columns: minmax(0, 1fr); } }
       .pl-reqs { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
       .pl-secret { gap: 6px; }
-      @media (max-width: 560px) { .pl-tray { height: 200px; } .pl-log-row.has-who { grid-template-columns: 40px minmax(0, 0.9fr) minmax(0, 1.4fr) 30px 46px; } }
+      @media (max-width: 560px) { .pl-tray { height: 200px; } .pl-log-row.has-who { grid-template-columns: 40px minmax(0, 0.9fr) minmax(0, 1.4fr) 14px 28px 44px; }
+        .pl-log-row { grid-template-columns: 40px minmax(0, 1fr) 14px 28px 46px; gap: 6px; } }
     `;
     document.head.appendChild(st);
   }

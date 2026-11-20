@@ -58,6 +58,12 @@ Nel mockup i punti decisi hanno il chip verde **deciso**; quelli ancora aperti i
 - **KI (Corax):** barra KI accanto a HP/MP/SP, KI max = 100 + KI × 8; rigenera VIT/30 a turno in combattimento, VIT/15 al minuto fuori, VIT/5 al minuto in meditazione.
 - **Carisma di Corax:** i suoi titoli danno +150 CHA, ma nell'Excel la cella «Punti Titoli» era 0 senza formula. Nell'app si applicano i bonus dei titoli (CHA 398).
 
+## Tiro d100 — DECISO
+- Prima di tirare il giocatore dichiara **sopra** o **sotto**, poi tira.
+- Sopra: naturale > 90 è **critico**, 100 è **supercritico**. Sotto: naturale < 10 è **critico**, 1 è **supercritico**.
+- Conta il d100 naturale, non il totale con i modificatori allegati (skill, titoli, talenti). L'esito lo legge il Master.
+- Il risultato lo genera il server; il vassoio anima i due d10 fino a quel valore.
+
 ## Ancora aperti
 - Effetti di Carisma, Saggezza e Shadow: oggi non incidono su nessuna derivata.
 

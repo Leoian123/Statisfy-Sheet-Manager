@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Character, Derived, ResourceKey } from "../api/types";
@@ -6,20 +6,21 @@ import { resourceMaxes, resourcesFor } from "../lib/resources";
 import { useAppData } from "../auth/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { EditToggle } from "../components/edit/fields";
-import { HeaderEditor, ListSectionEditor, ResourcesEditor, StatsEditor, type ListKey } from "../components/edit/sections";
+import { HeaderEditor, ListSectionEditor, ResourcesEditor, StatsEditor, type ListKey, type ListSubset } from "../components/edit/sections";
 import { Bar } from "../components/Bar";
 import { DerivedLegend, DerivedRow } from "../components/DerivedRow";
 import { Grade, Progress } from "../components/Grade";
 import { Inventory } from "../components/Inventory";
+import { activeKind, ActiveListTab, SkillsTab, TalentsTab, TitlesTab, type ActiveSection } from "../components/SheetLists";
 import { RarityChip } from "../components/RarityChip";
 import { SourceLegend, StatRow } from "../components/StatRow";
-import { ErrorBox, InlineError, Loading, SysMsg } from "../components/Status";
+import { ErrorBox, InlineError, Loading } from "../components/Status";
 import { Tabs, type TabDef } from "../components/Tabs";
 import { Win } from "../components/Win";
 import { n } from "../lib/format";
 import { useBusy, useCharacter } from "../lib/useCharacter";
 
-type TabKey = "titoli" | "skill" | "attive" | "talenti" | "inventario" | "pet" | "maledizioni" | "quest" | "reputazione";
+type TabKey = "titoli" | "skill" | "attive" | "incantesimi" | "miracoli" | "talenti" | "inventario" | "pet" | "maledizioni" | "quest" | "reputazione";
 
 export function PvpChip({ flag }: { flag: string }) {
   const cls = ({ Bianco: "muted", Grigio: "warn", Rosso: "bad" } as Record<string, string>)[flag] || "muted";
@@ -196,9 +197,20 @@ function StatsWin({ c, onChange }: { c: Character; onChange: (c: Character) => v
 
 /* ---------- Tab ---------- */
 const TAB_FIELD: Record<TabKey, ListKey> = {
-  titoli: "titles", skill: "skills", attive: "active_skills", talenti: "talents", inventario: "inventory",
-  pet: "pets", maledizioni: "curses", quest: "quests", reputazione: "reputation",
+  titoli: "titles", skill: "skills", attive: "active_skills", incantesimi: "active_skills", miracoli: "active_skills",
+  talenti: "talents", inventario: "inventory", pet: "pets", maledizioni: "curses", quest: "quests", reputazione: "reputation",
 };
+/* Skill attive, incantesimi e miracoli sono tutti in active_skills (campo `kind`): ogni tab ne modifica solo la sua parte. */
+const ACTIVE_TABS: Partial<Record<TabKey, ActiveSection>> = { attive: "Skill", incantesimi: "Incantesimo", miracoli: "Miracolo" };
+function tabSubset(tab: TabKey): ListSubset | undefined {
+  const kind = ACTIVE_TABS[tab];
+  if (!kind) return undefined;
+  return {
+    match: (it) => activeKind(it as never) === kind,
+    blank: kind === "Skill" ? {} : { kind, cost: "0 MP", ...(kind === "Miracolo" ? { god: "" } : { spheres: [] }) },
+    noun: kind === "Skill" ? "Skill attiva" : kind,
+  };
+}
 
 function Details({ c, onChange }: { c: Character; onChange: (c: Character) => void }) {
   const [tab, setTab] = useState<TabKey>("titoli");
@@ -207,7 +219,9 @@ function Details({ c, onChange }: { c: Character; onChange: (c: Character) => vo
   const tabs: TabDef<TabKey>[] = [
     { key: "titoli", label: "Titoli", count: c.titles.length },
     { key: "skill", label: "Skill", count: c.skills.length },
-    { key: "attive", label: "Skill attive", count: c.active_skills.length },
+    { key: "attive", label: "Skill attive", count: c.active_skills.filter((s) => activeKind(s) === "Skill").length },
+    { key: "incantesimi", label: "Incantesimi", count: c.active_skills.filter((s) => activeKind(s) === "Incantesimo").length },
+    { key: "miracoli", label: "Miracoli", count: c.active_skills.filter((s) => activeKind(s) === "Miracolo").length },
     { key: "talenti", label: "Talenti", count: c.talents.length },
     { key: "inventario", label: "Inventario", count: c.inventory.length },
     { key: "pet", label: "Pet", count: c.pets.length },
@@ -219,17 +233,17 @@ function Details({ c, onChange }: { c: Character; onChange: (c: Character) => vo
   if (edit) {
     return (
       <Win title={<>Dettagli · Modifica {label}</>} right={<EditToggle on onClick={() => setEdit(false)} label={label} />}>
-        <ListSectionEditor key={`${c.id}-${tab}`} c={c} field={TAB_FIELD[tab]} what={label} onChange={onChange} onClose={() => setEdit(false)} />
+        <ListSectionEditor key={`${c.id}-${tab}`} c={c} field={TAB_FIELD[tab]} subset={tabSubset(tab)} what={label} onChange={onChange} onClose={() => setEdit(false)} />
       </Win>
     );
   }
   return (
     <Win title="Dettagli" right={master ? <EditToggle on={false} onClick={() => setEdit(true)} label={label} /> : undefined}>
       <Tabs tabs={tabs} active={tab} onChange={setTab} label="Sezioni della scheda">
-        {tab === "titoli" && <TabTitoli c={c} />}
-        {tab === "skill" && <TabSkill c={c} />}
-        {tab === "attive" && <TabAttive c={c} />}
-        {tab === "talenti" && <TabTalenti c={c} />}
+        {tab === "titoli" && <TitlesTab c={c} />}
+        {tab === "skill" && <SkillsTab c={c} />}
+        {ACTIVE_TABS[tab] && <ActiveListTab key={tab} c={c} kind={ACTIVE_TABS[tab]!} />}
+        {tab === "talenti" && <TalentsTab c={c} />}
         {tab === "inventario" && <Inventory c={c} onChange={onChange} />}
         {tab === "pet" && <TabPet c={c} />}
         {tab === "maledizioni" && <TabMaledizioni c={c} />}
@@ -237,88 +251,6 @@ function Details({ c, onChange }: { c: Character; onChange: (c: Character) => vo
         {tab === "reputazione" && <TabReputazione c={c} />}
       </Tabs>
     </Win>
-  );
-}
-
-const bonusText = (b: Record<string, number>) => Object.entries(b || {}).map(([k, v]) => `${k} ${v >= 0 ? "+" : ""}${v}`).join(", ");
-
-function TabTitoli({ c }: { c: Character }) {
-  if (!c.titles.length) return <Empty text="Nessun titolo." />;
-  return (
-    <div className="table-wrap"><table className="t">
-      <thead><tr><th>Titolo</th><th>Rarità</th><th>Bonus</th></tr></thead>
-      <tbody>{c.titles.map((t, i) => (
-        <tr key={i}><td>{t.name}</td><td><RarityChip rarity={t.rarity} /></td><td className="mono small">{bonusText(t.bonus) || "—"}</td></tr>
-      ))}</tbody>
-    </table></div>
-  );
-}
-
-function TabSkill({ c }: { c: Character }) {
-  const [filter, setFilter] = useState("Tutti");
-  useEffect(() => setFilter("Tutti"), [c.id]);
-  if (!c.skills.length) return <Empty text="Nessuna skill." />;
-  const types = ["Tutti", ...Array.from(new Set(c.skills.map((s) => s.type)))];
-  const active = types.includes(filter) ? filter : "Tutti";
-  const shown = active === "Tutti" ? c.skills : c.skills.filter((s) => s.type === active);
-  return (
-    <>
-      <div className="row sc-filter" role="group" aria-label="Filtra per tipo">
-        {types.map((t) => (
-          <button key={t} type="button" className="btn ghost" aria-pressed={t === active} onClick={() => setFilter(t)}>
-            {t}{t !== "Tutti" && <span className="xs muted num"> {c.skills.filter((s) => s.type === t).length}</span>}
-          </button>
-        ))}
-      </div>
-      <div className="table-wrap"><table className="t">
-        <thead><tr><th>Skill</th><th>Tipo</th><th title="Grado di maestria I–X">Grado</th><th title="Progresso verso il grado successivo">Progresso</th><th>Passiva</th></tr></thead>
-        <tbody>{shown.map((s, i) => (
-          <tr key={i}>
-            <td>{s.name}</td>
-            <td><span className="chip violet">{s.type}</span></td>
-            <td><Grade lvl={s.lvl} /></td>
-            <td><Progress pct={s.pct} /></td>
-            <td className="small">{s.passive ? s.passive : <span className="muted">—</span>}</td>
-          </tr>
-        ))}</tbody>
-      </table></div>
-    </>
-  );
-}
-
-function TabAttive({ c }: { c: Character }) {
-  if (!c.active_skills.length) return <Empty text="Nessuna skill attiva." />;
-  return (
-    <div className="sc-cards">{c.active_skills.map((s, i) => (
-      <article className="sc-card" key={i}>
-        <h4>{s.name}</h4>
-        <p className="small">{s.effect}</p>
-        <div className="row">
-          <span className="chip" style={{ color: "var(--mp)" }}>Costo {s.cost}</span>
-          <span className="chip muted">Cooldown {s.cd} turni</span>
-        </div>
-        <div className="row small"><span>Grado <Grade lvl={s.lvl} /></span></div>
-        <Progress pct={s.pct} />
-      </article>
-    ))}</div>
-  );
-}
-
-function TabTalenti({ c }: { c: Character }) {
-  const { rules } = useAppData();
-  const every = rules?.level.talent_every;
-  return (
-    <>
-      <SysMsg lines={[`Prossimo talento al Lv ${c.next_talent_level}${every ? ` (ogni ${every} livelli)` : ""}.`]} />
-      {!c.talents.length ? <Empty text="Nessun talento." /> : (
-        <div className="table-wrap"><table className="t">
-          <thead><tr><th>Talento</th><th>Rarità</th><th>Origine</th><th>Effetto</th></tr></thead>
-          <tbody>{c.talents.map((t, i) => (
-            <tr key={i}><td>{t.name}</td><td><RarityChip rarity={t.rarity} /></td><td className="mono small nowrap">{t.origin}</td><td className="small">{t.effect}</td></tr>
-          ))}</tbody>
-        </table></div>
-      )}
-    </>
   );
 }
 

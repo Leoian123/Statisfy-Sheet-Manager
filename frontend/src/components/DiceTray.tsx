@@ -10,8 +10,10 @@ import { forwardRef, useCallback, useEffect, useId, useImperativeHandle, useLayo
 const DIE = 64; // lato del dado in px
 const REDUCED = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SOUND_KEY = "statisfy-dice-sound";
+const FAST_KEY = "statisfy-fast-roll";
 
-export interface ThrowOpts { x?: number; y?: number; vx?: number; vy?: number }
+/** `instant`: Tiro veloce, i dadi mostrano subito le facce uscite senza animazione. */
+export interface ThrowOpts { x?: number; y?: number; vx?: number; vy?: number; instant?: boolean }
 export interface DiceTrayHandle {
   /** Anima i dadi fino a decine/unità date (dal server); si risolve quando si fermano. */
   throwTo: (tens: number, units: number, opts?: ThrowOpts) => Promise<void>;
@@ -100,6 +102,25 @@ export function useDiceSound(): [boolean, () => void] {
   return [on, toggle];
 }
 
+/* ---------- Tiro veloce: risultato subito, senza animazione (preferenza del browser) ---------- */
+let fast = (() => { try { return localStorage.getItem(FAST_KEY) === "on"; } catch { return false; } })();
+const fastListeners = new Set<(on: boolean) => void>();
+
+/** Tiro veloce sì/no, condiviso da tutti i vassoi e ricordato nel browser. */
+export function useFastRoll(): [boolean, () => void] {
+  const [on, setOn] = useState(fast);
+  useEffect(() => {
+    fastListeners.add(setOn);
+    return () => { fastListeners.delete(setOn); };
+  }, []);
+  const toggle = useCallback(() => {
+    fast = !fast;
+    try { localStorage.setItem(FAST_KEY, fast ? "on" : "off"); } catch { /* facoltativo */ }
+    fastListeners.forEach((fn) => fn(fast));
+  }, []);
+  return [on, toggle];
+}
+
 /* ---------- Un dado SVG ---------- */
 function DieSvg({ gid }: { gid: string }) {
   return (
@@ -156,6 +177,18 @@ export const DiceTray = forwardRef<DiceTrayHandle, Props>(function DiceTray({ on
       setFace(d, 0);
       place(d, W / 2 + (i ? 46 : -46), H / 2, 0, i ? 8 : -10);
     });
+    // Il vassoio cambia larghezza (rotazione del telefono, sezione nascosta e poi mostrata): da fermi i dadi tornano
+    // al centro con la faccia che hanno, così non restano fuori dal bordo.
+    if (typeof ResizeObserver !== "function") return;
+    let w0 = W, h0 = H;
+    const ro = new ResizeObserver(() => {
+      const w = tray.clientWidth, h = tray.clientHeight;
+      if (!w || !h || (w === w0 && h === h0) || rolling.current) return;
+      w0 = w; h0 = h;
+      [0, 1].forEach((i) => place(parts(i), w / 2 + (i ? 46 : -46), h / 2, 0, i ? 8 : -10));
+    });
+    ro.observe(tray);
+    return () => ro.disconnect();
   }, [parts]);
 
   const throwTo = useCallback((tens: number, units: number, opts: ThrowOpts = {}) => new Promise<void>((resolve) => {
@@ -177,9 +210,9 @@ export const DiceTray = forwardRef<DiceTrayHandle, Props>(function DiceTray({ on
       setIsRolling(false);
       resolve();
     };
-    if (REDUCED()) {
-      dice.forEach((d, i) => { place(d, W / 2 + (i ? 44 : -44), H / 2, 0, 0); setFace(d, d.final); });
-      setTimeout(finish, 250);
+    if (opts.instant || REDUCED()) {
+      dice.forEach((d, i) => { place(d, W / 2 + (i ? 44 : -44), H / 2, 0, i ? 6 : -8); setFace(d, d.final); });
+      if (opts.instant) finish(); else setTimeout(finish, 250);
       return;
     }
     const sx = opts.x ?? 40, sy = opts.y ?? H - 40;

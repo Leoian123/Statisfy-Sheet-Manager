@@ -27,6 +27,7 @@ npm run preview
 - `src/auth/` — `AuthContext` (utente/token), `AppData` (configurazione `/api/rules` e lista PG per il selettore).
 - `src/layout/AppShell.tsx` — topbar (selettore PG, utente, logout, tema) e navigazione laterale (riga scorrevole su mobile).
 - `src/components/` — `Win`, `Bar`, `RarityChip`, `TipRow` (riga compatta con tooltip), `StatRow`, `DerivedRow`, `Tabs`, `Toast`, `Grade`, `Status`.
-- `src/pages/` — `Login`, `Scheda`, `Crea`, `LevelUp`, `Combattimento`, `Master`.
+- `src/pages/` — `Login`, `Scheda`, `Crea`, `LevelUp`, `PlanciaGiocatore` (Plancia di gioco: HUD, tiro d100 con Sopra/Sotto e critici, combattimento, allegati, registro unico), `Master`, `Plancia` (plancia di comando del Master), `Forgia`.
 
-Rotte: `/login`, `/personaggi/:id`, `/personaggi/:id/level-up`, `/personaggi/:id/combattimento`, `/crea`, `/master` (solo master). `/` porta il master su `/master`, il giocatore sul suo ultimo PG (o su `/crea` se non ne ha).
+Rotte: `/login`, `/personaggi/:id`, `/personaggi/:id/plancia`, `/personaggi/:id/level-up`, `/crea`, `/master`, `/master/plancia`, `/master/forgia` (solo master).
+`/personaggi/:id/combattimento` reindirizza a `/personaggi/:id/plancia` (il combattimento è una sezione della Plancia di gioco). `/` porta il master su `/master`, il giocatore sul suo ultimo PG (o su `/crea` se non ne ha).

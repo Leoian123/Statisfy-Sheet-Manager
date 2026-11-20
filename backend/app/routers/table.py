@@ -20,6 +20,7 @@ from .characters import get_char
 router = APIRouter(prefix="/api/table", tags=["table"])
 
 ModKind = Literal["Skill", "Skill attiva", "Titolo", "Talento", "Fortuna"]
+Call = Literal["sopra", "sotto"]
 FORTUNA_NAME = "Bonus Fortuna sui tiri"
 MAX_MODS = 30
 
@@ -35,6 +36,7 @@ class ModIn(BaseModel):
 class CharRollIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: str = Field("", max_length=120)
+    call: Call
     mods: list[ModIn] = Field(default_factory=list, max_length=MAX_MODS)
     request_id: int | None = None
 
@@ -42,6 +44,7 @@ class CharRollIn(BaseModel):
 class MasterRollIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: str = Field("", max_length=120)
+    call: Call | None = None
     secret: bool = False
 
 
@@ -67,6 +70,16 @@ def d100() -> tuple[int, int, int]:
     return tens, units, tens * 10 + units or 100
 
 
+def crit_of(natural: int, call: str | None) -> str | None:
+    """Critici del d100 (regola del Master): prima di tirare si dichiara «sopra» o «sotto» e conta il **naturale**.
+    Sopra: 100 supercritico, 91–99 critico. Sotto: 1 supercritico, 2–9 critico. Senza dichiarazione nessun critico."""
+    if call == "sopra":
+        return "supercritico" if natural == 100 else "critico" if natural > 90 else None
+    if call == "sotto":
+        return "supercritico" if natural == 1 else "critico" if natural < 10 else None
+    return None
+
+
 def _names(db: Session) -> dict[int, str]:
     return {c.id: c.name for c in db.scalars(select(Character)).unique()}
 
@@ -76,7 +89,7 @@ def roll_out(r: Roll, names: dict[int, str], users: dict[int, str]) -> dict:
             "char_name": "Master" if r.char_id is None else names.get(r.char_id, "PG eliminato"),
             "by": "master" if r.char_id is None else "giocatore", "author_id": r.author_id,
             "author_name": users.get(r.author_id, ""), "reason": r.reason, "tens": r.tens, "units": r.units,
-            "natural": r.natural, "mods": r.mods or [], "total": r.total, "secret": bool(r.secret),
+            "natural": r.natural, "mods": r.mods or [], "total": r.total, "call": r.call, "crit": r.crit, "secret": bool(r.secret),
             "request_id": r.request_id, "created_at": r.created_at}
 
 
@@ -85,6 +98,7 @@ def request_out(q: RollRequest, names: dict[int, str], rolls: dict[int, Roll]) -
     return {"id": q.id, "char_id": q.char_id, "char_name": names.get(q.char_id, "PG eliminato"), "what": q.what,
             "note": q.note, "status": q.status, "roll_id": q.roll_id,
             "roll_total": roll.total if roll else None, "roll_natural": roll.natural if roll else None,
+            "roll_crit": roll.crit if roll else None,
             "created_at": q.created_at}
 
 
@@ -117,7 +131,8 @@ def _my_char_ids(db: Session, user: User) -> list[int]:
 
 @router.post("/characters/{char_id}/rolls", status_code=201)
 def roll_for_character(char_id: int, data: CharRollIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Tiro d100 di un PG con gli allegati. Il giocatore tira solo per i propri PG, il Master per tutti.
+    """Tiro d100 di un PG con gli allegati e la dichiarazione `call` (sopra/sotto, obbligatoria) da cui il server
+    calcola `crit`. Il giocatore tira solo per i propri PG, il Master per tutti.
     Se `request_id` è una richiesta aperta di quel PG, diventa `risolta` (altrimenti viene ignorata)."""
     c = get_char(char_id, user, db)
     mods = _check_mods(c, data.mods)
@@ -126,7 +141,8 @@ def roll_for_character(char_id: int, data: CharRollIn, user: User = Depends(curr
     if req is not None and (req.char_id != c.id or req.status != "aperta"):
         req = None
     r = Roll(char_id=c.id, author_id=user.id, reason=data.reason.strip(), tens=tens, units=units, natural=natural,
-             mods=mods, total=natural + sum(m["mod"] for m in mods), secret=False,
+             mods=mods, total=natural + sum(m["mod"] for m in mods), call=data.call, crit=crit_of(natural, data.call),
+             secret=False,
              request_id=req.id if req else None, created_at=_now())
     db.add(r)
     db.flush()
@@ -143,7 +159,8 @@ def master_roll(data: MasterRollIn, user: User = Depends(require_master), db: Se
     """Tiro del Master (nessun PG). `secret` = visibile solo al Master."""
     tens, units, natural = d100()
     r = Roll(char_id=None, author_id=user.id, reason=data.reason.strip(), tens=tens, units=units, natural=natural,
-             mods=[], total=natural, secret=data.secret, created_at=_now())
+             mods=[], total=natural, call=data.call, crit=crit_of(natural, data.call), secret=data.secret,
+             created_at=_now())
     db.add(r)
     db.commit()
     db.refresh(r)

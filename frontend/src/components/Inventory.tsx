@@ -3,17 +3,17 @@
 // events (mouse dopo 6px, touch con pressione lunga), clic per equipaggiare/togliere. Le regole sono sul server:
 // qui si mostrano `equipped`, `item_previews` e `unmet` ricevuti e si chiamano gli endpoint di equipaggiamento.
 import {
-  useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent as RFocusEvent, type MouseEvent as RMouseEvent,
+  useEffect, useRef, useState, type FocusEvent as RFocusEvent, type MouseEvent as RMouseEvent,
   type PointerEvent as RPointerEvent, type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 import { api, errorText } from "../api/client";
 import type { Character, Derived, DerivedFmt, EquipTypeDef, InventoryItem, ItemCategory, RulesConfig, SlotDef, SlotKey } from "../api/types";
 import { useAppData } from "../auth/AppData";
 import { fmtDiff, rarityKey } from "../lib/format";
 import { Loading } from "./Status";
 import { useToast } from "./Toast";
-import { Ornament, Win } from "./Win";
+import { initials, Kv, OgTipHead, TipLayer } from "./og";
+import { Win } from "./Win";
 
 type Filter = "tutti" | ItemCategory;
 type Sort = "rarita" | "tipo" | "nome";
@@ -67,11 +67,6 @@ function signed(v: number, kind?: DerivedFmt): string {
   return `${v < 0 ? "−" : "+"}${nf(Math.abs(v))}`;
 }
 const isCoin = (it: InventoryItem) => it.type === "Monete";
-function initials(name: string): string {
-  const stop = ["del", "della", "dello", "dei", "degli", "delle", "di", "da", "la", "il", "lo", "le", "gli", "un", "una"];
-  const w = String(name || "?").replace(/['’]/g, " ").split(/\s+/).filter((x) => x && !stop.includes(x.toLowerCase()));
-  return (w.length ? w : [String(name || "?")]).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
-}
 function bonusLines(stats: Record<string, number>, bonus: Record<string, number>, der: Record<string, Derived>): string[] {
   const out: string[] = [];
   for (const [k, v] of Object.entries(stats || {})) if (v) out.push(`${signed(v)} ${k}`);
@@ -88,10 +83,6 @@ function bonusLines(stats: Record<string, number>, bonus: Record<string, number>
   return out;
 }
 
-function Kv({ k, children, cls }: { k: string; children: ReactNode; cls?: string }) {
-  return <div className="og-kv"><span className="og-k">{k}:</span> <span className={`og-v${cls ? ` ${cls}` : ""}`}>{children}</span></div>;
-}
-
 function DurBar({ it }: { it: InventoryItem }) {
   if (!it.durability || !it.durability.max) return null;
   const pct = Math.max(0, Math.min(100, (it.durability.cur / it.durability.max) * 100));
@@ -106,35 +97,6 @@ function Figure() {
       <circle className="inv-body" cx="60" cy="28" r="16" />
       <path className="inv-body" d="M52 44 L68 44 L70 52 Q88 54 92 66 L100 126 Q101 132 95 133 L88 132 L80 82 L78 128 L82 226 Q82 230 77 230 L66 230 L61 146 L59 146 L54 230 L43 230 Q38 230 38 226 L42 128 L40 82 L32 132 L25 133 Q19 132 20 126 L28 66 Q32 54 50 52 Z" />
     </svg>
-  );
-}
-
-/** Tooltip unico, position fixed nel body, posizionato e limitato alla viewport. */
-function TipLayer({ anchor, border, children }: { anchor: HTMLElement; border?: string; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const r = anchor.getBoundingClientRect();
-    const vw = document.documentElement.clientWidth, vh = window.innerHeight;
-    const w = el.offsetWidth, h = el.offsetHeight, m = 8;
-    let left = r.right + m;
-    if (left + w > vw - m) left = r.left - w - m;          // a sinistra se non c'è spazio a destra
-    let top = r.top;
-    if (left < m) {                                        // schermi stretti: sotto o sopra l'elemento
-      left = Math.min(Math.max(m, r.left + r.width / 2 - w / 2), vw - w - m);
-      top = r.bottom + m;
-      if (top + h > vh - m) top = r.top - h - m;
-    }
-    top = Math.min(Math.max(m, top), Math.max(m, vh - h - m));
-    left = Math.min(Math.max(m, left), Math.max(m, vw - w - m));
-    setPos({ left: Math.round(left), top: Math.round(top) });
-  }, [anchor, children]);
-  const style: CSSProperties = { left: pos?.left ?? 0, top: pos?.top ?? 0, borderColor: border };
-  return createPortal(
-    <div ref={ref} className={`inv-tip${pos ? " on" : ""}`} role="tooltip" style={style}>{children}</div>,
-    document.body,
   );
 }
 
@@ -396,7 +358,7 @@ function InventoryView({ c, rules, onChange }: { c: Character; rules: RulesConfi
     }
     return (
       <>
-        <div className="og-h"><Ornament /><div className="og-iname-big" data-rarity={rk}>[{it.name}]</div></div>
+        <OgTipHead name={it.name} rarity={rk} />
         <Kv k="Rarità"><span data-rarity={rk}>{it.rarity}</span></Kv>
         {pair.length > 0 && <div className="og-pair">{pair}</div>}
         <Kv k="Tipo">{[it.type || "Oggetto", t?.label].filter(Boolean).join(" · ")}</Kv>
