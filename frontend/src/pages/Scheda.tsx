@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Character, Derived, Resources } from "../api/types";
 import { useAppData } from "../auth/AppData";
+import { useAuth } from "../auth/AuthContext";
+import { EditToggle } from "../components/edit/fields";
+import { HeaderEditor, ListSectionEditor, ResourcesEditor, StatsEditor, type ListKey } from "../components/edit/sections";
 import { Bar } from "../components/Bar";
 import { DerivedLegend, DerivedRow } from "../components/DerivedRow";
 import { Grade, Progress } from "../components/Grade";
@@ -37,15 +40,20 @@ export function Scheda() {
   return <SchedaView c={char} onChange={setChar} />;
 }
 
+/** Il Master modifica ogni sezione; il giocatore resta in sola lettura sui campi del Master. */
+function useIsMaster() {
+  return useAuth().user?.role === "master";
+}
+
 function SchedaView({ c, onChange }: { c: Character; onChange: (c: Character) => void }) {
   const d = dmap(c.derived);
   return (
     <>
-      <Header c={c} />
+      <Header c={c} onChange={onChange} />
       <div className="grid-2">
         <div className="stack" style={{ gap: 20 }}>
           <ResourcesWin c={c} d={d} onChange={onChange} />
-          <StatsWin c={c} />
+          <StatsWin c={c} onChange={onChange} />
         </div>
         <div className="stack" style={{ gap: 20 }}>
           <Win title="Statistiche derivate">
@@ -54,14 +62,20 @@ function SchedaView({ c, onChange }: { c: Character; onChange: (c: Character) =>
           </Win>
         </div>
       </div>
-      <Details c={c} d={d} />
+      <Details c={c} d={d} onChange={onChange} />
     </>
   );
 }
 
-function Header({ c }: { c: Character }) {
+function Header({ c, onChange }: { c: Character; onChange: (c: Character) => void }) {
+  const master = useIsMaster();
+  const [edit, setEdit] = useState(false);
   return (
-    <Win title="Finestra di stato" gold right={<span className="xs muted">{c.owner_name}</span>}>
+    <Win title="Finestra di stato" gold right={<>
+      <span className="xs muted">{c.owner_name}</span>
+      {master && <EditToggle on={edit} onClick={() => setEdit((x) => !x)} label="finestra di stato" />}
+    </>}>
+      {edit ? <HeaderEditor key={c.id} c={c} onChange={onChange} onClose={() => setEdit(false)} /> : (
       <div className="sc-head">
         <div className="sc-head-main">
           <h1 className="sc-name">{c.name}</h1>
@@ -83,6 +97,7 @@ function Header({ c }: { c: Character }) {
           <div className="kv"><span className="label">Scellini</span><span className="v">{n(c.scellini)}</span></div>
         </div>
       </div>
+      )}
     </Win>
   );
 }
@@ -91,6 +106,8 @@ const RES: [keyof Resources, string][] = [["hp", "Vita (HP)"], ["mp", "Mana (MP)
 
 function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Derived>; onChange: (c: Character) => void }) {
   const { busy, error, run } = useBusy();
+  const master = useIsMaster();
+  const [edit, setEdit] = useState(false);
 
   async function move(k: keyof Resources, dir: 1 | -1) {
     const max = d[k]?.value ?? 0;
@@ -102,8 +119,17 @@ function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Deri
     if (res) onChange(res);
   }
 
+  if (edit) {
+    const max = { hp: d.hp?.value ?? 0, mp: d.mp?.value ?? 0, sp: d.sp?.value ?? 0 };
+    return (
+      <Win title="Risorse" right={<EditToggle on onClick={() => setEdit(false)} label="risorse" />}>
+        <ResourcesEditor key={c.id} c={c} max={max} onChange={onChange} onClose={() => setEdit(false)} />
+      </Win>
+    );
+  }
+
   return (
-    <Win title="Risorse">
+    <Win title="Risorse" right={master ? <EditToggle on={false} onClick={() => setEdit(true)} label="risorse" /> : undefined}>
       <div className="sc-res">
         {RES.map(([k, label]) => {
           const max = d[k]?.value ?? 0;
@@ -126,15 +152,24 @@ function ResourcesWin({ c, d, onChange }: { c: Character; d: Record<string, Deri
   );
 }
 
-function StatsWin({ c }: { c: Character }) {
+function StatsWin({ c, onChange }: { c: Character; onChange: (c: Character) => void }) {
   const { rules } = useAppData();
+  const master = useIsMaster();
+  const [edit, setEdit] = useState(false);
+  if (edit) {
+    return (
+      <Win title="Statistiche" right={<EditToggle on onClick={() => setEdit(false)} label="statistiche" />}>
+        <StatsEditor key={c.id} c={c} onChange={onChange} onClose={() => setEdit(false)} />
+      </Win>
+    );
+  }
   const groups = [
     { kind: "base", label: "Statistiche base" },
     { kind: "avanzata", label: "Statistiche avanzate" },
   ] as const;
   const fp = c.free_points;
   return (
-    <Win title="Statistiche">
+    <Win title="Statistiche" right={master ? <EditToggle on={false} onClick={() => setEdit(true)} label="statistiche" /> : undefined}>
       <div>
         {groups.map((g) => {
           const rows = c.stats.filter((r) => r.kind === g.kind);
@@ -158,8 +193,15 @@ function StatsWin({ c }: { c: Character }) {
 }
 
 /* ---------- Tab ---------- */
-function Details({ c, d }: { c: Character; d: Record<string, Derived> }) {
+const TAB_FIELD: Record<TabKey, ListKey> = {
+  titoli: "titles", skill: "skills", attive: "active_skills", talenti: "talents", inventario: "inventory",
+  pet: "pets", maledizioni: "curses", quest: "quests", reputazione: "reputation",
+};
+
+function Details({ c, d, onChange }: { c: Character; d: Record<string, Derived>; onChange: (c: Character) => void }) {
   const [tab, setTab] = useState<TabKey>("titoli");
+  const master = useIsMaster();
+  const [edit, setEdit] = useState(false);
   const tabs: TabDef<TabKey>[] = [
     { key: "titoli", label: "Titoli", count: c.titles.length },
     { key: "skill", label: "Skill", count: c.skills.length },
@@ -171,8 +213,16 @@ function Details({ c, d }: { c: Character; d: Record<string, Derived> }) {
     { key: "quest", label: "Quest", count: c.quests.length },
     { key: "reputazione", label: "Reputazione", count: c.reputation.length },
   ];
+  const label = tabs.find((t) => t.key === tab)?.label ?? "";
+  if (edit) {
+    return (
+      <Win title={<>Dettagli · Modifica {label}</>} right={<EditToggle on onClick={() => setEdit(false)} label={label} />}>
+        <ListSectionEditor key={`${c.id}-${tab}`} c={c} field={TAB_FIELD[tab]} what={label} onChange={onChange} onClose={() => setEdit(false)} />
+      </Win>
+    );
+  }
   return (
-    <Win title="Dettagli">
+    <Win title="Dettagli" right={master ? <EditToggle on={false} onClick={() => setEdit(true)} label={label} /> : undefined}>
       <Tabs tabs={tabs} active={tab} onChange={setTab} label="Sezioni della scheda">
         {tab === "titoli" && <TabTitoli c={c} />}
         {tab === "skill" && <TabSkill c={c} />}

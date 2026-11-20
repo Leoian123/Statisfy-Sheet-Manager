@@ -47,7 +47,8 @@ Sono credenziali di sviluppo, create solo dal seed; vanno anche nel README.
 
 ```ts
 StatRow = { code: string; name: string; kind: "base"|"avanzata"; iniziale: number; creazione: number;
-            investiti: number; levelup: number; altro: number; titoli: number; note?: string|null; total: number }  // total calcolato dal server
+            investiti: number; levelup: number; altro: number; titoli: number; oggetti?: number;  // oggetti: calcolata
+            note?: string|null; total: number }  // total calcolato dal server
 
 Derived = { key: string; label: string; fmt: "int"|"int1"|"kg"|"pct"|"permin"|"mult"|"dec";
             base: number;        // valore formula (già limitato da cap)
@@ -68,7 +69,7 @@ Character = {
   skills:   {name; lvl: int; pct: number|"MAX"; type: string; passive?: string}[];
   active_skills: {name; effect; lvl; pct; cost; cd: int}[];
   talents:  {name; rarity; origin; effect}[];
-  inventory:{name; stats; rarity; type; qty: int; weight: number}[];
+  inventory:{name; stats: string|{[code]: number}; rarity; type; qty: int; weight: number; ...}[];  // altri campi conservati
   pets:     {name; species; lvl; passive; skills: {name; lvl; pct}[]}[];
   curses:   {name; desc; bonus; malus}[];
   quests:   {name; progress; reward; rarity}[];
@@ -94,10 +95,25 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
   somma(valore−10) == 20 esatti; classe e regno esistenti. Il PG nasce lv 1, exp 0, PvP Bianco, 20 Corone,
   risorse al massimo, active_skills = abilità di classe, inventory = equipaggiamento di classe (Comune) + "Corone d'Oro" ×20,
   posizione "Mischia". owner = utente corrente (il master può passare `owner_id` opzionale).
-- `PATCH /api/characters/{id}` — modifica parziale. Player: solo `resources`, `combat.position`. Master: anche
-  `exp_pct, regno, pvp, gilda, corone, scellini, item_bonus, equip, magia` e le liste
-  (`titles, skills, active_skills, talents, inventory, pets, curses, quests, reputation`, sostituzione intera).
-  `name`, `classe`, stats di creazione non sono modificabili (422). → `Character`
+- `PATCH /api/characters/{id}` — modifica parziale → `Character`. Si inviano solo le sezioni da cambiare; le liste
+  si sostituiscono per intero. Tutto viene validato prima di salvare: se un controllo fallisce (422) non cambia nulla.
+  - **Player** (solo i propri PG): `resources`, `combat.position`. Qualsiasi campo del Master → 403.
+  - **Master**: anche `level` (int ≥ 1), `exp_pct` (0–100), `regno`, `pvp`, `gilda`, `corone`, `scellini`, `stats`,
+    `item_bonus`, `equip`, `magia` e le liste `titles, skills, active_skills, talents, inventory, pets, curses, quests, reputation`.
+  - Non modificabili da nessuno: `name`, `classe`, `id`, `owner_id` → 422.
+  - `stats`: elenco completo delle righe `{code, name, kind, iniziale, creazione, investiti, levelup, altro, titoli, note}`.
+    `code` 2–5 lettere maiuscole, unico; STR, DEX, VIT, INT restano e sono le sole `kind: "base"`; totale ≥ 0.
+    `total` inviato viene ignorato (ricalcolato). La colonna **`oggetti`** è calcolata dagli oggetti equipaggiati:
+    il valore salvato si conserva e inviarne uno diverso → 422. Cambiare il livello non tocca la colonna `levelup`.
+  - `resources`: 0 ≤ valore ≤ massimo (calcolato sulle stat dopo la modifica), altrimenti 422.
+    Se `stats`, `equip` o `magia` abbassano un massimo, le risorse correnti scendono al nuovo massimo.
+  - Regole sulle liste (`rules.sheet_errors`):
+    rarità nella scala a 8 gradi per titoli, talenti, oggetti e quest (per le quest può essere vuota);
+    `lvl` (Grado) 1–10 e `pct` 0–100 o `"MAX"` per skill, skill attive e skill dei pet; `cd` ≥ 0; `lvl` dei pet ≥ 1;
+    `qty` intero ≥ 0 e `weight` ≥ 0 per gli oggetti; bonus dei titoli e `stats` a mappa degli oggetti solo su codici di
+    statistica esistenti; reputazione con `range` ≥ 0 e |`value`| ≤ `range` quando `range` > 0. `name` (e `target`
+    della reputazione) obbligatorio.
+  - Campi non previsti negli elementi delle liste (es. `id`, `slot`, `bonus`, `req` degli oggetti) si conservano.
 - `DELETE /api/characters/{id}` — solo master → 204
 
 ### Level up
