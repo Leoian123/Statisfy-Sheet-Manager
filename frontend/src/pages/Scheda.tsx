@@ -6,6 +6,7 @@ import { useAppData } from "../auth/AppData";
 import { Bar } from "../components/Bar";
 import { DerivedLegend, DerivedRow } from "../components/DerivedRow";
 import { Grade, Progress } from "../components/Grade";
+import { Inventory } from "../components/Inventory";
 import { RarityChip } from "../components/RarityChip";
 import { SourceLegend, StatRow } from "../components/StatRow";
 import { ErrorBox, InlineError, Loading, SysMsg } from "../components/Status";
@@ -54,7 +55,7 @@ function SchedaView({ c, onChange }: { c: Character; onChange: (c: Character) =>
           </Win>
         </div>
       </div>
-      <Details c={c} d={d} />
+      <Details c={c} onChange={onChange} />
     </>
   );
 }
@@ -158,7 +159,7 @@ function StatsWin({ c }: { c: Character }) {
 }
 
 /* ---------- Tab ---------- */
-function Details({ c, d }: { c: Character; d: Record<string, Derived> }) {
+function Details({ c, onChange }: { c: Character; onChange: (c: Character) => void }) {
   const [tab, setTab] = useState<TabKey>("titoli");
   const tabs: TabDef<TabKey>[] = [
     { key: "titoli", label: "Titoli", count: c.titles.length },
@@ -178,7 +179,7 @@ function Details({ c, d }: { c: Character; d: Record<string, Derived> }) {
         {tab === "skill" && <TabSkill c={c} />}
         {tab === "attive" && <TabAttive c={c} />}
         {tab === "talenti" && <TabTalenti c={c} />}
-        {tab === "inventario" && <TabInventario c={c} d={d} />}
+        {tab === "inventario" && <Inventory c={c} onChange={onChange} />}
         {tab === "pet" && <TabPet c={c} />}
         {tab === "maledizioni" && <TabMaledizioni c={c} />}
         {tab === "quest" && <TabQuest c={c} />}
@@ -266,34 +267,6 @@ function TabTalenti({ c }: { c: Character }) {
           ))}</tbody>
         </table></div>
       )}
-    </>
-  );
-}
-
-function TabInventario({ c, d }: { c: Character; d: Record<string, Derived> }) {
-  if (!c.inventory.length) return <Empty text="Inventario vuoto." />;
-  const kg = (v: number) => `${(Math.round(v * 10) / 10).toLocaleString("it-IT")} kg`;
-  const tot = c.inventory.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.weight) || 0), 0);
-  const cap = d.carico?.value ?? 0;
-  const pct = cap > 0 ? (tot / cap) * 100 : 0;
-  return (
-    <>
-      <div className={`bar ${pct > 100 ? "hp" : "sp"}`}>
-        <div className="bar-top"><span className="label">Peso trasportato</span><span className="num">{kg(tot)} / {kg(cap)}</span></div>
-        <div className="bar-track" role="progressbar" aria-label="Peso trasportato" aria-valuemin={0} aria-valuemax={Math.round(cap)} aria-valuenow={Math.round(tot)}>
-          <div className="bar-fill" style={{ width: `${Math.min(100, pct)}%` }} />
-        </div>
-      </div>
-      <div className="table-wrap"><table className="t">
-        <thead><tr><th>Oggetto</th><th>Stats</th><th>Rarità</th><th>Tipo</th><th className="num">Q.tà</th><th className="num" title="Quantità × peso unitario">Peso tot.</th></tr></thead>
-        <tbody>{c.inventory.map((i, k) => (
-          <tr key={k}>
-            <td>{i.name}</td><td className="small">{i.stats}</td><td><RarityChip rarity={i.rarity} /></td><td className="small">{i.type}</td>
-            <td className="num">{n(i.qty)}</td><td className="num nowrap">{kg((Number(i.qty) || 0) * (Number(i.weight) || 0))}</td>
-          </tr>
-        ))}</tbody>
-        <tfoot><tr><td colSpan={5}>Totale</td><td className="num nowrap">{kg(tot)}</td></tr></tfoot>
-      </table></div>
     </>
   );
 }

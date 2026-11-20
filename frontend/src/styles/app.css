@@ -64,6 +64,7 @@ table.t td { overflow-wrap: anywhere; }
 .src-levelup { background: var(--mp); }
 .src-altro { background: var(--warn); }
 .src-titoli { background: var(--gold); }
+.src-oggetti { background: var(--r-unico); }
 .legend { gap: 14px; padding-top: 4px; }
 
 /* Statistiche */

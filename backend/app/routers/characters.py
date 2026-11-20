@@ -43,6 +43,16 @@ def tidy(v):
     return v
 
 
+def starting_inventory(classe: dict, stats: list[dict], level: int) -> list[dict]:
+    """Equipaggiamento di classe (Comune) + 20 Corone; indossa subito ciò che ha i requisiti soddisfatti."""
+    items = [{"rarity": "Comune", "qty": 1, **copy.deepcopy(e)} for e in classe["equip"]]
+    items.append({"name": "Corone d'Oro", "stats_text": "Moneta di Valeria", "rarity": "Comune", "type": "Monete",
+                  "qty": 20, "weight": 0})
+    inv = rules.normalize_inventory(items)
+    rules.ensure_item_ids(inv)
+    return rules.starting_equipment({"stats": stats, "level": level, "inventory": inv})
+
+
 def save(db: Session, c: Character) -> dict:
     db.commit()
     db.refresh(c)
@@ -104,10 +114,7 @@ def create_character(data: CharacterCreate, user: User = Depends(current_user), 
         titles=[], skills=[], talents=[], pets=[], curses=[], quests=[], reputation=[],
         active_skills=[{"name": classe["skill"], "effect": classe["skill_text"], "lvl": 1, "pct": 0,
                         "cost": classe["cost"], "cd": classe["cooldown"]}],
-        inventory=[{"name": e["name"], "stats": e.get("stats", ""), "rarity": "Comune", "type": e["type"],
-                    "qty": 1, "weight": e["weight"]} for e in classe["equip"]]
-                  + [{"name": "Corone d'Oro", "stats": "Moneta di Valeria", "rarity": "Comune", "type": "Monete",
-                      "qty": 20, "weight": 0}],
+        inventory=starting_inventory(classe, stats, 1),
         combat={"position": "Mischia", "turn": 1, "effects": [], "cooldowns": [], "log": []},
         death=None,
     )
@@ -140,6 +147,13 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
         set_json(c, "combat", combat)
     else:
         fields.pop("combat", None)
+    if fields.get("inventory") is not None:
+        inv = rules.normalize_inventory(fields["inventory"])
+        rules.ensure_item_ids(inv)
+        problem = rules.validate_equipment(inv)
+        if problem:
+            raise HTTPException(422, problem)
+        fields["inventory"] = inv
     for k, v in fields.items():
         if v is None:
             continue

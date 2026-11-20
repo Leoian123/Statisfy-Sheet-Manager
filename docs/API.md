@@ -32,26 +32,49 @@ Sono credenziali di sviluppo, create solo dal seed; vanno anche nel README.
   "creation": {"base": 10, "bonus_points": 20, "min": 1, "name_min": 3, "name_max": 15},
   "level": {"auto_per_level": 1, "free_per_level": 10, "talent_every": 5},
   "regen": {"mp_pct": 15, "sp_pct": 25},
-  "sources": [{"key": "iniziale", "label": "Iniziale", "help": "..."}, "... creazione, investiti, levelup, altro, titoli"],
+  "sources": [{"key": "iniziale", "label": "Iniziale", "help": "..."}, "... creazione, investiti, levelup, altro, titoli, oggetti"],
   "grades": ["Assoluto Novizio", "...", "Maestro"],
   "rarities": [{"name": "Comune", "key": "comune", "grade": 1, "weapon_base": [15, 30], "creature_mult": 1}, "..."],
   "classes": [{"id": "guerriero", "name": "Guerriero", "skill": "Attacco Possente", "skill_text": "...", "cost": "15 SP", "cooldown": 3, "equip": [{"name": "...", "type": "Arma", "weight": 3}]}],
   "kingdoms": [{"id": "valeria", "name": "Valeria", "text": "..."}],
   "positions": ["Mischia", "Media distanza", "Lunga distanza", "Elevato", "Coperto"],
-  "power_ranks": [{"min": 1, "name": "Soldato Semplice"}, "..."]
+  "power_ranks": [{"min": 1, "name": "Soldato Semplice"}, "..."],
+  "slots": [{"key": "testa", "label": "Testa", "side": "left"}, "... 16 slot (left/right/bottom)"],
+  "equip_types": [{"key": "dueMani", "label": "Due mani", "slots": ["manoPrincipale"], "two_handed": true}, "..."],
+  "equip_formula_keys": ["difesa", "difesaMagica", "blocco"],
+  "item_categories": [{"key": "equipaggiamento", "label": "Equipaggiamento"}, "... consumabili, materiali, altro"]
 }
 ```
-- `POST /api/rules/preview` `{stats: [StatRow...], item_bonus?: {}, equip?: {}, magia?: {}}` → `{totals: {CODE: number}, derived: [Derived...]}`. Serve all'anteprima live (creazione, level up). Nessuna persistenza.
+`classes[].equip` sono oggetti completi (stesso formato di `Item`, senza `id`/`slot`).
+
+Slot (16): `testa, collo, spalle, mantello, torso, polsi, mani, cintura, gambe, piedi, anello1, anello2, ninnolo1, ninnolo2,
+manoPrincipale, manoSecondaria`. Tipo di equipaggiamento → slot ammessi (modello InventoryType di WoW):
+
+| tipo | slot |
+|---|---|
+| elmo, amuleto, spallacci, mantello, corazza, bracciali, guanti, cintura, gambali, stivali | testa, collo, spalle, mantello, torso, polsi, mani, cintura, gambe, piedi |
+| anello / ninnolo | anello1 o anello2 / ninnolo1 o ninnolo2 |
+| unaMano | manoPrincipale o manoSecondaria (doppia impugnatura libera per tutti) |
+| manoPrincipale | solo manoPrincipale |
+| dueMani | manoPrincipale e blocca manoSecondaria |
+| scudo, tenuto | solo manoSecondaria |
+
+- `POST /api/rules/preview` `{stats: [StatRow...], item_bonus?: {}, equip?: {}, magia?: {}, inventory?: Item[]}`
+  (con `inventory` la colonna `oggetti`, `equip` e `item_bonus` vengono ricalcolati dall'equipaggiato, come per la scheda) → `{totals: {CODE: number}, derived: [Derived...]}`. Serve all'anteprima live (creazione, level up). Nessuna persistenza.
 
 ## Tipi
 
 ```ts
 StatRow = { code: string; name: string; kind: "base"|"avanzata"; iniziale: number; creazione: number;
-            investiti: number; levelup: number; altro: number; titoli: number; note?: string|null; total: number }  // total calcolato dal server
+            investiti: number; levelup: number; altro: number; titoli: number;
+            oggetti: number;     // bonus degli oggetti equipaggiati: calcolato dal server, mai inserito a mano
+            note?: string|null; total: number }  // total calcolato dal server (somma di tutte le colonne)
 
 Derived = { key: string; label: string; fmt: "int"|"int1"|"kg"|"pct"|"permin"|"mult"|"dec";
             base: number;        // valore formula (già limitato da cap)
-            bonus: number;       // bonus oggetti (item_bonus[key] || 0)
+            bonus: number;       // bonus oggetti sommato DOPO la formula (item_bonus manuale + oggetti equipaggiati).
+                                 // Difesa, Difesa magica e Blocco degli oggetti invece entrano nella formula
+                                 // ("Difesa equip × (1 + VIT/100)", "Blocco scudo + STR/40") e qui valgono 0.
             value: number;       // base + bonus, limitato da cap
             formula: string;     // es. "1 + INT/60" (già risolta per il PG)
             explain: string;     // es. "1 + 86/60"
@@ -68,7 +91,7 @@ Character = {
   skills:   {name; lvl: int; pct: number|"MAX"; type: string; passive?: string}[];
   active_skills: {name; effect; lvl; pct; cost; cd: int}[];
   talents:  {name; rarity; origin; effect}[];
-  inventory:{name; stats; rarity; type; qty: int; weight: number}[];
+  inventory: Item[];      // illimitato: nessun limite di caselle, conta solo il peso (carico)
   pets:     {name; species; lvl; passive; skills: {name; lvl; pct}[]}[];
   curses:   {name; desc; bonus; malus}[];
   quests:   {name; progress; reward; rarity}[];
@@ -77,10 +100,25 @@ Character = {
             cooldowns: {name; turns: int}[]; log: string[] };   // log: ultime 20 righe, più recente per ultima
   death?: { lost: number; malus: string; bonus: string; protected: boolean } | null;  // ultimo esito, se appena morto
   // calcolati dal server a ogni risposta:
+  equipped: {[slot: string]: string};   // slot → id oggetto; un'arma a due mani compare in entrambe le mani
+  item_previews: {[itemId: string]: ItemPreview};  // per ogni equipaggiabile nella borsa: esito e confronto
   derived: Derived[]; totals: {[code: string]: number};
   free_points: {total: int; used: int; left: int};   // total = (level-1)*10, used = somma investiti
   power_rank: string; next_talent_level: int;
 }
+Item = { id: string; name: string; rarity: string; type: string;   // type descrittivo (Arma, Armatura, Cibo…)
+         category: "equipaggiamento"|"consumabili"|"materiali"|"altro";  // dedotta se assente
+         equip_type: string|null;   // chiave di equip_types (null = non equipaggiabile)
+         slot: string|null;         // slot in cui è indossato (null = nella borsa)
+         stats: {[code: string]: number};   // bonus alle statistiche → colonna "oggetti"
+         bonus: {[key: string]: number};    // bonus alle derivate (chiavi di Derived; difesa/difesaMagica/blocco → formula)
+         req: {level?: number; [code: string]: number};   // requisiti d'uso
+         durability: {cur: number; max: number}|null; weapon_base: number|null;
+         weight: number; qty: int; desc: string|null; stats_text: string;
+         unmet: string[] }          // solo in uscita: requisiti non soddisfatti, es. ["Livello 80", "STR 200"]
+ItemPreview = { ok: bool; error: string|null; unmet: string[]; slot: string|null;
+                replaces: string[];                 // nomi degli oggetti che tornerebbero nella borsa
+                stats: {[code]: number}; derived: {[key]: number} }   // differenze (valori finali) se lo si indossasse
 CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; regno; pvp; gilda; power_rank;
                      hp: number; hp_max: number }
 ```
@@ -92,17 +130,37 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
   `{name, classe_id, stats: {STR, DEX, VIT, INT}, regno_id}` — valori finali (base 10 ± punti).
   Validazioni (422 con messaggio): nome 3–15 solo lettere/numeri, unico (case-insensitive); ogni stat ≥ 1;
   somma(valore−10) == 20 esatti; classe e regno esistenti. Il PG nasce lv 1, exp 0, PvP Bianco, 20 Corone,
-  risorse al massimo, active_skills = abilità di classe, inventory = equipaggiamento di classe (Comune) + "Corone d'Oro" ×20,
+  risorse al massimo, active_skills = abilità di classe, inventory = equipaggiamento di classe (Comune) + "Corone d'Oro" ×20
+  (gli oggetti di classe con requisiti soddisfatti vengono indossati subito),
   posizione "Mischia". owner = utente corrente (il master può passare `owner_id` opzionale).
 - `PATCH /api/characters/{id}` — modifica parziale. Player: solo `resources`, `combat.position`. Master: anche
   `exp_pct, regno, pvp, gilda, corone, scellini, item_bonus, equip, magia` e le liste
   (`titles, skills, active_skills, talents, inventory, pets, curses, quests, reputation`, sostituzione intera).
   `name`, `classe`, stats di creazione non sono modificabili (422). → `Character`
+  `inventory` viene normalizzato (id assegnato se manca) e validato: slot ammessi dal tipo, nessuno slot occupato due
+  volte, due mani + mano secondaria, quantità 1 per gli indossati (422 con messaggio). I requisiti non sono controllati
+  qui (il Master può forzare), solo negli endpoint di equipaggiamento. `equip` e `item_bonus` restano correzioni
+  manuali del Master che si sommano a quanto viene dagli oggetti.
 - `DELETE /api/characters/{id}` — solo master → 204
 
 ### Level up
 - `POST /api/characters/{id}/level-up` → `Character` — level+1; `levelup` +1 su ogni stat (base e avanzate); i punti liberi crescono di 10 (deriva da level). Se il nuovo livello è multiplo di 5, `combat.log` riceve "Nuovo talento disponibile…".
 - `POST /api/characters/{id}/distribute` `{alloc: {CODE: int>=0}}` → `Character` — aggiunge a `investiti`; 422 se somma > `free_points.left` o codice inesistente.
+
+### Equipaggiamento (ogni rotta → `Character`; player sui propri PG, master su tutti)
+- `POST /api/characters/{id}/equipment/equip` `{item_id: string, slot?: SlotKey}` — indossa un oggetto della borsa.
+  Senza `slot` usa il primo slot libero ammesso (altrimenti il primo ammesso). Chi occupava lo slot torna nella borsa;
+  un'arma a due mani libera entrambe le mani; un'arma a una mano o uno scudo tolgono l'arma a due mani.
+  Se l'oggetto è già indossato e `slot` è diverso, equivale a `move`.
+  422: oggetto inesistente o non equipaggiabile, quantità ≠ 1, slot non ammesso
+  ("… non va nello slot X. Slot ammessi: …"), requisiti non soddisfatti
+  ("Impossibile equipaggiare X: requisiti non soddisfatti (Livello 80, STR 200).").
+- `POST /api/characters/{id}/equipment/unequip` `{slot: SlotKey}` — rimette nella borsa l'oggetto dello slot
+  (`manoSecondaria` bloccata da un'arma a due mani toglie l'arma). 422 se lo slot è vuoto.
+- `POST /api/characters/{id}/equipment/move` `{from_slot: SlotKey, to_slot: SlotKey}` — sposta un oggetto indossato in
+  un altro slot ammesso; l'occupante di `to_slot` va in `from_slot` se può, altrimenti nella borsa. 422 per armi a due
+  mani, slot non ammesso o vuoto.
+- Dopo ogni modifica HP/MP/SP correnti vengono limitati ai nuovi massimi.
 
 ### Combattimento (ogni rotta → `Character`, con riga aggiunta a `combat.log`)
 - `POST /api/characters/{id}/combat/action` `{type: "damage"|"heal"|"spend_mp"|"spend_sp", amount: int>0}`
@@ -124,4 +182,7 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
 
 ## Seed
 All'avvio, se il DB è vuoto: utenti sopra, campagna "Campagna di Alba Chiara" (sessione 15), i 6 PG di `mockup/data.js`
-(Kelvin completo → giocatore1, Eric → giocatore2, Corax → 3, Deniel → 4, Connor → 5, Dante → 6), i 3 PNG, quest aperte e questioni (con le decisioni già prese).
+(Kelvin completo con inventario MMORPG: Thanatos a due mani e Spalla del Simbionte equipaggiati → giocatore1, Eric → giocatore2, Corax → 3, Deniel → 4, Connor → 5, Dante → 6), i 3 PNG, quest aperte e questioni (con le decisioni già prese).
+Se il DB esiste già, all'avvio una migrazione leggera dà un `id` agli oggetti che non ce l'hanno e sposta il vecchio campo
+testuale `stats` in `stats_text` (gli oggetti restano nella borsa; nessuna colonna nuova nel DB: l'inventario è JSON).
+Per avere gli oggetti di esempio di Kelvin: `python -m app.seed --reset`.

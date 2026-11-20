@@ -5,13 +5,29 @@ from .models import Character, Npc, Issue, Campaign
 LIST_FIELDS = ["titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests", "reputation"]
 
 
+def raw_input(c: Character) -> dict:
+    """Dati salvati del PG per le regole (equip e item_bonus = soli valori manuali del Master)."""
+    return {"stats": c.stats or [], "equip": c.equip or {}, "magia": c.magia or {},
+            "item_bonus": c.item_bonus or {}, "inventory": c.inventory or [], "level": c.level}
+
+
 def rules_input(c: Character) -> dict:
-    return {"stats": c.stats or [], "equip": c.equip or {}, "magia": c.magia or {}, "item_bonus": c.item_bonus or {}}
+    """Dati per le regole, con l'equipaggiamento già applicato (colonna Oggetti, equip, item_bonus)."""
+    return rules.apply_equipment(raw_input(c))
+
+
+def maxes_of(ri: dict) -> dict:
+    d = {x["key"]: x["value"] for x in rules.derived(ri)}
+    return {"hp": d["hp"], "mp": d["mp"], "sp": d["sp"]}
 
 
 def maxes(c: Character) -> dict:
-    d = rules.derived_values(rules_input(c))
-    return {"hp": d["hp"], "mp": d["mp"], "sp": d["sp"]}
+    return maxes_of(rules_input(c))
+
+
+def inventory_out(ri: dict) -> list[dict]:
+    t = rules.totals(ri["stats"])
+    return [{**it, "unmet": rules.unmet_requirements(ri, it, t)} for it in ri["inventory"]]
 
 
 def stats_out(stats: list[dict]) -> list[dict]:
@@ -30,12 +46,15 @@ def character_out(c: Character) -> dict:
         "name": c.name, "classe": c.classe, "level": c.level, "exp_pct": num_out(c.exp_pct),
         "regno": c.regno, "pvp": c.pvp, "gilda": {"nome": "", "ruolo": "", **(c.gilda or {})},
         "corone": c.corone, "scellini": c.scellini,
-        "stats": stats_out(c.stats or []), "item_bonus": c.item_bonus or {},
-        "equip": rules.equip(ri), "magia": rules.magic(ri),
+        "stats": stats_out(ri["stats"]), "item_bonus": c.item_bonus or {},
+        "equip": rules.equip({"equip": c.equip}), "magia": rules.magic(ri),
         "resources": c.resources or {"hp": 0, "mp": 0, "sp": 0},
         **{f: getattr(c, f) or [] for f in LIST_FIELDS},
+        "inventory": inventory_out(ri),
+        "equipped": rules.equipped_map(ri["inventory"]),
+        "item_previews": rules.item_previews(raw_input(c)),
         "combat": combat, "death": c.death,
-        "derived": rules.derived(ri), "totals": rules.totals(c.stats or []),
+        "derived": rules.derived(ri), "totals": rules.totals(ri["stats"]),
         "free_points": rules.free_points(c.level, c.stats or []),
         "power_rank": rules.power_rank(c.level), "next_talent_level": rules.next_talent_level(c.level),
     }

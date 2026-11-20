@@ -65,8 +65,15 @@ def test_create_character(client, p2):
     assert c["classe"] == "Guerriero" and c["regno"] == "Valeria"
     assert c["resources"] == {"hp": 325, "mp": 150, "sp": 225}
     assert c["active_skills"][0]["name"] == "Attacco Possente" and c["active_skills"][0]["cd"] == 3
-    assert c["inventory"][-1] == {"name": "Corone d'Oro", "stats": "Moneta di Valeria", "rarity": "Comune",
-                                  "type": "Monete", "qty": 20, "weight": 0}
+    coins = c["inventory"][-1]
+    assert (coins["name"], coins["stats_text"], coins["type"], coins["qty"], coins["weight"]) ==         ("Corone d'Oro", "Moneta di Valeria", "Monete", 20, 0)
+    assert coins["category"] == "altro" and coins["slot"] is None and coins["id"]
+    # Equipaggiamento iniziale indossato in automatico (requisito STR 15 soddisfatto con STR 20)
+    assert c["equipped"] == {"manoPrincipale": c["inventory"][0]["id"], "torso": c["inventory"][1]["id"],
+                             "manoSecondaria": c["inventory"][2]["id"]}
+    d = {x["key"]: x for x in c["derived"]}
+    assert d["blocco"]["value"] == 20.5  # Blocco scudo 20 + STR/40 (20/40)
+    assert d["difesa"]["explain"] == "15/10 + 5 × (1 + 15/100)"
     assert all(i["rarity"] == "Comune" for i in c["inventory"])
     assert c["combat"]["position"] == "Mischia"
     assert c["free_points"] == {"total": 0, "used": 0, "left": 0}

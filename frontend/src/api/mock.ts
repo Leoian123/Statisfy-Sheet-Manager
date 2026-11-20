@@ -1,13 +1,14 @@
 // Mock in memoria del backend, attivo solo con VITE_MOCK=1 (npm run dev:mock).
 // Simula il server: qui (e solo qui) le regole sono replicate dal mockup per poter sviluppare senza backend.
 import type {
-  Campaign, Character, CharacterSummary, Derived, DerivedFmt, Effect, Issue, Npc, RulesConfig, StatRow, User,
+  Campaign, Character, CharacterSummary, Derived, DerivedFmt, Effect, EquipTypeDef, InventoryItem, ItemPreview, Issue, Npc,
+  RulesConfig, SlotDef, SlotKey, StatRow, User,
 } from "./types";
 
 type Res = { status: number; data: unknown };
 
 /* ---------- Regole (copia di mockup/rules.js) ---------- */
-const SOURCES = ["iniziale", "creazione", "investiti", "levelup", "altro", "titoli"] as const;
+const SOURCES = ["iniziale", "creazione", "investiti", "levelup", "altro", "titoli", "oggetti"] as const;
 const statTotal = (r: Partial<StatRow>) => SOURCES.reduce((s, k) => s + (Number(r[k]) || 0), 0);
 
 type Calc = { t: Record<string, number>; eq: Character["equip"]; mg: Character["magia"] };
@@ -72,6 +73,158 @@ function derivedOf(stats: Partial<StatRow>[], ib: Record<string, number> = {}, e
   });
 }
 
+
+/* ---------- Equipaggiamento (copia di backend/app/rules.py) ---------- */
+const SLOT_DEFS: SlotDef[] = [
+  { key: "testa", label: "Testa", side: "left" }, { key: "collo", label: "Collo", side: "left" },
+  { key: "spalle", label: "Spalle", side: "left" }, { key: "mantello", label: "Mantello", side: "left" },
+  { key: "torso", label: "Torso", side: "left" }, { key: "polsi", label: "Polsi", side: "left" },
+  { key: "mani", label: "Mani", side: "right" }, { key: "cintura", label: "Cintura", side: "right" },
+  { key: "gambe", label: "Gambe", side: "right" }, { key: "piedi", label: "Piedi", side: "right" },
+  { key: "anello1", label: "Anello", side: "right" }, { key: "anello2", label: "Anello", side: "right" },
+  { key: "ninnolo1", label: "Ninnolo", side: "bottom" }, { key: "ninnolo2", label: "Ninnolo", side: "bottom" },
+  { key: "manoPrincipale", label: "Mano principale", side: "bottom" }, { key: "manoSecondaria", label: "Mano secondaria", side: "bottom" },
+];
+const MAIN: SlotKey = "manoPrincipale";
+const OFF: SlotKey = "manoSecondaria";
+const et = (key: string, label: string, slots: SlotKey[], two_handed = false): EquipTypeDef => ({ key, label, slots, two_handed });
+const EQUIP_TYPES: EquipTypeDef[] = [
+  et("elmo", "Elmo", ["testa"]), et("amuleto", "Amuleto", ["collo"]), et("spallacci", "Spallacci", ["spalle"]),
+  et("mantello", "Mantello", ["mantello"]), et("corazza", "Corazza / Veste", ["torso"]), et("bracciali", "Bracciali", ["polsi"]),
+  et("guanti", "Guanti", ["mani"]), et("cintura", "Cintura", ["cintura"]), et("gambali", "Gambali", ["gambe"]),
+  et("stivali", "Stivali", ["piedi"]), et("anello", "Anello", ["anello1", "anello2"]), et("ninnolo", "Ninnolo", ["ninnolo1", "ninnolo2"]),
+  et("unaMano", "Una mano", [MAIN, OFF]), et("manoPrincipale", "Mano principale", [MAIN]), et("dueMani", "Due mani", [MAIN], true),
+  et("scudo", "Scudo", [OFF]), et("tenuto", "Tenuto in mano secondaria", [OFF]),
+];
+const ET: Record<string, EquipTypeDef> = Object.fromEntries(EQUIP_TYPES.map((t) => [t.key, t]));
+const FORMULA_KEYS = ["difesa", "difesaMagica", "blocco"] as const;
+const CONSUMABLE_TYPES = ["Cibo", "Pozione", "Consumabile", "Bevanda", "Pergamena"];
+const slotLabel = (k: string) => SLOT_DEFS.find((x) => x.key === k)?.label ?? k;
+
+let itemSeq = 1;
+type ItemIn = Partial<InventoryItem> & { name: string };
+function mkItem(p: ItemIn): InventoryItem {
+  const it: InventoryItem = {
+    id: p.id || `mk-${itemSeq++}`, rarity: "Comune", type: "", category: "altro", equip_type: null, slot: null, stats: {}, bonus: {},
+    req: {}, durability: null, weapon_base: null, weight: 0, qty: 1, desc: null, stats_text: "", unmet: [], ...p,
+  };
+  it.category = p.category || (it.equip_type ? "equipaggiamento" : CONSUMABLE_TYPES.includes(it.type) ? "consumabili" : it.type === "Materiale" ? "materiali" : "altro");
+  return it;
+}
+const etOf = (it: InventoryItem) => (it.equip_type ? ET[it.equip_type] : undefined);
+const twoHanded = (it: InventoryItem) => !!etOf(it)?.two_handed;
+const worn = (it: InventoryItem) => !!it.slot && !!etOf(it)?.slots.includes(it.slot);
+function eqMap(inv: InventoryItem[]): Partial<Record<SlotKey, string>> {
+  const m: Partial<Record<SlotKey, string>> = {};
+  for (const it of inv) if (worn(it)) { m[it.slot!] = it.id; if (twoHanded(it)) m[OFF] = it.id; }
+  return m;
+}
+const occupant = (inv: InventoryItem[], slot: SlotKey) => { const id = eqMap(inv)[slot]; return id ? inv.find((x) => x.id === id) : undefined; };
+
+type RulesIn = { stats: StatRow[]; equip: Character["equip"]; item_bonus: Record<string, number>; magia: Character["magia"]; inventory: InventoryItem[]; level: number };
+function applied(c: RulesIn) {
+  const st: Record<string, number> = {};
+  const eq = { ...c.equip };
+  const ib: Record<string, number> = { ...c.item_bonus };
+  for (const it of c.inventory) {
+    if (!worn(it)) continue;
+    for (const [k, v] of Object.entries(it.stats)) st[k] = (st[k] || 0) + v;
+    for (const [k, v] of Object.entries(it.bonus)) {
+      if ((FORMULA_KEYS as readonly string[]).includes(k)) eq[k as keyof typeof eq] += v;
+      else ib[k] = (ib[k] || 0) + v;
+    }
+  }
+  return { stats: c.stats.map((r) => ({ ...r, oggetti: st[r.code] || 0 })), equip: eq, item_bonus: ib };
+}
+const derivedFor = (c: RulesIn) => { const a = applied(c); return derivedOf(a.stats, a.item_bonus, a.equip, c.magia); };
+function unmetOf(c: RulesIn, it: InventoryItem, t = totalsOf(applied(c).stats)): string[] {
+  return Object.entries(it.req).filter(([k, v]) => (k === "level" ? c.level : t[k] ?? 0) < v).map(([k, v]) => (k === "level" ? `Livello ${v}` : `${k} ${v}`));
+}
+class EqErr extends Error {}
+const wrongSlot = (it: InventoryItem, slot: string) =>
+  new EqErr(`${it.name} (${etOf(it)?.label}) non va nello slot ${slotLabel(slot)}. Slot ammessi: ${(etOf(it)?.slots || []).map(slotLabel).join(", ")}.`);
+function equipOp(c: RulesIn, id: string, slot?: SlotKey): InventoryItem[] {
+  const inv = clone(c.inventory);
+  const it = inv.find((x) => x.id === id);
+  if (!it) throw new EqErr("Oggetto non trovato nell'inventario.");
+  const t = etOf(it);
+  if (!t) throw new EqErr(`${it.name}: oggetto non equipaggiabile.`);
+  if (it.qty !== 1) throw new EqErr(`${it.name}: si può equipaggiare solo un oggetto singolo (quantità 1).`);
+  if (slot && !t.slots.includes(slot)) throw wrongSlot(it, slot);
+  if (it.slot) return !slot || slot === it.slot ? inv : moveOp({ ...c, inventory: inv }, it.slot, slot);
+  const unmet = unmetOf(c, it);
+  if (unmet.length) throw new EqErr(`Impossibile equipaggiare ${it.name}: requisiti non soddisfatti (${unmet.join(", ")}).`);
+  const clear = (k: SlotKey) => { const o = occupant(inv, k); if (o) o.slot = null; };
+  let target: SlotKey;
+  if (t.two_handed) { target = MAIN; clear(MAIN); clear(OFF); }
+  else {
+    const m = eqMap(inv);
+    target = slot || t.slots.find((k) => !m[k]) || t.slots[0];
+    if (target === MAIN || target === OFF) { const main = occupant(inv, MAIN); if (main && twoHanded(main)) main.slot = null; }
+    clear(target);
+  }
+  it.slot = target;
+  return inv;
+}
+function unequipOp(c: RulesIn, slot: SlotKey): InventoryItem[] {
+  const inv = clone(c.inventory);
+  const it = occupant(inv, slot);
+  if (!it) throw new EqErr(`Lo slot ${slotLabel(slot)} è vuoto.`);
+  it.slot = null;
+  return inv;
+}
+function moveOp(c: RulesIn, from: SlotKey, to: SlotKey): InventoryItem[] {
+  const inv = clone(c.inventory);
+  const it = occupant(inv, from);
+  if (!it) throw new EqErr(`Lo slot ${slotLabel(from)} è vuoto.`);
+  if (from === to) throw new EqErr("Lo slot di partenza e quello di arrivo coincidono.");
+  if (twoHanded(it)) throw new EqErr(`${it.name} è un'arma a due mani: occupa entrambe le mani e non si sposta.`);
+  if (!etOf(it)!.slots.includes(to)) throw wrongSlot(it, to);
+  const other = occupant(inv, to);
+  if (other) other.slot = !twoHanded(other) && etOf(other)!.slots.includes(from) ? from : null;
+  it.slot = to;
+  return inv;
+}
+function finalVals(c: RulesIn) {
+  const a = applied(c);
+  return { stats: totalsOf(a.stats), der: Object.fromEntries(derivedOf(a.stats, a.item_bonus, a.equip, c.magia).map((d) => [d.key, d.value])) as Record<string, number> };
+}
+function diff(a: Record<string, number>, b: Record<string, number>) {
+  const o: Record<string, number> = {};
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const d = (b[k] || 0) - (a[k] || 0); if (Math.abs(d) > 1e-9) o[k] = d; }
+  return o;
+}
+function previews(c: RulesIn): Record<string, ItemPreview> {
+  const before = finalVals(c);
+  const out: Record<string, ItemPreview> = {};
+  for (const it of c.inventory) {
+    if (it.slot || !etOf(it)) continue;
+    try {
+      const inv = equipOp(c, it.id);
+      const after = finalVals({ ...c, inventory: inv });
+      const was = new Set(Object.values(eqMap(c.inventory)));
+      const now = new Set(Object.values(eqMap(inv)));
+      const replaces = c.inventory.filter((x) => was.has(x.id) && !now.has(x.id)).map((x) => x.name);
+      out[it.id] = { ok: true, error: null, unmet: [], slot: inv.find((x) => x.id === it.id)!.slot, replaces, stats: diff(before.stats, after.stats), derived: diff(before.der, after.der) };
+    } catch (e) {
+      out[it.id] = { ok: false, error: (e as Error).message, unmet: unmetOf(c, it), slot: null, replaces: [], stats: {}, derived: {} };
+    }
+  }
+  return out;
+}
+function startingEquipment(c: RulesIn): InventoryItem[] {
+  let inv = c.inventory;
+  for (const it of c.inventory) {
+    const t = etOf(it);
+    if (!t) continue;
+    const m = eqMap(inv);
+    const free = t.slots.find((k) => !m[k]);
+    if (!free || (t.two_handed && m[OFF])) continue;
+    try { inv = equipOp({ ...c, inventory: inv }, it.id, free); } catch { /* requisiti non soddisfatti: resta in borsa */ }
+  }
+  return inv;
+}
+
 const POWER_RANKS = [
   { min: 1, name: "Soldato Semplice" }, { min: 100, name: "Guerriero Scelto" }, { min: 200, name: "Guerriero Importante" },
   { min: 300, name: "Eroe" }, { min: 400, name: "Leggenda" }, { min: 500, name: "Mito" }, { min: 600, name: "Divinità" },
@@ -100,13 +253,25 @@ const RULES: RulesConfig = {
   })),
   classes: [
     { id: "guerriero", name: "Guerriero", skill: "Attacco Possente", skill_text: "+50% danno fisico", cost: "15 SP", cooldown: 3,
-      equip: [{ name: "Spada di Ferro (Req 15 STR)", type: "Arma", weight: 3 }, { name: "Armatura di Cuoio Rinforzato (+5 Difesa)", type: "Armatura", weight: 5 }, { name: "Scudo di Legno (Blocco 20%)", type: "Accessorio", weight: 1 }] },
+      equip: [
+        { name: "Spada di Ferro", type: "Arma", equip_type: "unaMano", weapon_base: 20, req: { STR: 15 }, weight: 3, stats_text: "Una mano · Base 20" },
+        { name: "Armatura di Cuoio Rinforzato", type: "Armatura", equip_type: "corazza", bonus: { difesa: 5 }, weight: 5, stats_text: "Difesa 5" },
+        { name: "Scudo di Legno", type: "Scudo", equip_type: "scudo", bonus: { blocco: 20 }, weight: 4, stats_text: "Blocco 20%" }] },
     { id: "mago", name: "Mago", skill: "Dardo Magico", skill_text: "Colpisce sempre", cost: "20 MP", cooldown: 1,
-      equip: [{ name: "Bastone di Frassino (Req 15 INT, +10% Mana)", type: "Arma", weight: 3 }, { name: "Vesti di Stoffa (+3 Regen Mana)", type: "Armatura", weight: 5 }, { name: "Grimorio Basilare (Dardo + 2 slot liberi)", type: "Accessorio", weight: 1 }] },
+      equip: [
+        { name: "Bastone di Frassino", type: "Arma", equip_type: "dueMani", weapon_base: 18, req: { INT: 15 }, weight: 3, stats_text: "Due mani · Base 18 · +10% Mana" },
+        { name: "Vesti di Stoffa", type: "Armatura", equip_type: "corazza", bonus: { difesaMagica: 2 }, weight: 2, stats_text: "+3 Regen Mana" },
+        { name: "Grimorio Basilare", type: "Libro", equip_type: null, weight: 1, stats_text: "Dardo Magico + 2 slot liberi" }] },
     { id: "ladro", name: "Ladro", skill: "Colpo Furtivo", skill_text: "+100% critico se non visto", cost: "10 SP", cooldown: 2,
-      equip: [{ name: "Daga Affilata (Req 15 DEX, +5% Critico)", type: "Arma", weight: 3 }, { name: "Armatura di Cuoio Morbido (+10% Evasione)", type: "Armatura", weight: 5 }, { name: "Kit da Scasso", type: "Accessorio", weight: 1 }] },
+      equip: [
+        { name: "Daga Affilata", type: "Arma", equip_type: "unaMano", weapon_base: 15, bonus: { critico: 5 }, req: { DEX: 15 }, weight: 1, stats_text: "Una mano · Base 15 · +5% Critico" },
+        { name: "Armatura di Cuoio Morbido", type: "Armatura", equip_type: "corazza", bonus: { evasione: 10 }, weight: 4, stats_text: "+10% Evasione" },
+        { name: "Kit da Scasso", type: "Strumento", equip_type: null, weight: 1, stats_text: "Grimaldelli e lime" }] },
     { id: "chierico", name: "Chierico", skill: "Cura Minore", skill_text: "Ripristina 40–60 HP", cost: "25 MP", cooldown: 1,
-      equip: [{ name: "Mazza Benedetta (Req 12 STR, +10% vs non-morti)", type: "Arma", weight: 3 }, { name: "Vesti Sacre (+5 Difesa Magica)", type: "Armatura", weight: 5 }, { name: "Simbolo Sacro", type: "Accessorio", weight: 1 }] },
+      equip: [
+        { name: "Mazza Benedetta", type: "Arma", equip_type: "unaMano", weapon_base: 20, req: { STR: 12 }, weight: 3, stats_text: "Una mano · Base 20 · +10% vs non-morti" },
+        { name: "Vesti Sacre", type: "Armatura", equip_type: "corazza", bonus: { difesaMagica: 5 }, weight: 2, stats_text: "Difesa magica 5" },
+        { name: "Simbolo Sacro", type: "Accessorio", equip_type: "tenuto", weight: 0.5, stats_text: "Tenuto in mano secondaria · Focus divino" }] },
   ],
   kingdoms: [
     { id: "valeria", name: "Valeria", text: "Regno d'oro e grano. Il più comune per iniziare; moneta: Corone d'Oro." },
@@ -116,7 +281,15 @@ const RULES: RulesConfig = {
   ],
   positions: ["Mischia", "Media distanza", "Lunga distanza", "Elevato", "Coperto"],
   power_ranks: POWER_RANKS,
+  slots: SLOT_DEFS,
+  equip_types: EQUIP_TYPES,
+  equip_formula_keys: [...FORMULA_KEYS],
+  item_categories: [
+    { key: "equipaggiamento", label: "Equipaggiamento" }, { key: "consumabili", label: "Consumabili" },
+    { key: "materiali", label: "Materiali" }, { key: "altro", label: "Altro" },
+  ],
 };
+type ClassItem = RulesConfig["classes"][number]["equip"][number] & Partial<InventoryItem>;
 
 /* ---------- Dati ---------- */
 const USERS: (User & { password: string })[] = [
@@ -124,10 +297,10 @@ const USERS: (User & { password: string })[] = [
   ...[1, 2, 3, 4, 5, 6].map((i) => ({ id: i + 1, username: `giocatore${i}`, password: `giocatore${i}`, display_name: `Giocatore ${i}`, role: "player" as const })),
 ];
 
-type Stored = Omit<Character, "derived" | "totals" | "free_points" | "power_rank" | "next_talent_level">;
+type Stored = Omit<Character, "derived" | "totals" | "free_points" | "power_rank" | "next_talent_level" | "equipped" | "item_previews">;
 
 const st = (code: string, name: string, kind: "base" | "avanzata", iniziale: number, creazione: number, investiti: number, levelup: number, altro: number, titoli: number, note?: string): StatRow =>
-  ({ code, name, kind, iniziale, creazione, investiti, levelup, altro, titoli, note: note ?? null, total: 0 });
+  ({ code, name, kind, iniziale, creazione, investiti, levelup, altro, titoli, oggetti: 0, note: note ?? null, total: 0 });
 
 const emptyLists = { titles: [], skills: [], active_skills: [], talents: [], inventory: [], pets: [], curses: [], quests: [], reputation: [] };
 
@@ -140,7 +313,8 @@ const kelvin: Stored = {
     st("FIN", "Finesse", "avanzata", 0, 0, 200, 35, 354, 60, "Altro = talento Finesse IV: (somma+titoli)×1,2"),
     st("AUT", "Autorità", "avanzata", 5, 0, 0, 7, 0, 50, "Sbloccata al livello 70"),
   ],
-  item_bonus: { evasione: 10, critico: 12 }, equip: { difesa: 85, difesaMagica: 0, blocco: 0 }, magia: { nucleo: 4, talenti: 0 },
+  // Difesa, critico ed evasione arrivano dagli oggetti equipaggiati
+  item_bonus: {}, equip: { difesa: 0, difesaMagica: 0, blocco: 0 }, magia: { nucleo: 4, talenti: 0 },
   resources: { hp: 2410, mp: 640, sp: 2900 },
   titles: [
     { name: "Artigiano Talentuoso", rarity: "Raro", bonus: { DEX: 5, VIT: 5, FIN: 10 } },
@@ -169,16 +343,50 @@ const kelvin: Stored = {
     { name: "Linguistica", rarity: "Non Comune", origin: "Lvl 55", effect: "Apprendimento lingue raddoppiato" },
     { name: "Finesse IV", rarity: "Epico", origin: "Lvl 75", effect: "Finesse ×1,2 su somma e titoli" },
   ],
-  inventory: [
-    { name: "La Promessa di Thanatos", stats: "Lancia · Base 410 · +12% critico", rarity: "Unico", type: "Arma", qty: 1, weight: 6 },
-    { name: "Spalla del Simbionte", stats: "Difesa 85 · +10% Evasione", rarity: "Epico", type: "Armatura", qty: 1, weight: 4 },
-    { name: "Kit del conciatore", stats: "+5% qualità pelli", rarity: "Non Comune", type: "Strumento", qty: 1, weight: 3 },
-    { name: "Pelle di Wyrm", stats: "Materiale grezzo", rarity: "Raro", type: "Materiale", qty: 4, weight: 2 },
-    { name: "Razione da viaggio", stats: "+50% recupero per 1h", rarity: "Comune", type: "Cibo", qty: 12, weight: 0.5 },
-    { name: "Diario di caccia", stats: "Appunti sulle creature domate", rarity: "Comune", type: "Libro", qty: 1, weight: 1 },
-    { name: "Corone d'Oro", stats: "Moneta di Valeria", rarity: "Comune", type: "Monete", qty: 25, weight: 0 },
-    { name: "Scellini", stats: "Moneta minore", rarity: "Comune", type: "Monete", qty: 30, weight: 0 },
-  ],
+  inventory: ([
+    { id: "it-thanatos", name: "La Promessa di Thanatos", rarity: "Unico", type: "Arma", equip_type: "dueMani", slot: "manoPrincipale", weapon_base: 410,
+      bonus: { critico: 12 }, durability: { cur: 182, max: 200 }, req: { level: 70, DEX: 300 }, stats_text: "Lancia a due mani · Base 410 · +12% critico",
+      desc: "Una promessa fatta a un dio non si spezza: si consuma.", weight: 6 },
+    { id: "it-simbionte", name: "Spalla del Simbionte", rarity: "Epico", type: "Armatura", equip_type: "spallacci", slot: "spalle", bonus: { difesa: 85, evasione: 10 },
+      durability: { cur: 95, max: 120 }, req: { level: 60 }, stats_text: "Difesa 85 · +10% Evasione", desc: "Cresce di qualche fibra ogni notte.", weight: 4 },
+    { id: "it-elmo", name: "Elmo del Domatore", rarity: "Raro", type: "Armatura", equip_type: "elmo", stats: { VIT: 8, AUT: 5 }, bonus: { difesa: 30 },
+      durability: { cur: 70, max: 70 }, req: { level: 50 }, weight: 3 },
+    { id: "it-mantello", name: "Mantello del Gelo", rarity: "Raro", type: "Armatura", equip_type: "mantello", stats: { VIT: 5 }, bonus: { difesaMagica: 15, resElementi: 5 },
+      durability: { cur: 40, max: 60 }, weight: 2 },
+    { id: "it-stivali", name: "Stivali del Segugio", rarity: "Non Comune", type: "Armatura", equip_type: "stivali", stats: { DEX: 6 }, bonus: { difesa: 12, velocita: 5 },
+      durability: { cur: 50, max: 50 }, weight: 2 },
+    { id: "it-anello-wyrm", name: "Anello del Wyrm", rarity: "Epico", type: "Accessorio", equip_type: "anello", stats: { INT: 12 }, bonus: { difesaMagica: 20 }, req: { level: 75 }, weight: 0.1 },
+    { id: "it-anello-fin", name: "Anello dell'Artigiano", rarity: "Non Comune", type: "Accessorio", equip_type: "anello", stats: { FIN: 15 }, weight: 0.1 },
+    { id: "it-scudo", name: "Scudo di pelle di Wyrm", rarity: "Raro", type: "Scudo", equip_type: "scudo", bonus: { blocco: 20, difesa: 25 },
+      durability: { cur: 80, max: 80 }, req: { STR: 150 }, weight: 5 },
+    { id: "it-zanna", name: "Zanna del Topo dei Ghiacci", rarity: "Non Comune", type: "Accessorio", equip_type: "ninnolo", bonus: { critico: 3 }, weight: 0.2 },
+    { id: "it-corazza", name: "Corazza di scaglie di Wyrm", rarity: "Raro", type: "Armatura", equip_type: "corazza", stats: { VIT: 6 }, bonus: { difesa: 55 },
+      durability: { cur: 90, max: 110 }, req: { level: 55, STR: 120 }, weight: 9 },
+    { id: "it-gambali", name: "Gambali da battitore", rarity: "Non Comune", type: "Armatura", equip_type: "gambali", stats: { DEX: 4 }, bonus: { difesa: 18 }, durability: { cur: 60, max: 60 }, weight: 4 },
+    { id: "it-guanti", name: "Guanti del Conciatore", rarity: "Non Comune", type: "Armatura", equip_type: "guanti", stats: { FIN: 8 }, bonus: { difesa: 6 }, durability: { cur: 30, max: 40 }, weight: 1 },
+    { id: "it-bracciali", name: "Bracciali di corda gelata", rarity: "Comune", type: "Armatura", equip_type: "bracciali", bonus: { difesa: 5, resElementi: 2 }, durability: { cur: 35, max: 35 }, weight: 0.5 },
+    { id: "it-cintura", name: "Cintura delle esche", rarity: "Comune", type: "Armatura", equip_type: "cintura", stats: { STR: 3 }, bonus: { difesa: 4 }, weight: 0.5 },
+    { id: "it-amuleto", name: "Amuleto del Branco", rarity: "Epico", type: "Accessorio", equip_type: "amuleto", stats: { AUT: 14 }, bonus: { difesaMagica: 10 }, req: { level: 65 }, weight: 0.2 },
+    { id: "it-pugnale", name: "Pugnale da scuoiatore", rarity: "Non Comune", type: "Arma", equip_type: "unaMano", weapon_base: 24, stats: { DEX: 4 }, bonus: { critico: 4 },
+      durability: { cur: 45, max: 50 }, weight: 1 },
+    { id: "it-coltello", name: "Coltello d'osso", rarity: "Comune", type: "Arma", equip_type: "unaMano", weapon_base: 18, bonus: { critico: 2 }, durability: { cur: 20, max: 40 }, weight: 0.8 },
+    { id: "it-frusta", name: "Frusta del Domatore", rarity: "Raro", type: "Arma", equip_type: "manoPrincipale", weapon_base: 120, stats: { AUT: 10 },
+      durability: { cur: 70, max: 70 }, req: { level: 40 }, weight: 2 },
+    { id: "it-fischietto", name: "Fischietto del Branco", rarity: "Raro", type: "Accessorio", equip_type: "tenuto", stats: { AUT: 8 }, desc: "Un fischio, e il branco risponde.", weight: 0.1 },
+    { id: "it-kit", name: "Kit del conciatore", stats_text: "+5% qualità pelli", rarity: "Non Comune", type: "Strumento", weight: 3 },
+    { id: "it-pelle", name: "Pelle di Wyrm", stats_text: "Materiale grezzo", rarity: "Raro", type: "Materiale", qty: 4, weight: 2 },
+    { id: "it-razione", name: "Razione da viaggio", stats_text: "+50% recupero per 1h", rarity: "Comune", type: "Cibo", qty: 12, weight: 0.5 },
+    { id: "it-diario", name: "Diario di caccia", stats_text: "Appunti sulle creature domate", rarity: "Comune", type: "Libro", weight: 1 },
+    { id: "it-pozione-hp", name: "Pozione di cura maggiore", stats_text: "Ripristina 600 HP", rarity: "Raro", type: "Pozione", qty: 7, weight: 0.3 },
+    { id: "it-pozione-mp", name: "Pozione di mana", stats_text: "Ripristina 250 MP", rarity: "Non Comune", type: "Pozione", qty: 4, weight: 0.3 },
+    { id: "it-stufato", name: "Stufato di Wyrm", stats_text: "+15% STR per 2h (raddoppiato da Cooking)", rarity: "Raro", type: "Cibo", qty: 3, weight: 0.8 },
+    { id: "it-pergamena", name: "Pergamena del ritorno", stats_text: "Teletrasporto alla città vincolata", rarity: "Non Comune", type: "Pergamena", qty: 2, weight: 0.1 },
+    { id: "it-zanne", name: "Zanne di lupo grigio", stats_text: "Materiale di conciatura", rarity: "Comune", type: "Materiale", qty: 46, weight: 0.1 },
+    { id: "it-cristallo", name: "Cristallo di gelo", stats_text: "Catalizzatore magico", rarity: "Epico", type: "Materiale", weight: 0.5 },
+    { id: "it-uovo", name: "Frammento di guscio di Wyrm", stats_text: "Indizio per la quest «Il Wyrm che non brucia»", rarity: "Raro", type: "Oggetto quest", qty: 2, weight: 0.4 },
+    { id: "it-corone", name: "Corone d'Oro", stats_text: "Moneta di Valeria", rarity: "Comune", type: "Monete", qty: 25, weight: 0 },
+    { id: "it-scellini", name: "Scellini", stats_text: "Moneta minore", rarity: "Comune", type: "Monete", qty: 30, weight: 0 },
+  ] as ItemIn[]).map(mkItem),
   pets: [
     { name: "Celsius", species: "Topo dei Ghiacci", lvl: 56, passive: "Aura di gelo", skills: [{ name: "Morso glaciale", lvl: 6, pct: 30 }, { name: "Mimetismo nella neve", lvl: 4, pct: 10 }] },
     { name: "Fahrenheit", species: "Wyrm del Fuoco", lvl: 3, passive: "Immunità alla lava", skills: [{ name: "Ignis", lvl: 9, pct: 0 }] },
@@ -256,7 +464,7 @@ const db = {
       decision: "Confermata SP = 50 + (STR+DEX)×5. Va aggiunta al modello e calcolata in automatico." },
     { id: 3, title: "Scala di rarità", text: "Combat unisce Unico/Leggendario, il Crafting li separa e aggiunge Evolutivo; i titoli aggiungono Divino.", sev: "warn", resolved: true,
       decision: "Scala unica a 8 gradi: Comune, Non Comune, Raro, Epico, Unico, Leggendario, Mitico, Divino." },
-    { id: 4, title: "Punti Level Up incoerenti", text: "Corax (lv 181) ha 185 punti invece di 180.", sev: "warn", resolved: false, decision: null },
+    { id: 4, title: "Punti Level Up incoerenti", text: "Corax (lv 181) ha 185 punti invece di 180 su STR, DEX, VIT e INT; Deniel (lv 110) ne ha 110 invece di 109; Eric (lv 110) ha 129 punti su WIS, più dei 109 level up.", sev: "warn", resolved: false, decision: null },
     { id: 5, title: "Formule non definite", text: "Difesa, iniziativa, probabilità di critico e di blocco non hanno formula.", sev: "bad", resolved: true,
       decision: "Difesa = VIT/10 + Difesa equip × (1 + VIT/100); Iniziativa = 10 + DEX/10; Critico = 5 + DEX/40 % (max 75%); Blocco = Blocco scudo + STR/40 % (solo con scudo, max 75%)." },
   ] as Issue[],
@@ -266,17 +474,21 @@ const db = {
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 const ok = (data: unknown, status = 200): Res => ({ status, data: clone(data) });
 const err = (status: number, detail: string): Res => ({ status, data: { detail } });
-const dmax = (c: Stored, k: string) => derivedOf(c.stats, c.item_bonus, c.equip, c.magia).find((d) => d.key === k)!.value;
+const dmax = (c: Stored, k: string) => derivedFor(c).find((d) => d.key === k)!.value;
 const nf = (x: number) => Math.round(x).toLocaleString("it-IT");
 
 function full(c: Stored): Character {
-  const stats = c.stats.map((r) => ({ ...r, total: statTotal(r) }));
+  const a = applied(c);
+  const stats = a.stats.map((r) => ({ ...r, total: statTotal(r) }));
+  const t = totalsOf(a.stats);
   const used = c.stats.reduce((s, r) => s + (Number(r.investiti) || 0), 0);
   const total = (c.level - 1) * RULES.level.free_per_level;
   const every = RULES.level.talent_every;
   return {
     ...clone(c), stats,
-    derived: derivedOf(c.stats, c.item_bonus, c.equip, c.magia), totals: totalsOf(c.stats),
+    inventory: c.inventory.map((it) => ({ ...clone(it), unmet: unmetOf(c, it, t) })),
+    equipped: eqMap(c.inventory), item_previews: previews(c),
+    derived: derivedOf(a.stats, a.item_bonus, a.equip, c.magia), totals: t,
     free_points: { total, used, left: total - used }, power_rank: powerRank(c.level),
     next_talent_level: (Math.floor(c.level / every) + 1) * every,
   };
@@ -312,8 +524,14 @@ export async function handle(method: string, path: string, body: unknown, token:
   if (method === "GET" && path === "/auth/me") return ok(me);
   if (method === "GET" && path === "/rules") return ok(RULES);
   if (method === "POST" && path === "/rules/preview") {
-    const stats = (b.stats as StatRow[]) || [];
-    return ok({ totals: totalsOf(stats), derived: derivedOf(stats, b.item_bonus as Record<string, number>, b.equip as Character["equip"], b.magia as Character["magia"]) });
+    let stats = (b.stats as StatRow[]) || [];
+    let ib = (b.item_bonus as Record<string, number>) || {};
+    let eq: Character["equip"] = { difesa: 0, difesaMagica: 0, blocco: 0, ...((b.equip || {}) as Partial<Character["equip"]>) };
+    if (Array.isArray(b.inventory)) {
+      const a = applied({ stats, item_bonus: ib, equip: eq, magia: { nucleo: 0, talenti: 0 }, inventory: (b.inventory as ItemIn[]).map(mkItem), level: 1 });
+      stats = a.stats; ib = a.item_bonus; eq = a.equip;
+    }
+    return ok({ totals: totalsOf(stats), derived: derivedOf(stats, ib, eq, b.magia as Character["magia"]) });
   }
 
   if (path === "/characters" && method === "GET") {
@@ -342,11 +560,12 @@ export async function handle(method: string, path: string, body: unknown, token:
       ...clone(emptyLists),
       active_skills: [{ name: cls.skill, effect: cls.skill_text, lvl: 1, pct: 0, cost: cls.cost, cd: cls.cooldown }],
       inventory: [
-        ...cls.equip.map((e) => ({ name: e.name, stats: "Equipaggiamento iniziale", rarity: "Comune", type: e.type, qty: 1, weight: e.weight })),
-        { name: "Corone d'Oro", stats: "Moneta di Valeria", rarity: "Comune", type: "Monete", qty: 20, weight: 0 },
+        ...cls.equip.map((e) => mkItem({ ...(e as ClassItem), equip_type: (e as ClassItem).equip_type ?? null })),
+        mkItem({ name: "Corone d'Oro", stats_text: "Moneta di Valeria", type: "Monete", qty: 20, weight: 0 }),
       ],
       combat: { position: "Mischia", turn: 1, effects: [], cooldowns: [], log: [] }, death: null,
     };
+    c.inventory = startingEquipment(c);
     c.resources = { hp: dmax(c, "hp"), mp: dmax(c, "mp"), sp: dmax(c, "sp") };
     db.chars.push(c);
     return ok(full(c), 201);
@@ -373,6 +592,23 @@ export async function handle(method: string, path: string, body: unknown, token:
       }
       const cb = b.combat as Partial<Character["combat"]> | undefined;
       if (cb?.position) { c.combat.position = cb.position; log(c, `Posizione: ${cb.position}.`); }
+      return ok(full(c));
+    }
+    if (sub.startsWith("/equipment/") && method === "POST") {
+      try {
+        const slot = (k: unknown) => {
+          if (!SLOT_DEFS.some((x) => x.key === k)) throw new EqErr(`Slot inesistente: ${String(k)}.`);
+          return k as SlotKey;
+        };
+        if (sub === "/equipment/equip") c.inventory = equipOp(c, String(b.item_id || ""), b.slot ? slot(b.slot) : undefined);
+        else if (sub === "/equipment/unequip") c.inventory = unequipOp(c, slot(b.slot));
+        else if (sub === "/equipment/move") c.inventory = moveOp(c, slot(b.from_slot), slot(b.to_slot));
+        else return err(404, "Rotta mock non implementata.");
+      } catch (e) {
+        if (e instanceof EqErr) return err(422, e.message);
+        throw e;
+      }
+      for (const k of ["hp", "mp", "sp"] as const) c.resources[k] = Math.min(c.resources[k], dmax(c, k));
       return ok(full(c));
     }
     if (sub === "/level-up" && method === "POST") {

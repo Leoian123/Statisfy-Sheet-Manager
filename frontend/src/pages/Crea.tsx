@@ -86,7 +86,7 @@ function Wizard({ rules }: { rules: RulesConfig }) {
     const t = window.setTimeout(() => {
       const stats: StatRow[] = CODES.map((code) => ({
         code, name: STAT_INFO[code].name, kind: "base", iniziale: C.base, creazione: w.stats[code] - C.base,
-        investiti: 0, levelup: 0, altro: 0, titoli: 0, note: null, total: w.stats[code],
+        investiti: 0, levelup: 0, altro: 0, titoli: 0, oggetti: 0, note: null, total: w.stats[code],
       }));
       api.preview({ stats })
         .then((r) => { setPreview(r.derived); setPreviewErr(null); })

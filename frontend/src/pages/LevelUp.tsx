@@ -54,7 +54,7 @@ function LevelWin({ c, onChange }: { c: Character; onChange: (c: Character) => v
     setStale(true);
     const t = window.setTimeout(() => {
       const stats = c.stats.map((r) => ({ ...r, investiti: r.investiti + (pending[r.code] || 0) }));
-      api.preview({ stats, item_bonus: c.item_bonus, equip: c.equip, magia: c.magia })
+      api.preview({ stats, item_bonus: c.item_bonus, equip: c.equip, magia: c.magia, inventory: c.inventory })
         .then((r) => { setAfter(r); setPreviewErr(null); })
         .catch((e) => setPreviewErr(errorText(e)))
         .finally(() => setStale(false));

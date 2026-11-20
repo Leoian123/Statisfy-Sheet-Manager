@@ -30,7 +30,10 @@
 
   // Progressione_Personaggio_Completo.txt, Sezione 3–4
   const SKILL_TYPES = ["Combat", "Craft", "Utility", "Gathering", "Defense", "Knowledge", "Language", "Social", "Classe"];
-  const WEAPON_GRADE = [{ what: "Precisione", amount: 2, unit: "%" }, { what: "Danno", amount: 1, unit: "%" }];
+  /* Scala di una skill: un valore per ognuno dei 10 Gradi (deciso il 20/11/2026: ogni skill ha i suoi valori, scelti nel wizard) */
+  const linVals = (v1) => Array.from({ length: 10 }, (_, i) => v1 * (i + 1));
+  const WEAPON_GRADE = [{ what: "Precisione", unit: "%", vals: linVals(2) }, { what: "Danno", unit: "%", vals: linVals(1) }];
+  const emptyRow = () => ({ what: "", unit: "%", vals: Array(10).fill("") });
   const GRADE1_RULE = {
     Combat: "Al primo uso vero in combattimento.",
     Craft: "Dopo un lavoro completo fatto sotto la guida di un PNG che pratica il mestiere.",
@@ -80,8 +83,9 @@
       const n = Math.max(0, Number(c.count) || 0);
       if (!n) continue;
       const g = expGain(pgLevel, Number(c.level) || 0);
-      tot += g.pct * n;
-      parts.push(`${n}× ${c.name || "creatura"}: ${nf(g.base)}%${g.factor < 1 ? ` × ${nf(g.factor)}` : ""}`);
+      const rm = rarity(c.rarity).creatureMult; // deciso 20/11/2026: la rarità moltiplica l'EXP (numero: grado³, proposta)
+      tot += g.pct * rm * n;
+      parts.push(`${n}× ${c.name || "creatura"}: ${nf(g.base)}%${g.factor < 1 ? ` × ${nf(g.factor)}` : ""}${rm > 1 ? ` × ${rm} (${c.rarity})` : ""}`);
     }
     return { pct: tot, parts };
   }
@@ -102,6 +106,7 @@
   /* PROPOSTA: difficoltà = (ΣVita creature × ΣDanno creature) / (ΣVita gruppo × ΣDanno gruppo).
      Coerente con "grado N vale N³ Comuni": 27 goblin insieme valgono quanto una creatura Rara. */
   const DIFF = [[0.1, "Banale", "muted"], [0.3, "Facile", "good"], [0.7, "Equilibrato", "violet"], [1.5, "Difficile", "warn"], [4, "Mortale", "bad"], [Infinity, "Impossibile", "bad"]];
+  const diffTone = (label) => (DIFF.find((d) => d[1] === label) || [0, "", "muted"])[2];
   function difficulty(creatures, pcs) {
     let cHP = 0, cD = 0, pHP = 0, pD = 0;
     for (const c of creatures) {
@@ -382,6 +387,7 @@
   }
   /* Chip "proposta": numero o regola inventati, da far approvare */
   function prop(why) { return `<span class="chip warn wmr-prop" tabindex="0" title="${esc("Proposta, non nel regolamento: " + why)}" aria-label="${esc("Proposta: " + why)}">proposta</span>`; }
+  function decided(why) { return `<span class="chip good wmr-prop" tabindex="0" title="${esc("Deciso il 20/11/2026: " + why)}" aria-label="${esc("Deciso: " + why)}">deciso</span>`; }
   function ruleChip(src) { return `<span class="chip good wmr-prop" tabindex="0" title="${esc("Dal regolamento: " + src)}" aria-label="${esc("Regola: " + src)}">regola</span>`; }
   function ref(html) { return `<p class="small muted wmr-ref">${html}</p>`; }
 
@@ -427,6 +433,11 @@
       .wmr-line > .field.wmr-grow { flex: 2 1 180px; }
       .wmr-line > .field.wmr-narrow { flex: 1 1 72px; max-width: 120px; }
       .wmr-line > .btn { flex: none; }
+      .wmr-grades { flex: 1 1 100%; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; min-width: 0; }
+      .wmr-grades .field { gap: 2px; min-width: 0; }
+      .wmr-grades .label { text-align: center; }
+      .wmr-grades .input { padding: 4px 2px; text-align: center; min-width: 0; width: 100%; }
+      @media (max-width: 560px) { .wmr-grades { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
       .wmr-calc { flex: 1 1 100%; display: flex; gap: 6px; flex-wrap: wrap; font-size: var(--fs-sm); min-width: 0; }
       .wmr-check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; font-size: var(--fs-sm); flex-wrap: wrap; }
       .wmr-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--gold); }
@@ -466,13 +477,15 @@
   /* =====================================================================
      1. SKILL
      ===================================================================== */
-  const PROP_GRADE = "il bonus di ogni riga si moltiplica per il Grado (al Grado I vale già una volta, al Grado X dieci volte).";
+  const DEC_GRADE = "ogni skill ha i suoi valori per Grado, scelti qui: non c'è una formula unica.";
+  const gradeVal = (r, g) => Number((r.vals || [])[g - 1]) || 0;
   function gradeText(rows, g) {
-    const ok = (rows || []).filter((r) => filled(r.what) && Number(r.amount) > 0);
+    const ok = (rows || []).filter((r) => filled(r.what) && gradeVal(r, g) !== 0);
     if (!ok.length) return "";
-    return ok.map((r) => `+${nf(r.amount * g)}${r.unit === "%" ? "%" : " " + r.unit} ${r.what.trim()}`).join(", ");
+    return ok.map((r) => `${gradeVal(r, g) > 0 ? "+" : ""}${nf(gradeVal(r, g))}${r.unit === "%" ? "%" : " " + r.unit} ${r.what.trim()}`).join(", ");
   }
-  const isWeaponRule = (st) => st.type === "Combat" && JSON.stringify(st.rows.map((r) => [r.what, Number(r.amount), r.unit])) === JSON.stringify(WEAPON_GRADE.map((r) => [r.what, r.amount, r.unit]));
+  const rowKey = (rows) => JSON.stringify(rows.map((r) => [r.what, r.unit, (r.vals || []).map(Number)]));
+  const isWeaponRule = (st) => st.type === "Combat" && rowKey(st.rows) === rowKey(WEAPON_GRADE);
 
   define({
     id: "skill", kind: "skills", group: "Personaggi", title: "Skill",
@@ -484,14 +497,20 @@
       grade1: GRADE1_RULE.Combat, grade1Auto: true, method: "Level up", charId: "", startGrade: 1 }),
     onField(st, path) {
       if (path === "type") {
-        if (st.rowsAuto) st.rows = st.type === "Combat" ? clone(WEAPON_GRADE) : [{ what: "", amount: "", unit: "%" }];
+        if (st.rowsAuto) st.rows = st.type === "Combat" ? clone(WEAPON_GRADE) : [emptyRow()];
         if (st.grade1Auto) st.grade1 = GRADE1_RULE[st.type] || "";
       }
       if (path.startsWith("rows.")) st.rowsAuto = false;
       if (path === "grade1") st.grade1Auto = false;
     },
     act(st, a, el) {
-      if (a === "row-add") { st.rows.push({ what: "", amount: "", unit: "%" }); st.rowsAuto = false; return `rows.${st.rows.length - 1}.what`; }
+      if (a === "row-add") { st.rows.push(emptyRow()); st.rowsAuto = false; return `rows.${st.rows.length - 1}.what`; }
+      if (a === "row-lin") {
+        const r = st.rows[Number(el.dataset.i)];
+        const v1 = Number(r.vals[0]);
+        if (Number.isFinite(v1) && r.vals[0] !== "") { r.vals = linVals(v1); st.rowsAuto = false; }
+        return `rows.${el.dataset.i}.vals.9`;
+      }
       if (a === "row-rm") { st.rows.splice(Number(el.dataset.i), 1); st.rowsAuto = false; return "row-add"; }
       if (a === "row-rule") { st.rows = clone(WEAPON_GRADE); st.rowsAuto = true; }
     },
@@ -528,7 +547,11 @@
       { label: "Gradi",
         check(st) {
           if (!st.rows.length) return "aggiungi almeno una riga a «cosa migliora per Grado».";
-          if (st.rows.some((r) => !filled(r.what) || !(Number(r.amount) > 0))) return "ogni riga della scala vuole cosa migliora e un valore maggiore di 0.";
+          for (const [i, r] of st.rows.entries()) {
+            if (!filled(r.what)) return `riga ${i + 1}: scrivi cosa migliora.`;
+            const bad = r.vals.findIndex((v) => v === "" || !Number.isFinite(Number(v)));
+            if (bad !== -1) return `riga ${i + 1}: manca il valore del Grado ${S.rules.ROMAN[bad + 1]}.`;
+          }
           if (st.mode === "attiva" && !(Number(st.costRed) >= 0 && Number(st.costRed) <= 10)) return "la riduzione del costo per Grado va da 0 a 10%.";
           if (!filled(st.passiveX, 5)) return "descrivi la passiva sbloccata al Grado X.";
           if (st.school && !filled(st.schoolName, 2)) return "dai un nome alla scuola oltre il Grado X, o togli la spunta.";
@@ -536,18 +559,19 @@
         },
         html: (st) => `
           <div class="field">
-            <span class="label">Cosa migliora per Grado ${isWeaponRule(st) ? ruleChip("Progressione, Sezione 4: +2% precisione e +1% danno per Grado") : ""} ${prop(PROP_GRADE)}</span>
+            <span class="label">Cosa migliora, Grado per Grado ${isWeaponRule(st) ? ruleChip("Progressione, Sezione 4: +2% precisione e +1% danno per Grado") : ""} ${decided(DEC_GRADE)}</span>
             <div class="wmr-lines">${st.rows.map((r, i) => `<div class="wmr-line">
               ${fText(`rows.${i}.what`, "Cosa", { cls: "wmr-grow", ph: "Precisione" })}
-              ${fNum(`rows.${i}.amount`, "Per Grado", { cls: "wmr-narrow", min: 0, step: 0.5, ph: "2" })}
               ${fSel(`rows.${i}.unit`, "Unità", ["%", "punti"], { cls: "wmr-narrow" })}
+              ${btn("row-lin", "Lineare dal I", { cls: "ghost", i, id: `lin-${i}`, label: `Riempi la riga ${i + 1} moltiplicando il Grado I` })}
               ${btn("row-rm", "✕", { cls: "icon ghost", i, id: `rm-${i}`, label: `Togli la riga ${i + 1}` })}
+              <div class="wmr-grades">${r.vals.map((_, g) => fNum(`rows.${i}.vals.${g}`, S.rules.ROMAN[g + 1], { step: 0.5 })).join("")}</div>
             </div>`).join("")}</div>
             <div class="row">${btn("row-add", "＋ Aggiungi riga", { id: "row-add", disabled: st.rows.length >= 6 })}
               ${st.type === "Combat" && !isWeaponRule(st) ? btn("row-rule", "Usa la regola delle armi", { cls: "ghost", id: "row-rule" }) : ""}</div>
-            <span class="hint">Regola per le skill d'arma: +2% precisione e +1% danno per Grado; il regolamento cita anche costi di stamina ridotti e 1–2 tecniche nuove per Grado.</span>
+            <span class="hint">Un valore per Grado, cumulativo (quanto vale la skill a quel Grado). «Lineare dal I» moltiplica il valore del Grado I. Regola per le skill d'arma: +2% precisione e +1% danno per Grado.</span>
           </div>
-          ${st.mode === "attiva" ? fNum("costRed", "Riduzione del costo per Grado (%)", { min: 0, max: 10, step: 0.5, hint: "Il regolamento dice «costi ridotti» senza un numero: 0 lascia il costo fisso.", after: Number(st.costRed) > 0 ? prop("percentuale di riduzione del costo per Grado decisa qui") : "" }) : ""}
+          ${st.mode === "attiva" ? fNum("costRed", "Riduzione del costo per Grado (%)", { min: 0, max: 10, step: 0.5, hint: "Il regolamento dice «costi ridotti» senza un numero: 0 lascia il costo fisso.", }) : ""}
           ${fText("passiveX", "Passiva sbloccata al Grado X", { req: true, area: true, rows: 2, ph: "es. Gli effetti dei consumabili ingeriti raddoppiano" })}
           ${fCheck("school", "Prevede una scuola o uno stile oltre il Grado X")}
           ${st.school ? fText("schoolName", "Nome della scuola", { req: true, ph: "es. Lancia del Gelo", hint: "Oltre il X la skill diventa una scuola personale con i suoi Gradi I–X (Progressione, Sezione 5)." }) : ""}` },
@@ -603,7 +627,7 @@
         effect: st.effect.trim(), perGrade: clone(st.rows), costRedPerGrade: att ? Number(st.costRed) || 0 : 0,
         passiveX: st.passiveX.trim(), school: st.school ? st.schoolName.trim() : null, grade1: st.grade1.trim(), method: st.method,
         assignedTo: c ? c.id : null,
-        summary: `${st.type} · ${att ? `attiva, ${st.cost} ${st.res}, cd ${st.cd}` : "passiva"} · Grado I: +${gradeText(st.rows, 1).replace(/^\+/, "")}${c ? ` · assegnata a ${c.name}` : ""}`,
+        summary: `${st.type} · ${att ? `attiva, ${st.cost} ${st.res}, cd ${st.cd}` : "passiva"} · Grado I: ${gradeText(st.rows, 1) || "—"}${c ? ` · assegnata a ${c.name}` : ""}`,
       };
     },
     apply(st, ctx, e) {
@@ -757,11 +781,10 @@
     { name: "Elementali minori", origin: "Qadesh", desc: "" },
   ];
   const RELATIONS = ["Alleati", "Cordiali", "Neutrali", "Diffidenti", "Ostili"];
-  const PROP_RACE = "il regolamento non dà statistiche alle razze (gli Immortali arrivano tutti umani). Modificatori da −5 a +5 con somma netta tra −2 e +2.";
+  const DEC_RACE = "le razze aggiungono statistiche e talenti razziali, decisi qui dal Master senza limiti fissi.";
   function raceChar(mods) {
     return { level: 1, stats: BASE.map((code) => ({ code, name: STAT_NAME[code], kind: "base", iniziale: 10, creazione: 0, investiti: 0, levelup: 0, altro: Number(mods[code]) || 0, titoli: 0 })) };
   }
-  const netMods = (m) => BASE.reduce((s, k) => s + (Number(m[k]) || 0), 0);
 
   define({
     id: "razza", kind: "races", group: "Personaggi", title: "Razza",
@@ -781,11 +804,6 @@
       if (a === "tr-rm") { st.traits.splice(Number(el.dataset.i), 1); return "tr-add"; }
       if (a === "rel-add") { st.rel.push({ race: "", rel: "Neutrali" }); return `rel.${st.rel.length - 1}.race`; }
       if (a === "rel-rm") { st.rel.splice(Number(el.dataset.i), 1); return "rel-add"; }
-      if (a === "mod") {
-        const k = el.dataset.k;
-        st.mods[k] = Math.max(-5, Math.min(5, (Number(st.mods[k]) || 0) + Number(el.dataset.d)));
-        return `mod-${k}-${el.dataset.d > 0 ? "p" : "m"}`;
-      }
     },
     steps: [
       { label: "Identità",
@@ -808,39 +826,31 @@
           </div>
           ${fText("desc", "Descrizione", { req: true, area: true })}
           ${fText("acquire", "Come la ottiene un Immortale (facoltativo)", { area: true, rows: 2, ph: "es. Rituale ancestrale nel cuore di Heartwood", hint: "Benedizione divina, trasformazione magica o rituale ancestrale." })}` },
-      { label: "Tratti",
+      { label: "Talenti razziali",
         check(st) {
           const ok = st.traits.filter((t) => filled(t.name, 2) && filled(t.effect, 5));
-          if (!ok.length) return "aggiungi almeno un tratto con nome ed effetto.";
-          if (st.traits.some((t) => (filled(t.name) || filled(t.effect)) && !(filled(t.name, 2) && filled(t.effect, 5)))) return "completa o togli i tratti a metà.";
+          if (!ok.length) return "aggiungi almeno un talento razziale con nome ed effetto.";
+          if (st.traits.some((t) => (filled(t.name) || filled(t.effect)) && !(filled(t.name, 2) && filled(t.effect, 5)))) return "completa o togli i talenti a metà.";
           return "";
         },
         html: (st) => `
-          <div class="field"><span class="label">Tratti razziali (passivi) <span class="wmr-req" aria-hidden="true">*</span></span>
+          <div class="field"><span class="label">Talenti razziali <span class="wmr-req" aria-hidden="true">*</span></span>
             <div class="wmr-lines">${st.traits.map((t, i) => `<div class="wmr-line">
-              ${fText(`traits.${i}.name`, "Tratto", { ph: "es. Scurovisione" })}
+              ${fText(`traits.${i}.name`, "Talento", { ph: "es. Scurovisione" })}
               ${fText(`traits.${i}.effect`, "Effetto", { cls: "wmr-grow", ph: "es. Vede al buio fino a 30 metri" })}
-              ${btn("tr-rm", "✕", { cls: "icon ghost", i, id: `trrm-${i}`, label: `Togli il tratto ${i + 1}`, disabled: st.traits.length <= 1 })}
+              ${btn("tr-rm", "✕", { cls: "icon ghost", i, id: `trrm-${i}`, label: `Togli il talento ${i + 1}`, disabled: st.traits.length <= 1 })}
             </div>`).join("")}</div>
-            <div class="row">${btn("tr-add", "＋ Aggiungi tratto", { id: "tr-add", disabled: st.traits.length >= 6 })}</div>
+            <div class="row">${btn("tr-add", "＋ Aggiungi talento", { id: "tr-add", disabled: st.traits.length >= 6 })}</div>
           </div>` },
       { label: "Statistiche",
         check(st) {
-          const net = netMods(st.mods);
-          if (Math.abs(net) > 2) return `somma netta ${signed(net)}: tienila tra −2 e +2 (bilanciamento proposto).`;
+          for (const k of BASE) if (!isInt(st.mods[k], -999, 999)) return `${k}: scrivi un intero (anche negativo).`;
           return "";
         },
         html: (st) => `
-          <div class="sysmsg"><span class="tag">[PROPOSTA]</span><span>Il regolamento non definisce statistiche razziali. Modificatori da −5 a +5, somma netta tra −2 e +2: ciò che una razza guadagna lo paga altrove.</span></div>
-          <div class="field"><span class="label">Modificatori alle statistiche base ${prop(PROP_RACE)}</span>
-            <div>${BASE.map((k) => `<div class="wmr-stat">
-              <span><b>${k}</b> <span class="muted small">${STAT_NAME[k]}</span></span>
-              <span class="wmr-ctl">
-                ${btn("mod", "−", { cls: "icon", k, d: -1, id: `mod-${k}-m`, label: `${k} meno 1`, disabled: st.mods[k] <= -5 })}
-                <span class="wmr-val" aria-live="polite">${signed(st.mods[k])}</span>
-                ${btn("mod", "+", { cls: "icon", k, d: 1, id: `mod-${k}-p`, label: `${k} più 1`, disabled: st.mods[k] >= 5 })}
-              </span></div>`).join("")}</div>
-            <span class="hint ${Math.abs(netMods(st.mods)) > 2 ? "bad" : ""}">Somma netta: <span class="wmr-net">${signed(netMods(st.mods))}</span>. L'anteprima mostra un PG di livello 1 della razza rispetto a un umano.</span>
+          <div class="field"><span class="label">Statistiche aggiunte dalla razza ${decided(DEC_RACE)}</span>
+            <div class="wz-grid2">${BASE.map((k) => fNum(`mods.${k}`, `${k} · ${STAT_NAME[k]}`, { min: -999, max: 999 })).join("")}</div>
+            <span class="hint">Anche negativi. Finiscono nella colonna «Altro» del PG. L'anteprima mostra un PG di livello 1 della razza rispetto a un umano.</span>
           </div>` },
       { label: "Lingue e rapporti",
         check(st) {
@@ -876,10 +886,10 @@
         ${row("Origine", st.origin ? esc(st.origin + (filled(st.originNote) ? " · " + st.originNote.trim() : "")) : DASH)}
         ${trow("Descrizione", st.desc)}
         ${filled(st.acquire) ? trow("Per gli Immortali", st.acquire) : ""}
-        ${sec("Tratti")}
-        ${traits.length ? traits.map((t) => trow(t.name.trim(), t.effect, 32)).join("") : row("Tratti", DASH)}
-        ${sec("Modificatori", prop(PROP_RACE))}
-        ${row("Statistiche", nonzero.length ? nonzero.map((k) => `<span class="num">${k} ${signed(st.mods[k])}</span>`).join(" · ") : "nessuno", `Somma netta ${signed(netMods(st.mods))}`)}
+        ${sec("Talenti razziali")}
+        ${traits.length ? traits.map((t) => trow(t.name.trim(), t.effect, 32)).join("") : row("Talenti", DASH)}
+        ${sec("Statistiche")}
+        ${row("Bonus razziali", nonzero.length ? nonzero.map((k) => `<span class="num">${k} ${signed(st.mods[k])}</span>`).join(" · ") : "nessuno")}
         ${sec("PG di livello 1")}
         ${keys.map((k) => {
           const d = R.DERIVED.find((x) => x.key === k);
@@ -894,13 +904,13 @@
     },
     build(st) {
       const traits = st.traits.filter((t) => filled(t.name)).map((t) => ({ name: t.name.trim(), effect: t.effect.trim() }));
-      const mods = { ...st.mods };
+      const mods = Object.fromEntries(BASE.map((k) => [k, Number(st.mods[k]) || 0]));
       const ms = BASE.filter((k) => mods[k]).map((k) => `${k} ${signed(mods[k])}`).join(", ") || "nessun modificatore";
       return {
         name: st.name.trim(), origin: st.origin, originNote: st.originNote.trim(), desc: st.desc.trim(), acquire: st.acquire.trim(),
-        traits, mods, modsProposal: true, langs: st.langs.split(",").map((s) => s.trim()).filter(Boolean), lifespan: Number(st.life),
+        traits, mods, langs: st.langs.split(",").map((s) => s.trim()).filter(Boolean), lifespan: Number(st.life),
         relations: st.rel.filter((r) => filled(r.race)).map((r) => ({ race: r.race.trim(), rel: r.rel })),
-        summary: `${st.origin} · ${traits.length} tratti · ${ms} (proposta) · vita ${ni(st.life)} anni`,
+        summary: `${st.origin} · ${traits.length} talenti razziali · ${ms} · vita ${ni(st.life)} anni`,
       };
     },
   });
@@ -908,7 +918,7 @@
   /* =====================================================================
      4. TITOLO
      ===================================================================== */
-  const PROP_EVO = "quando un PG ottiene l'evoluzione, il titolo precedente viene sostituito e i suoi bonus tolti.";
+  const PROP_EVO = "quando un PG ottiene l'evoluzione, il titolo precedente viene sostituito e i suoi bonus tolti (l'evoluzione di solito dà di più).";
   function knownTitles(ctx) {
     const map = new Map();
     for (const t of lib("titles")) map.set(t.name, t.rarity);
@@ -1001,7 +1011,7 @@
           ${ref("Esempio dal regolamento: «Ammazzadraghi» → «Flagello dei Draghi» dopo 10+ draghi.")}
           <div class="wz-grid2">${fSel("prev", "Evolve da (precedente)", opts)}${fSel("next", "Evolve in (successivo)", opts)}</div>
           ${st.next ? fText("evoCond", "Condizione per evolvere", { req: true, ph: "es. Uccidere 10 draghi" }) : ""}
-          ${st.prev ? fCheck("replacePrev", "Sostituisce il precedente sul PG", { after: prop(PROP_EVO) }) : ""}
+          ${st.prev ? fCheck("replacePrev", "Sostituisce il precedente sul PG", { after: decided(PROP_EVO) }) : ""}
           ${!knownTitles(ctx).length ? ref("La libreria non ha ancora altri titoli: potrai collegarli quando ne creerai.") : ""}`;
         } },
       { label: "Assegna",
@@ -1226,7 +1236,9 @@
   const ENVS = ["Foresta", "Montagna", "Grotta o dungeon", "Città", "Deserto", "Ghiacci", "Mare o costa", "Palude", "Sottosuolo", "Rovine", "Piano oscuro"];
   const PROP_DIFF = "difficoltà = (Vita totale creature × Danno totale creature) / (Vita totale gruppo × Danno totale gruppo). Danno di un PG = Base arma equipaggiata (o media della rarità tipica per il suo livello) × max(molt. fisico, molt. magico) × attacchi per turno. Soglie: <0,1 Banale, <0,3 Facile, <0,7 Equilibrato, <1,5 Difficile, <4 Mortale, oltre Impossibile. Non conta Difesa, critici, abilità.";
   const PROP_LOOT = "il bottino ha la rarità della creatura più rara dell'incontro.";
-  const PROP_EXP = "ogni PG che partecipa riceve l'EXP intera di ogni creatura (nessuna divisione nel gruppo).";
+  const PROP_EXP_RAR = "la rarità moltiplica l'EXP per grado³, come la forza della creatura (Non Comune ×8, Raro ×27, Epico ×64 … Divino ×512).";
+  const DEC_EXP = "quando chiudi l'incontro scegli se ogni PG prende l'EXP intera o se va divisa nel gruppo.";
+  const DEC_DIFF = "la difficoltà la decide il Master al momento; la stima calcolata è solo un riferimento.";
   function avgLevel(ctx, ids) {
     const cs = chars(ctx).filter((c) => ids.includes(c.id));
     return cs.length ? Math.round(cs.reduce((s, c) => s + c.level, 0) / cs.length) : 1;
@@ -1245,7 +1257,7 @@
       const party = chars(ctx).map((c) => c.id);
       const level = avgLevel(ctx, party);
       return { name: "", place: "", env: "Foresta", conditions: "", party, level,
-        creatures: [{ name: "", level, rarity: "Comune", size: "Normale", count: 1 }], hooks: "", lootNote: "" };
+        creatures: [{ name: "", level, rarity: "Comune", size: "Normale", count: 1 }], hooks: "", lootNote: "", masterDiff: "" };
     },
     act(st, a, el, ctx) {
       if (a === "avg") { st.level = avgLevel(ctx, st.party); return "avg"; }
@@ -1318,6 +1330,7 @@
           const top = topRarity(cs);
           return `
           <div class="sysmsg gold"><span class="tag">[BOTTINO]</span><span>Suggerito: oggetti ${esc(top)} — arma con Base danno ${baseRange(top)}. ${prop(PROP_LOOT)}</span></div>
+          ${fSel("masterDiff", "Difficoltà decisa dal Master", [{ v: "", l: "Usa la stima" }, ...DIFF.map((d) => d[1])], { hint: "Facoltativa: la stima calcolata nell'anteprima è solo un riferimento." })}
           ${fText("lootNote", "Bottino deciso dal Master", { area: true, rows: 2, ph: "es. Zanna di lupo (Comune), 12 Scellini" })}
           ${fText("hooks", "Ganci narrativi", { area: true, rows: 3, ph: "es. Uno dei lupi porta un collare con lo stemma di Orsino" })}
           ${ref("Bersagli inermi o inattivi danno metà EXP (Progressione, Sezione 2).")}`;
@@ -1330,7 +1343,8 @@
       const d = cs.length && pcs.length ? difficulty(cs, pcs) : null;
       const exp = expFor(lv, cs);
       const expTip = [`PG di livello ${lv}: ${nf(exp.pct)}%`, ...exp.parts, "", ...pcs.map((p) => `${p.name} (Lv ${p.level}): ${nf(expFor(p.level, cs).pct)}%`),
-        "", "Pari livello 2%, ±1 punto per livello di differenza (0–10%); dal lv 10 metà, dal 50 un quarto."].join("\n");
+        "", "Pari livello 2%, ±1 punto per livello di differenza (0–10%); dal lv 10 metà, dal 50 un quarto; poi × grado³ della rarità.",
+        "Intera o divisa: si sceglie alla chiusura dell'incontro, nella Libreria della Forgia."].join("\n");
       const top = topRarity(cs);
       const diffTip = d ? [`Creature: Vita ${ni(d.cHP)} × Danno ${ni(d.cD)}`, `Gruppo: Vita ${ni(d.pHP)} × Danno ${ni(d.pD)}`, `Rapporto: ${nf(d.ratio)}`, "",
         ...pcs.map((p) => { const w = pgPower(p); return `${p.name}: Vita ${ni(w.hp)}, danno ${ni(w.dmg)} (${w.weapon}: ${ni(w.base)} × ${nf(w.molt)} × ${nf(w.att)})`; })].join("\n") : "";
@@ -1343,9 +1357,10 @@
           return row(`${c.count}× ${c.name.trim()}`, `<span class="num">${ni(k.hp)}</span> <span class="xs muted">Vita</span> · <span class="num">${ni(k.dmg)}</span> <span class="xs muted">danno</span>`,
             `Lv ${c.level} · ${c.rarity} · ${c.size}\nVita = ${k.hpF} = ${ni(k.hp)}\nDanno base = ${k.dmgF} = ${ni(k.dmg)}`);
         }).join("") : row("Creature", DASH)}
-        ${sec("Valutazione", prop(PROP_DIFF))}
-        ${row("Difficoltà", d ? `<span class="chip ${d.tone}">${d.label}</span>` : DASH, diffTip)}
-        ${row("EXP per PG", cs.length ? `<span class="num">${nf(exp.pct)}%</span> ${prop(PROP_EXP)}` : DASH, cs.length ? esc(expTip) : "")}
+        ${sec("Valutazione", decided(DEC_DIFF))}
+        ${st.masterDiff ? row("Difficoltà", `<span class="chip ${diffTone(st.masterDiff)}">${esc(st.masterDiff)}</span> <span class="xs muted">decisa dal Master</span>`) : ""}
+        ${row(st.masterDiff ? "Stima" : "Difficoltà (stima)", d ? `<span class="chip ${d.tone}">${d.label}</span> ${prop(PROP_DIFF)}` : DASH, diffTip)}
+        ${row("EXP intera per PG", cs.length ? `<span class="num">${nf(exp.pct)}%</span> ${prop(PROP_EXP_RAR)} ${decided(DEC_EXP)}` : DASH, cs.length ? esc(expTip) : "")}
         ${row("Bottino", cs.length ? `${S.ui.rarityChip(top)} ${prop(PROP_LOOT)}` : DASH, cs.length ? `Arma ${top}: Base danno ${baseRange(top)} (scala di rarità)` : "")}
         ${sec("Scena")}
         ${trow("Condizioni", st.conditions)}
@@ -1361,12 +1376,13 @@
       const d = difficulty(cs, pcs);
       const exp = expFor(Number(st.level), cs);
       const top = topRarity(cs);
+      const diffLabel = st.masterDiff || d.label;
       return {
         name: st.name.trim(), place: st.place.trim(), env: st.env, conditions: st.conditions.trim(), party: st.party.slice(), level: Number(st.level),
-        creatures: cs, difficulty: { label: d.label, ratio: d.ratio, proposal: true }, expPct: exp.pct,
+        creatures: cs, difficulty: { label: diffLabel, estimate: d.label, ratio: d.ratio, byMaster: !!st.masterDiff }, expPct: exp.pct,
         expByPc: Object.fromEntries(pcs.map((p) => [p.id, expFor(p.level, cs).pct])),
         loot: { rarity: top, weaponBase: rarity(top).weaponBase, note: st.lootNote.trim() }, hooks: st.hooks.trim(),
-        summary: `${st.place.trim()} · ${cs.reduce((s, c) => s + c.count, 0)} creature · ${d.label} (proposta) · EXP ${nf(exp.pct)}% a lv ${st.level}`,
+        summary: `${st.place.trim()} · ${cs.reduce((s, c) => s + c.count, 0)} creature · ${diffLabel}${st.masterDiff ? "" : " (stima)"} · EXP ${nf(exp.pct)}% a lv ${st.level}`,
       };
     },
   });

@@ -14,8 +14,8 @@ export interface LoginResponse {
   user: User;
 }
 
-export type SourceKey = "iniziale" | "creazione" | "investiti" | "levelup" | "altro" | "titoli";
-export const SOURCE_KEYS: SourceKey[] = ["iniziale", "creazione", "investiti", "levelup", "altro", "titoli"];
+export type SourceKey = "iniziale" | "creazione" | "investiti" | "levelup" | "altro" | "titoli" | "oggetti";
+export const SOURCE_KEYS: SourceKey[] = ["iniziale", "creazione", "investiti", "levelup", "altro", "titoli", "oggetti"];
 
 export interface StatRow {
   code: string;
@@ -27,6 +27,8 @@ export interface StatRow {
   levelup: number;
   altro: number;
   titoli: number;
+  /** Bonus degli oggetti equipaggiati: calcolato dal server, mai inserito a mano. */
+  oggetti: number;
   note?: string | null;
   total: number;
 }
@@ -54,7 +56,45 @@ export interface Title { name: string; rarity: string; bonus: Record<string, num
 export interface Skill { name: string; lvl: number; pct: number | "MAX"; type: string; passive?: string | null }
 export interface ActiveSkill { name: string; effect: string; lvl: number; pct: number | "MAX"; cost: string; cd: number }
 export interface Talent { name: string; rarity: string; origin: string; effect: string }
-export interface InventoryItem { name: string; stats: string; rarity: string; type: string; qty: number; weight: number }
+export type SlotKey =
+  | "testa" | "collo" | "spalle" | "mantello" | "torso" | "polsi" | "mani" | "cintura" | "gambe" | "piedi"
+  | "anello1" | "anello2" | "ninnolo1" | "ninnolo2" | "manoPrincipale" | "manoSecondaria";
+export type ItemCategory = "equipaggiamento" | "consumabili" | "materiali" | "altro";
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  rarity: string;
+  type: string;
+  category: ItemCategory;
+  /** Chiave di RulesConfig.equip_types; null = non equipaggiabile */
+  equip_type: string | null;
+  /** Slot in cui è indossato; null = nella borsa */
+  slot: SlotKey | null;
+  /** Bonus alle statistiche (colonna "Oggetti") */
+  stats: Record<string, number>;
+  /** Bonus alle derivate (difesa/difesaMagica/blocco entrano nella formula, gli altri si sommano dopo) */
+  bonus: Record<string, number>;
+  req: Record<string, number>;
+  durability: { cur: number; max: number } | null;
+  weapon_base: number | null;
+  weight: number;
+  qty: number;
+  desc: string | null;
+  stats_text: string;
+  /** Solo in uscita: requisiti non soddisfatti, es. ["Livello 80", "STR 200"] */
+  unmet: string[];
+}
+
+export interface ItemPreview {
+  ok: boolean;
+  error: string | null;
+  unmet: string[];
+  slot: SlotKey | null;
+  replaces: string[];
+  stats: Record<string, number>;
+  derived: Record<string, number>;
+}
 export interface Pet { name: string; species: string; lvl: number; passive: string; skills: { name: string; lvl: number; pct: number | "MAX" }[] }
 export interface Curse { name: string; desc: string; bonus: string; malus: string }
 export interface Quest { name: string; progress: string; reward: string; rarity: string }
@@ -115,6 +155,8 @@ export interface Character {
   reputation: Reputation[];
   combat: Combat;
   death?: Death | null;
+  equipped: Partial<Record<SlotKey, string>>;
+  item_previews: Record<string, ItemPreview>;
   derived: Derived[];
   totals: Record<string, number>;
   free_points: { total: number; used: number; left: number };
@@ -146,8 +188,13 @@ export interface ClassDef {
   skill_text: string;
   cost: string;
   cooldown: number;
-  equip: { name: string; type: string; weight: number }[];
+  equip: {
+    name: string; type: string; weight: number; equip_type?: string | null; stats_text?: string; weapon_base?: number;
+    stats?: Record<string, number>; bonus?: Record<string, number>; req?: Record<string, number>;
+  }[];
 }
+export interface SlotDef { key: SlotKey; label: string; side: "left" | "right" | "bottom" }
+export interface EquipTypeDef { key: string; label: string; slots: SlotKey[]; two_handed: boolean }
 export interface KingdomDef { id: string; name: string; text: string }
 
 export interface RulesConfig {
@@ -161,6 +208,10 @@ export interface RulesConfig {
   kingdoms: KingdomDef[];
   positions: string[];
   power_ranks: { min: number; name: string }[];
+  slots: SlotDef[];
+  equip_types: EquipTypeDef[];
+  equip_formula_keys: string[];
+  item_categories: { key: ItemCategory; label: string }[];
 }
 
 export interface PreviewRequest {
@@ -168,6 +219,7 @@ export interface PreviewRequest {
   item_bonus?: Record<string, number>;
   equip?: Character["equip"];
   magia?: Character["magia"];
+  inventory?: InventoryItem[];
 }
 export interface PreviewResponse {
   totals: Record<string, number>;

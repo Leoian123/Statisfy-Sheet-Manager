@@ -15,4 +15,6 @@ def get_rules():
 def preview(data: PreviewIn):
     c = {"stats": [r.model_dump() for r in data.stats], "item_bonus": data.item_bonus or {},
          "equip": data.equip or {}, "magia": data.magia or {}}
+    if data.inventory is not None:
+        c = rules.apply_equipment({**c, "inventory": data.inventory})
     return {"totals": rules.totals(c["stats"]), "derived": rules.derived(c)}

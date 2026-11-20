@@ -55,8 +55,9 @@
     voti: "Voti e tabù proposti a partire dal dominio del dio; il Master può aggiungerne di propri.",
     conseguenze: "Gradi di conseguenza oltre a «si indebolisce» e «cessa» (che vengono dal testo).",
   };
+  /* Le proposte 5–19 di docs/PROPOSTE.md sono state approvate il 20/11/2026: il chip ora dice "deciso" */
   const prop = (key, label = "proposta") =>
-    `<span class="chip warn wm-prop" tabindex="0" role="note" title="${esc("Proposta: " + PROPOSTE[key])}" aria-label="${esc("Proposta: " + PROPOSTE[key])}">${esc(label)}</span>`;
+    `<span class="chip good wm-prop" tabindex="0" role="note" title="${esc("Deciso il 20/11/2026: " + PROPOSTE[key])}" aria-label="${esc("Deciso: " + PROPOSTE[key])}">${esc(label.replace(/^proposta/, "deciso"))}</span>`;
   const src = (text) => `<span class="wm-src" title="${esc("Fonte: " + text)}">${esc(text)}</span>`;
 
   /* =====================================================================
@@ -467,7 +468,7 @@
     const dot = opts.prop ? `<span class="wm-dot" aria-hidden="true"></span>` : "";
     const val = `<span class="wm-v ${opts.text ? "is-text" : ""} ${opts.cls || ""}">${opts.html ? value : esc(value)}</span>`;
     if (!lines.length && !opts.prop) return `<div class="wm-row"><span class="wm-k">${esc(label)}</span>${val}</div>`;
-    const propLine = opts.prop ? `<span class="wm-warn">Proposta: ${esc(PROPOSTE[opts.prop])}</span>` : "";
+    const propLine = opts.prop ? `<span class="wm-warn">Deciso: ${esc(PROPOSTE[opts.prop])}</span>` : "";
     return `<div class="wm-row" tabindex="0" aria-describedby="${id}"><span class="wm-k">${esc(label)}${dot}</span>${val}
       <div class="wm-tip" role="tooltip" id="${id}">${lines.map((l) => `<span>${esc(l)}</span>`).join("")}${propLine}</div></div>`;
   }
@@ -877,13 +878,13 @@
       const V = spellVals(w);
       const char = charById(ctx, w.charId);
       const mp = charMpMax(char);
-      const parts = [`Proposta: ${fmtN(V.sugg.cost)} MP (10 × ${V.L.cast} × ${V.L.cast + 1}${w.combo ? " × 1,5 combinazione" : ""}).`];
+      const parts = [`Suggerito: ${fmtN(V.sugg.cost)} MP (10 × ${V.L.cast} × ${V.L.cast + 1}${w.combo ? " × 1,5 combinazione" : ""}).`];
       if (char && mp && !badNum(V.cost, 1)) parts.push(`${Math.round((V.cost / mp) * 100)}% del Mana massimo di ${char.name} (${fmtN(mp)}).`);
       return esc(parts.join(" "));
     },
     "wm-s-cd-hint"(w) {
       const V = spellVals(w);
-      return esc(`Proposta: ${V.sugg.cd} turni (⌈${V.L.cast} / 2⌉).`);
+      return esc(`Suggerito: ${V.sugg.cd} turni (⌈${V.L.cast} / 2⌉).`);
     },
     turns(w) {
       const V = spellVals(w);
@@ -986,9 +987,9 @@
       row("Livello di lancio", V.L.cast ? String(V.L.cast) : "—", [`Base ${V.L.base} + metamagia ${V.L.meta}${V.L.trav ? ` + traverso ${V.L.trav}` : ""}`, metas.length ? `Metamagia: ${metas.join(", ")}` : "", "Fonte: Magic.txt, Metamagic (livelli 1–10)"],
         { cls: V.L.cast > 10 ? "wm-bad" : "", prop: V.L.trav ? "traverso" : V.L.metaSph ? "metaSfera" : null }),
       row("Efficacia", String(V.L.eff), [`Base ${V.L.base} + linea di potere ${V.L.ley} + sintonia ${V.L.zone}`, w.env.anti ? "Zona antimagia attiva" : ""], { prop: "efficacia" }),
-      row("Costo Mana", badNum(V.cost, 1) ? "—" : `${fmtN(V.cost)} MP`, [`Proposta: 10 × ${V.L.cast} × ${V.L.cast + 1}${w.combo ? " × 1,5" : ""} = ${fmtN(V.sugg.cost)} MP`, w.cost !== null ? "Valore modificato a mano (contrattato)" : "", "Dardo Magico: 20 MP a livello 1 (Creazione personaggio.txt)"], { prop: "costo" }),
+      row("Costo Mana", badNum(V.cost, 1) ? "—" : `${fmtN(V.cost)} MP`, [`Suggerito: 10 × ${V.L.cast} × ${V.L.cast + 1}${w.combo ? " × 1,5" : ""} = ${fmtN(V.sugg.cost)} MP`, w.cost !== null ? "Valore modificato a mano (contrattato)" : "", "Dardo Magico: 20 MP a livello 1 (Creazione personaggio.txt)"], { prop: "costo" }),
       row("Tempo di lancio", `${V.turns} t`, [`⌈${V.L.cast}/3⌉${w.combo ? " × 1,5 (combinazione, Magic.txt)" : ""}`], { prop: "tempo" }),
-      row("Ricarica", badNum(V.cd, 0) ? "—" : `${V.cd} t`, [`Proposta: ⌈${V.L.cast}/2⌉ = ${V.sugg.cd}`], { prop: "ricarica" }),
+      row("Ricarica", badNum(V.cd, 0) ? "—" : `${V.cd} t`, [`Suggerito: ⌈${V.L.cast}/2⌉ = ${V.sugg.cd}`], { prop: "ricarica" }),
       row("Backlash", `${B.band.name} · ${B.score}`, B.factors.map((f) => `${f.v >= 0 ? "+" : "−"}${Math.abs(f.v)} ${f.label}`).concat([B.band.text]), { cls: "wm-" + ({ good: "ok", warn: "warn", bad: "bad" }[B.band.cls]), prop: "gravita" }),
       row(E ? `${E.kind} (${char ? char.name : "PG"})` : "Danno/cura", E ? `${fmtN(E.min)}–${fmtN(E.max)}` : "—", E ? E.steps : ["Categoria senza numero: lo descrive il narratore"], { prop: E ? "danno" : null }),
       row("Requisiti PG", !char ? "—" : miss ? `${miss} sfer${miss === 1 ? "a" : "e"} mancant${miss === 1 ? "e" : "i"}` : over ? "overcast" : "ok",
@@ -1242,17 +1243,17 @@
     },
     favorHint(m) {
       const V = miracleValues(m);
-      return esc(`Proposta: ${favorName(V.sugg.favor)} (livello ${V.L}${V.affine ? "" : ", +1 fuori dominio"}).`) + " " + prop("favoreRichiesto");
+      return esc(`Suggerito: ${favorName(V.sugg.favor)} (livello ${V.L}${V.affine ? "" : ", +1 fuori dominio"}).`) + " " + prop("favoreRichiesto");
     },
-    "wm-m-fede-hint"(m) { const V = miracleValues(m); return esc(`Proposta: ${fmtN(V.sugg.fede)} (5 × ${V.L} × ${V.L + 1}).`); },
+    "wm-m-fede-hint"(m) { const V = miracleValues(m); return esc(`Suggerito: ${fmtN(V.sugg.fede)} (5 × ${V.L} × ${V.L + 1}).`); },
     "wm-m-cost-hint"(m, ctx) {
       const V = miracleValues(m);
       const char = charById(ctx, m.charId);
       const mp = charMpMax(char);
-      return esc(`Proposta: ${fmtN(V.sugg.cost)} MP (12,5 × ${V.L} × ${V.L + 1}). Cura Minore: 25 MP.`
+      return esc(`Suggerito: ${fmtN(V.sugg.cost)} MP (12,5 × ${V.L} × ${V.L + 1}). Cura Minore: 25 MP.`
         + (char && mp && !badNum(V.cost, 1) ? ` ${Math.round((V.cost / mp) * 100)}% del Mana di ${char.name}.` : ""));
     },
-    "wm-m-cd-hint"(m) { const V = miracleValues(m); return esc(`Proposta: ${V.sugg.cd} turni (⌈${V.L} / 2⌉).`); },
+    "wm-m-cd-hint"(m) { const V = miracleValues(m); return esc(`Suggerito: ${V.sugg.cd} turni (⌈${V.L} / 2⌉).`); },
     power(m, ctx) {
       const char = charById(ctx, m.charId);
       const P = miraclePower(m, char);
@@ -1292,7 +1293,7 @@
       const mpOk = !badNum(A.V.cost, 1) && A.V.cost <= mp;
       return `<ul class="wm-reqs">
         <li><span>Classe <span class="xs muted">${esc(A.char.classe || "—")}</span></span><span class="${cleric ? "wm-ok" : "wm-warn"}">${cleric ? "✓ Chierico" : "non è un chierico"}</span></li>
-        <li><span>Fede <span class="xs muted">${esc(fmtN(A.fede))}${A.fede ? "" : " (statistica assente)"}</span></span><span class="${fedeOk ? "wm-ok" : "wm-bad"}">${fedeOk ? "✓" : `serve ${esc(fmtN(A.V.fede))}`}</span></li>
+        <li><span>Fede <span class="xs muted">${esc(fmtN(A.fede))}${A.fede ? "" : " (si sblocca quando il PG crede in un dio)"}</span></span><span class="${fedeOk ? "wm-ok" : "wm-bad"}">${fedeOk ? "✓" : `serve ${esc(fmtN(A.V.fede))}`}</span></li>
         <li><span>Favore di ${esc(A.V.god ? A.V.god.name : "—")} <span class="xs muted">${esc(favorName(A.fav.v))}${A.fav.recorded ? "" : " · non registrato"}</span></span><span class="${favOk ? "wm-ok" : "wm-bad"}">${favOk ? "✓" : `serve ${esc(favorName(Number(A.V.favor)))}`}</span></li>
         <li><span>Mana massimo <span class="xs muted">${esc(fmtN(mp))} MP</span></span><span class="${mpOk ? "wm-ok" : "wm-warn"}">${mpOk ? "✓" : "costo oltre il massimo"}</span></li>
       </ul>
@@ -1314,10 +1315,10 @@
       row("Dominio", V.god ? V.god.domain : "—", V.god ? [`Opposto: ${V.god.domain === "Luce" ? "Ombra" : "Luce"}`, "Fonte: Glossario, Domini divini"] : null, { text: true }),
       row("Natura", nat ? `${nat.name}${V.god && !V.affine ? " · fuori dominio" : ""}` : "—", nat ? [nat.text] : null, { text: true, cls: V.god && !V.affine ? "wm-warn" : "", prop: V.god ? "affinita" : null }),
       row("Livello", V.L ? String(V.L) : "—", null, { prop: "livelloMiracolo" }),
-      row("Fede richiesta", badNum(V.fede, 0) ? "—" : fmtN(V.fede), [`Proposta: 5 × ${V.L} × ${V.L + 1} = ${fmtN(V.sugg.fede)}`, m.fede !== null ? "Valore modificato a mano" : ""], { prop: "fede" }),
-      row("Favore richiesto", favorName(Number(V.favor)), [`Proposta: ${favorName(V.sugg.favor)}`, m.favor !== null ? "Valore modificato a mano" : ""], { text: true, prop: "favoreRichiesto" }),
-      row("Costo Mana", badNum(V.cost, 1) ? "—" : `${fmtN(V.cost)} MP`, [`Proposta: 12,5 × ${V.L} × ${V.L + 1} = ${fmtN(V.sugg.cost)} MP`, "Cura Minore: 25 MP a livello 1 (Creazione personaggio.txt)"], { prop: "costoMiracolo" }),
-      row("Ricarica", badNum(V.cd, 0) ? "—" : `${V.cd} t`, [`Proposta: ⌈${V.L}/2⌉ = ${V.sugg.cd}`], { prop: "ricarica" }),
+      row("Fede richiesta", badNum(V.fede, 0) ? "—" : fmtN(V.fede), [`Suggerito: 5 × ${V.L} × ${V.L + 1} = ${fmtN(V.sugg.fede)}`, m.fede !== null ? "Valore modificato a mano" : ""], { prop: "fede" }),
+      row("Favore richiesto", favorName(Number(V.favor)), [`Suggerito: ${favorName(V.sugg.favor)}`, m.favor !== null ? "Valore modificato a mano" : ""], { text: true, prop: "favoreRichiesto" }),
+      row("Costo Mana", badNum(V.cost, 1) ? "—" : `${fmtN(V.cost)} MP`, [`Suggerito: 12,5 × ${V.L} × ${V.L + 1} = ${fmtN(V.sugg.cost)} MP`, "Cura Minore: 25 MP a livello 1 (Creazione personaggio.txt)"], { prop: "costoMiracolo" }),
+      row("Ricarica", badNum(V.cd, 0) ? "—" : `${V.cd} t`, [`Suggerito: ⌈${V.L}/2⌉ = ${V.sugg.cd}`], { prop: "ricarica" }),
       row(P.value ? `${P.value.kind} (${char ? char.name : "PG"})` : "Potenza", P.value ? (P.fm.mult ? `${fmtN(P.value.min)}–${fmtN(P.value.max)}` : "nessun effetto") : P.fm.state,
         [`Fede del PG ${fmtN(P.fede)} · favore ${favorName(P.fav.v)}${P.fav.recorded ? "" : " (non registrato)"}`, `Molt. favore ×${String(P.fm.mult).replace(".", ",")} (${P.fm.state})`], { prop: "potenzaMiracolo", text: !P.value }),
       row("Voti e tabù", vows.length ? String(vows.length) : "—", vows, {}),

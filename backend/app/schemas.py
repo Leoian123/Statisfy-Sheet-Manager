@@ -20,6 +20,7 @@ class StatRowIn(BaseModel):
     levelup: float = 0
     altro: float = 0
     titoli: float = 0
+    oggetti: float = 0  # calcolata dal server: in /preview vale solo se non si passa `inventory`
     note: str | None = None
 
 
@@ -28,6 +29,7 @@ class PreviewIn(BaseModel):
     item_bonus: dict[str, float] | None = None
     equip: dict[str, float] | None = None
     magia: dict[str, int] | None = None
+    inventory: list[dict[str, Any]] | None = None  # se presente, l'equipaggiato ricalcola Oggetti/equip/bonus
 
 
 class CreationStats(BaseModel):
@@ -101,6 +103,27 @@ class CharacterPatch(BaseModel):
     curses: list[dict[str, Any]] | None = None
     quests: list[dict[str, Any]] | None = None
     reputation: list[dict[str, Any]] | None = None
+
+
+SlotKey = Literal["testa", "collo", "spalle", "mantello", "torso", "polsi", "mani", "cintura", "gambe", "piedi",
+                  "anello1", "anello2", "ninnolo1", "ninnolo2", "manoPrincipale", "manoSecondaria"]
+
+
+class EquipIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    item_id: str = Field(min_length=1)
+    slot: SlotKey | None = None
+
+
+class UnequipIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    slot: SlotKey
+
+
+class MoveSlotIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    from_slot: SlotKey
+    to_slot: SlotKey
 
 
 class DistributeIn(BaseModel):

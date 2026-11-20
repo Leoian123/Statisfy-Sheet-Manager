@@ -340,12 +340,14 @@
     }));
     const parts = String(cls.skillText).split("·").map((s) => s.trim());
     const cdMatch = /cooldown\s+(\d+)/i.exec(cls.skillText);
-    const inventory = cls.equip.map((e, i) => {
-      const m = /^(.*?)\s*\((.*)\)\s*$/.exec(e);
-      const meta = EQUIP_META[i] || { type: "Equipaggiamento", weight: 1 };
-      return { name: m ? m[1] : e, stats: m ? m[2] : "Equipaggiamento iniziale", rarity: "Comune", type: meta.type, qty: 1, weight: meta.weight };
-    });
-    inventory.push({ name: "Corone d'Oro", stats: "Moneta di Valeria", rarity: "Comune", type: "Monete", qty: 20, weight: 0 });
+    const inventory = cls.items
+      ? cls.items.map((it, i) => ({ id: `${id}-it${i}`, rarity: "Comune", stats: {}, bonus: {}, qty: 1, ...JSON.parse(JSON.stringify(it)) }))
+      : cls.equip.map((e, i) => {
+        const m = /^(.*?)\s*\((.*)\)\s*$/.exec(e);
+        const meta = EQUIP_META[i] || { type: "Equipaggiamento", weight: 1 };
+        return { name: m ? m[1] : e, stats: m ? m[2] : "Equipaggiamento iniziale", rarity: "Comune", type: meta.type, qty: 1, weight: meta.weight };
+      });
+    inventory.push({ id: `${id}-corone`, name: "Corone d'Oro", stats_text: "Moneta di Valeria", rarity: "Comune", type: "Monete", slot: null, qty: 20, weight: 0 });
 
     const pc = {
       id, owner: "Giocatore 1", name, classe: cls.name, level: 1, expPct: 0, regno: k.name, pvp: "Bianco",
@@ -360,6 +362,21 @@
       talents: [], inventory, pets: [], curses: [], quests: [], reputation: [],
       combat: { position: "Mischia", effects: [], cooldowns: [] },
     };
+    /* Equipaggiamento iniziale: indossa ciò che ha i requisiti soddisfatti, il resto resta in borsa */
+    if (cls.items) {
+      pc.equipped = {};
+      const R = S.rules;
+      for (const it of inventory) {
+        const t = R.equipType(it);
+        if (!t || R.unmetRequirements(pc, it).length) continue;
+        const free = t.slots.find((k) => !pc.equipped[k] && !(k === "manoSecondaria" && pc.equipped.manoPrincipale && t.slots.length > 1));
+        if (!free) continue;
+        if (t.twoHanded && pc.equipped.manoSecondaria) continue;
+        pc.equipped[free] = it.id;
+        if (t.twoHanded) pc.equipped.manoSecondaria = it.id;
+      }
+      R.applyEquipment(pc);
+    }
     const d = S.rules.derived(pc);
     pc.resources = { hp: d.hp, mp: d.mp, sp: d.sp };
 

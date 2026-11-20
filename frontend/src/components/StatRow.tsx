@@ -4,7 +4,7 @@ import { n } from "../lib/format";
 import { TipRow } from "./TipRow";
 
 const FALLBACK_LABELS: Record<string, string> = {
-  iniziale: "Iniziale", creazione: "Creazione", investiti: "Investiti", levelup: "Level up", altro: "Altro", titoli: "Titoli",
+  iniziale: "Iniziale", creazione: "Creazione", investiti: "Investiti", levelup: "Level up", altro: "Altro", titoli: "Titoli", oggetti: "Oggetti",
 };
 
 export function sourceLabel(rules: RulesConfig | null, key: string): string {

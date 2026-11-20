@@ -19,7 +19,7 @@
     return SOURCES.reduce((sum, s) => sum + (Number(row[s.key]) || 0), 0);
   }
 
-  /* ---------- Equipaggiamento stile MMORPG (proposta 20/11/2026) ----------
+  /* ---------- Equipaggiamento stile MMORPG (deciso 20/11/2026) ----------
      Slot del manichino. Un'arma a due mani occupa manoPrincipale e blocca manoSecondaria.
      Oggetto: { id, name, rarity, type, slot|null, twoHanded?, weight, qty, quality?,
                 stats: {STR: n, ...},          // bonus alle statistiche → colonna "Oggetti"
@@ -47,10 +47,36 @@
   /* Bonus che entrano nelle formule come "equipaggiamento" (moltiplicati dalla statistica), non sommati dopo */
   const EQUIP_FORMULA_KEYS = ["difesa", "difesaMagica", "blocco"];
 
-  /* Lo slot generico di un oggetto ("anello", "ninnolo") può andare in più slot del manichino */
+  /* Tipo di equipaggiamento → slot del manichino. Ricalca lo standard MMORPG (WoW "InventoryType"):
+     ogni oggetto dichiara un tipo, il tipo decide in quali slot può entrare.
+     - Una mano: mano principale o secondaria (doppia impugnatura);
+     - Mano principale: solo principale; Due mani: principale e blocca la secondaria;
+     - Scudo e "Tenuto in mano secondaria" (focus, tomo, simbolo sacro): solo secondaria;
+     - Anelli e ninnoli: uno qualsiasi dei due slot. */
+  const EQUIP_TYPES = {
+    elmo:           { label: "Elmo",               slots: ["testa"] },
+    amuleto:        { label: "Amuleto",            slots: ["collo"] },
+    spallacci:      { label: "Spallacci",          slots: ["spalle"] },
+    mantello:       { label: "Mantello",           slots: ["mantello"] },
+    corazza:        { label: "Corazza / Veste",    slots: ["torso"] },
+    bracciali:      { label: "Bracciali",          slots: ["polsi"] },
+    guanti:         { label: "Guanti",             slots: ["mani"] },
+    cintura:        { label: "Cintura",            slots: ["cintura"] },
+    gambali:        { label: "Gambali",            slots: ["gambe"] },
+    stivali:        { label: "Stivali",            slots: ["piedi"] },
+    anello:         { label: "Anello",             slots: ["anello1", "anello2"] },
+    ninnolo:        { label: "Ninnolo",            slots: ["ninnolo1", "ninnolo2"] },
+    unaMano:        { label: "Una mano",           slots: ["manoPrincipale", "manoSecondaria"] },
+    manoPrincipale: { label: "Mano principale",    slots: ["manoPrincipale"] },
+    dueMani:        { label: "Due mani",           slots: ["manoPrincipale"], twoHanded: true },
+    scudo:          { label: "Scudo",              slots: ["manoSecondaria"] },
+    tenuto:         { label: "Tenuto in mano secondaria", slots: ["manoSecondaria"] },
+  };
+  function equipType(item) { return (item && item.slot && EQUIP_TYPES[item.slot]) || null; }
+  function isTwoHanded(item) { return !!(item && (item.twoHanded || (equipType(item) || {}).twoHanded)); }
   function slotAccepts(slot, item) {
-    if (!item || !item.slot) return false;
-    return (slot.accepts || slot.key) === item.slot;
+    const t = equipType(item);
+    return !!t && t.slots.includes(slot.key);
   }
   function equippedItems(c) {
     const ids = new Set(Object.values((c && c.equipped) || {}).filter(Boolean));
@@ -74,6 +100,22 @@
     c.equip = equip;
     c.itemBonus = itemBonus;
   }
+  /* Doppia impugnatura (deciso 20/11/2026): libera per tutti, il danno della mano secondaria lo decide un talento.
+     PROPOSTA sul numero: senza talento la mano secondaria fa il 50% del danno; un talento "Doppia impugnatura"
+     (o "Ambidestria") porta la sua percentuale nell'effetto, es. "Mano secondaria al 75% del danno". */
+  const OFFHAND_BASE_PCT = 50;
+  function offHandPct(c) {
+    const tal = ((c && c.talents) || []).find((t) => /doppia impugnatura|ambidestr/i.test(t.name || ""));
+    const m = tal && /(\d+(?:[.,]\d+)?)\s*%/.exec(tal.effect || "");
+    return { pct: m ? Number(m[1].replace(",", ".")) : OFFHAND_BASE_PCT, talent: tal ? tal.name : null };
+  }
+  /* Arma nella mano secondaria (solo armi a una mano: scudi e oggetti tenuti non fanno danno) */
+  function offHandWeapon(c) {
+    const id = c && c.equipped && c.equipped.manoSecondaria;
+    const it = id && ((c.inventory || []).find((x) => x.id === id));
+    return it && it.weaponBase && (equipType(it) || {}) === EQUIP_TYPES.unaMano ? it : null;
+  }
+
   /* Requisiti non soddisfatti, es. ["Livello 80", "STR 200"] */
   function unmetRequirements(c, item) {
     const out = [];
@@ -100,7 +142,10 @@
     { key: "mp", label: "Mana (MP) max", fmt: "int", src: "Regole", calc: (t) => 50 + t.INT * 10, formula: "50 + INT×10" },
     { key: "sp", label: "Stamina (SP) max", fmt: "int", src: "Regole (confermata il 19/11/2026)", calc: (t) => 50 + (t.STR + t.DEX) * 5, formula: "50 + (STR+DEX)×5" },
     { key: "carico", label: "Carico massimo", fmt: "kg", src: "Regole", calc: (t) => 50 + t.STR * 2, formula: "50 + STR×2 kg" },
-    { key: "evasione", label: "Evasione", fmt: "pct", src: "Regole", calc: (t) => t.DEX / 20, formula: "DEX / 20 %" },
+    /* Con la Fortuna (LCK) l'Evasione è (DEX + LCK)/20, come nel foglio Excel di Dante */
+    { key: "evasione", label: "Evasione", fmt: "pct", src: "Regole + Excel (Fortuna)", calc: (t) => (t.DEX + (t.LCK || 0)) / 20, formula: "DEX / 20 %",
+      formulaFor: (c) => (hasStat(c, "LCK") ? "(DEX + LCK) / 20 %" : "DEX / 20 %"),
+      explain: (t, c) => (hasStat(c, "LCK") ? `(${t.DEX} + ${t.LCK}) / 20` : `${t.DEX} / 20`) },
     { key: "precisione", label: "Precisione", fmt: "pct", src: "Regole", calc: (t) => 70 + t.DEX / 10, formula: "70 + DEX/10 %" },
     { key: "regen", label: "Regen HP", fmt: "permin", src: "Regole", calc: (t) => t.VIT / 10, formula: "VIT / 10 HP/min" },
     { key: "bonusExp", label: "Bonus EXP", fmt: "pct", src: "Regole", calc: (t) => t.INT / 20, formula: "INT / 20 %" },
@@ -140,7 +185,16 @@
     { key: "velocita", label: "Velocità movimento", fmt: "pct", src: "Excel", calc: (t) => 100 + t.DEX / 5, formula: "100 + DEX/5 %" },
     { key: "resVeleni", label: "Res. veleni", fmt: "pct", src: "Excel", calc: (t) => t.VIT / 5, formula: "VIT / 5 %" },
     { key: "resElementi", label: "Res. elementi", fmt: "pct", src: "Excel", calc: (t) => t.VIT / 10, formula: "VIT / 10 %" },
+    /* Derivate delle statistiche avanzate: solo per chi ha quella statistica (formule dei fogli Excel) */
+    { key: "bonusFortuna", label: "Bonus Fortuna sui tiri", fmt: "dec", src: "Excel (Dante)", onlyIf: "LCK", calc: (t) => (t.LCK || 0) / 100, formula: "LCK / 100",
+      explain: (t) => `${t.LCK} / 100`, note: () => "Nel foglio di Dante la cella calcola LCK/100, ma la descrizione dice LCK/10: da confermare." },
+    { key: "kiCombat", label: "Regen KI in combattimento", fmt: "dec", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => t.VIT / 30, formula: "VIT / 30 a turno" },
+    { key: "kiFuori", label: "Regen KI fuori combattimento", fmt: "permin", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => t.VIT / 15, formula: "VIT / 15 al minuto" },
+    { key: "kiMeditazione", label: "Regen KI in meditazione", fmt: "permin", src: "Excel (Corax)", onlyIf: "KI", calc: (t) => t.VIT / 5, formula: "VIT / 5 al minuto" },
   ];
+  function hasStat(c, code) { return ((c && c.stats) || []).some((r) => r.code === code); }
+  /* Derivate che valgono per questo PG */
+  function derivedFor(c) { return DERIVED.filter((d) => !d.onlyIf || hasStat(c, d.onlyIf)); }
 
   /* Nucleo magico: divisore base 100, −10 per ogni grado di nucleo o talento apposito (minimo 10). */
   function magic(c) { return { nucleo: 0, talenti: 0, ...((c && c.magia) || {}) }; }
@@ -152,7 +206,7 @@
   function derived(char) {
     const t = totals(char);
     const out = {};
-    for (const d of DERIVED) out[d.key] = d.cap != null ? Math.min(d.cap, d.calc(t, char)) : d.calc(t, char);
+    for (const d of derivedFor(char)) out[d.key] = d.cap != null ? Math.min(d.cap, d.calc(t, char)) : d.calc(t, char);
     return out;
   }
   /* Testo della formula e calcolo con i valori del personaggio, per i tooltip */
@@ -160,7 +214,7 @@
   function explain(def, c) {
     const t = totals(c);
     if (def.explain) return def.explain(t, c);
-    return def.formula.replace(/ \(.*\)$/, "").replace(/ %$/, "").replace(/\b(STR|DEX|VIT|INT)\b/g, (m) => String(t[m] ?? m));
+    return def.formula.replace(/ \(.*\)$/, "").replace(/ %$/, "").replace(/\b(STR|DEX|VIT|INT|LCK|KI)\b/g, (m) => String(t[m] ?? m));
   }
 
   function fmt(value, kind) {
@@ -262,6 +316,6 @@
     toastTimer = setTimeout(() => { el.innerHTML = ""; }, 4000);
   }
 
-  S.rules = { BASE_STATS, SOURCES, SLOTS, EQUIP_FORMULA_KEYS, slotAccepts, equippedItems, applyEquipment, unmetRequirements, statTotal, totals, DERIVED, derived, formulaText, explain, magicDivisor, equip, fmt, CREATION, penaltyBand, LEVEL, freePointsTotal, deathPenalty, REGEN, GRADES, ROMAN, RARITIES, RARITY_SCALE, rarityKey, powerRank };
+  S.rules = { derivedFor, hasStat, BASE_STATS, SOURCES, SLOTS, EQUIP_TYPES, equipType, isTwoHanded, OFFHAND_BASE_PCT, offHandPct, offHandWeapon, EQUIP_FORMULA_KEYS, slotAccepts, equippedItems, applyEquipment, unmetRequirements, statTotal, totals, DERIVED, derived, formulaText, explain, magicDivisor, equip, fmt, CREATION, penaltyBand, LEVEL, freePointsTotal, deathPenalty, REGEN, GRADES, ROMAN, RARITIES, RARITY_SCALE, rarityKey, powerRank };
   S.ui = { esc, rarityChip, bar, win, toast };
 })();

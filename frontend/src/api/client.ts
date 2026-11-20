@@ -1,7 +1,7 @@
 // Client HTTP: token da localStorage, 401 -> logout, errori `detail` leggibili.
 import type {
   Campaign, Character, CharacterSummary, CombatActionType, CreateCharacterRequest, Issue, LoginResponse,
-  NewEffect, Npc, PreviewRequest, PreviewResponse, RulesConfig, User,
+  NewEffect, Npc, PreviewRequest, PreviewResponse, RulesConfig, SlotKey, User,
 } from "./types";
 
 const TOKEN_KEY = "statisfy-token";
@@ -106,6 +106,12 @@ export const api = {
   patchCharacter: (id: number, patch: Record<string, unknown>) => request<Character>("PATCH", `/characters/${enc(id)}`, patch),
   levelUp: (id: number) => request<Character>("POST", `/characters/${enc(id)}/level-up`),
   distribute: (id: number, alloc: Record<string, number>) => request<Character>("POST", `/characters/${enc(id)}/distribute`, { alloc }),
+
+  equip: (id: number, itemId: string, slot?: SlotKey) =>
+    request<Character>("POST", `/characters/${enc(id)}/equipment/equip`, slot ? { item_id: itemId, slot } : { item_id: itemId }),
+  unequip: (id: number, slot: SlotKey) => request<Character>("POST", `/characters/${enc(id)}/equipment/unequip`, { slot }),
+  moveSlot: (id: number, fromSlot: SlotKey, toSlot: SlotKey) =>
+    request<Character>("POST", `/characters/${enc(id)}/equipment/move`, { from_slot: fromSlot, to_slot: toSlot }),
 
   combatAction: (id: number, type: CombatActionType, amount: number) =>
     request<Character>("POST", `/characters/${enc(id)}/combat/action`, { type, amount }),

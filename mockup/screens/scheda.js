@@ -247,7 +247,7 @@
     const R = S.rules, esc = S.ui.esc;
     const ib = c.itemBonus || {};
     const t = R.totals(c);
-    const cells = R.DERIVED.map((def) => {
+    const cells = R.derivedFor(c).map((def) => {
       const base = d[def.key];
       const bonus = Number(ib[def.key]) || 0;
       const total = def.cap != null ? Math.min(def.cap, base + bonus) : base + bonus;
@@ -341,6 +341,7 @@
   function tabInventario(c, d) {
     const esc = S.ui.esc;
     const list = arr(c, "inventory");
+    if (S.inv && S.inv.hasDemo(c)) return '<div id="sc-inv-mount"></div>';
     if (!list.length) return empty();
     const tot = list.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.weight) || 0), 0);
     const kg = (v) => `${(Math.round(v * 10) / 10).toLocaleString("it-IT")} kg`;
@@ -454,6 +455,10 @@
       render(root, state);
       if (focusSel) { const el = root.querySelector(focusSel); if (el) el.focus({ preventScroll: true }); }
     };
+
+    /* Tab Inventario: manichino e borsa con drag & drop; ogni cambio ridisegna la scheda (stats e derivate) */
+    const invMount = root.querySelector("#sc-inv-mount");
+    if (invMount) S.inv.mount(invMount, state, { onChange: rerender });
 
     root.onclick = (e) => {
       const resBtn = e.target.closest("[data-res]");

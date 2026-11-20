@@ -5,7 +5,8 @@ from app.seed import KELVIN
 
 
 def kelvin():
-    return {k: KELVIN[k] for k in ("stats", "equip", "magia", "item_bonus")}
+    """Kelvin con l'equipaggiamento applicato (Thanatos a due mani + Spalla del Simbionte)."""
+    return rules.apply_equipment({k: KELVIN[k] for k in ("stats", "equip", "magia", "item_bonus", "inventory", "level")})
 
 
 def by_key(c):
