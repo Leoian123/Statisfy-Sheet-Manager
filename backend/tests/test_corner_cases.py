@@ -90,7 +90,7 @@ def test_long_strings(client, p1):
     assert client.post(url, headers=p1, json={"name": "x" * 61, "kind": "bad", "turns": 1}).status_code == 422
     r = client.post(url, headers=p1, json={"name": "X", "kind": "bad", "turns": 1, "text": "y" * 100_000})
     assert r.status_code == 422
-    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"reason": "z" * 10_000})
+    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"call": "sopra", "reason": "z" * 10_000})
     assert r.status_code == 422
 
 
@@ -108,7 +108,7 @@ def test_body_size_limit(client, master, p1):
 def test_unicode_and_emoji(client, master, p1):
     kid = cid(client, p1, "Kelvin")
     reason = "Tiro 🎲 per l'Ælfwine — 测试 \u200b ‮gnirts"
-    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"reason": reason})
+    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"call": "sopra", "reason": reason})
     assert r.status_code == 201 and r.json()["reason"] == reason
     n = client.post("/api/npcs", headers=master, json={"name": "Ñandú 🐉", "race": "Drago"}).json()
     assert n["name"] == "Ñandú 🐉"
@@ -148,7 +148,7 @@ def test_wrong_types_and_nonexistent_ids(client, master, p1):
     assert client.patch("/api/issues/999999", headers=master, json={"resolved": True}).status_code == 404
     assert client.delete("/api/table/requests/999999", headers=master).status_code == 404
     assert client.post("/api/table/requests", headers=master, json={"char_id": 999999, "what": "xx"}).status_code == 404
-    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"request_id": 999999})
+    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"call": "sopra", "request_id": 999999})
     assert r.status_code == 201 and r.json()["request_id"] is None
     assert client.get("/api/table/rolls?limit=100000", headers=p1).status_code == 422
     assert client.get("/api/table/rolls?limit=0", headers=p1).status_code == 422

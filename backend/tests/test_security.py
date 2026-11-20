@@ -199,7 +199,7 @@ def _player_calls(eric):
         ("POST", f"{base}/equipment/equip", {"item_id": "x"}),
         ("POST", f"{base}/equipment/unequip", {"slot": "testa"}),
         ("POST", f"{base}/equipment/move", {"from_slot": "anello1", "to_slot": "anello2"}),
-        ("POST", f"/api/table/characters/{eric}/rolls", {"reason": "furto"}),
+        ("POST", f"/api/table/characters/{eric}/rolls", {"call": "sopra", "reason": "furto"}),
     ]
 
 
@@ -225,7 +225,7 @@ def test_nonexistent_character_same_as_foreign(client, p1):
 def test_player_rolls_and_requests_isolation(client, master, p1, p2):
     eric = cid(client, master, "Eric")
     kelvin = cid(client, master, "Kelvin")
-    r = client.post(f"/api/table/characters/{eric}/rolls", headers=p2, json={"reason": "di Eric"})
+    r = client.post(f"/api/table/characters/{eric}/rolls", headers=p2, json={"call": "sopra", "reason": "di Eric"})
     assert r.status_code == 201
     secret = client.post("/api/table/rolls", headers=master, json={"reason": "segreto", "secret": True}).json()
     public = client.post("/api/table/rolls", headers=master, json={"reason": "pubblico"}).json()
@@ -238,7 +238,7 @@ def test_player_rolls_and_requests_isolation(client, master, p1, p2):
     # richieste: il giocatore vede solo le sue e non può risolvere quelle di un altro PG
     q = client.post("/api/table/requests", headers=master, json={"char_id": eric, "what": "Percezione"}).json()
     assert all(x["char_id"] == kelvin for x in client.get("/api/table/requests", headers=p1).json())
-    r = client.post(f"/api/table/characters/{kelvin}/rolls", headers=p1, json={"request_id": q["id"]})
+    r = client.post(f"/api/table/characters/{kelvin}/rolls", headers=p1, json={"call": "sopra", "request_id": q["id"]})
     assert r.status_code == 201 and r.json()["request_id"] is None
     still = next(x for x in client.get("/api/table/requests", headers=master).json() if x["id"] == q["id"])
     assert still["status"] == "aperta"
@@ -309,7 +309,7 @@ XSS = ['<script>alert(1)</script>', '"><img src=x onerror=alert(1)>', "javascrip
 def test_stored_xss_payloads_are_returned_as_inert_json(client, master, p1):
     kid = cid(client, p1, "Kelvin")
     for payload in XSS:
-        r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"reason": payload[:120]})
+        r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"call": "sopra", "reason": payload[:120]})
         assert r.status_code == 201 and r.json()["reason"] == payload[:120]
         assert r.headers["content-type"].startswith("application/json")
         r = client.post(f"/api/characters/{kid}/combat/effects", headers=p1,
@@ -354,7 +354,7 @@ def test_frontend_has_no_html_sinks():
 
 def test_roll_reason_length_limit(client, p1):
     kid = cid(client, p1, "Kelvin")
-    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"reason": "x" * 121})
+    r = client.post(f"/api/table/characters/{kid}/rolls", headers=p1, json={"call": "sopra", "reason": "x" * 121})
     assert r.status_code == 422
     with SessionLocal() as db:
         assert all(len(x.reason) <= 120 for x in db.scalars(select(Roll)))

@@ -100,8 +100,8 @@ def test_double_answer_to_roll_request_resolves_once(client, p1, master, monkeyp
     q = client.post("/api/table/requests", headers=master, json={"char_id": kid, "what": "Percezione"}).json()
     barrier_wrap(monkeypatch, table, "_now")
     url = f"/api/table/characters/{kid}/rolls"
-    res = run_parallel(lambda c: c.post(url, headers=p1, json={"request_id": q["id"], "reason": "a"}),
-                       lambda c: c.post(url, headers=p1, json={"request_id": q["id"], "reason": "b"}))
+    res = run_parallel(lambda c: c.post(url, headers=p1, json={"call": "sopra", "request_id": q["id"], "reason": "a"}),
+                       lambda c: c.post(url, headers=p1, json={"call": "sotto", "request_id": q["id"], "reason": "b"}))
     monkeypatch.undo()
     assert all(r.status_code in (201, 409) for r in res), [r.text for r in res]
     linked = [r.json() for r in res if r.status_code == 201 and r.json()["request_id"] == q["id"]]
@@ -146,7 +146,7 @@ def test_sqlite_concurrent_writes(client):
         def call(c):
             out = []
             for i in range(8):
-                out.append(c.post(f"/api/table/characters/{ids[u]}/rolls", headers=heads[u], json={"reason": f"{u}-{i}"}).status_code)
+                out.append(c.post(f"/api/table/characters/{ids[u]}/rolls", headers=heads[u], json={"call": "sopra", "reason": f"{u}-{i}"}).status_code)
                 out.append(c.post(f"/api/characters/{ids[u]}/combat/end-turn", headers=heads[u]).status_code)
             return out
         return call
