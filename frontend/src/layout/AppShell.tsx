@@ -42,6 +42,7 @@ function BrandMenu(props: {
   showOwner: boolean;
   onCreate: () => void;
   onOpen: (id: number) => void;
+  onAccount: () => void;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -94,6 +95,7 @@ function BrandMenu(props: {
             </>
           )}
           <div className="brand-sep" />
+          <button type="button" role="menuitem" className="brand-item" onClick={pick(props.onAccount)}>Il mio account</button>
           <button type="button" role="menuitem" className="brand-item" onClick={pick(props.onLogout)}>Esci</button>
         </div>
       )}
@@ -172,6 +174,7 @@ export function AppShell() {
           showOwner={isMaster}
           onCreate={() => navigate("/crea")}
           onOpen={(id) => navigate(`/personaggi/${id}`)}
+          onAccount={() => navigate("/account")}
           onLogout={logout}
         />
         {chars && chars.length > 0 && (
@@ -191,7 +194,7 @@ export function AppShell() {
           </label>
         )}
         <span className="user">
-          <span className="name">{user?.display_name}</span>
+          <NavLink to="/account" className="name" title="Il mio account: nome visibile, password, sessioni">{user?.display_name}</NavLink>
           <span className="chip muted role">{isMaster ? "Master" : "Giocatore"}</span>
           <button type="button" className="btn ghost" onClick={logout}>Esci</button>
         </span>
@@ -217,6 +220,7 @@ export function AppShell() {
               <NavLink to="/master/plancia">Plancia di comando</NavLink>
               <NavLink to="/master" end>Area Master</NavLink>
               <NavLink to="/master/forgia">Forgia del Master</NavLink>
+              <NavLink to="/master/amministrazione">Amministrazione</NavLink>
             </>
           )}
           <div className="nav-sep" />

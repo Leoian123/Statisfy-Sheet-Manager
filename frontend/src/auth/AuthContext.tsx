@@ -8,6 +8,10 @@ interface AuthState {
   checking: boolean;
   login: (username: string, password: string) => Promise<User>;
   logout: () => void;
+  /** Dopo il cambio password: il server dà un token nuovo (i vecchi sono revocati). */
+  replaceSession: (token: string, user: User) => void;
+  /** Aggiorna i dati dell'utente (es. nome visibile) senza toccare il token. */
+  setCurrentUser: (user: User) => void;
 }
 
 const Ctx = createContext<AuthState | null>(null);
@@ -57,7 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.user;
   }, []);
 
-  const value = useMemo(() => ({ user, checking, login, logout }), [user, checking, login, logout]);
+  const replaceSession = useCallback((token: string, u: User) => { setToken(token); setUser(u); }, []);
+  const setCurrentUser = useCallback((u: User) => setUser(u), []);
+
+  const value = useMemo(() => ({ user, checking, login, logout, replaceSession, setCurrentUser }),
+    [user, checking, login, logout, replaceSession, setCurrentUser]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

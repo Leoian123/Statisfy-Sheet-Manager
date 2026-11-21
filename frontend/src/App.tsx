@@ -16,6 +16,8 @@ import { Plancia } from "./pages/Plancia";
 import { PlanciaGiocatore } from "./pages/PlanciaGiocatore";
 import { Diario } from "./pages/Diario";
 import { Richieste } from "./pages/Richieste";
+import { Account, ForcedPassword } from "./pages/Account";
+import { Amministrazione } from "./pages/Amministrazione";
 
 export function App() {
   return (
@@ -38,6 +40,7 @@ function Gate() {
       </Routes>
     );
   }
+  if (user.must_change_password) return <ForcedPassword />;
   return (
     <AppDataProvider key={user.id}>
       <Routes>
@@ -51,9 +54,11 @@ function Gate() {
           <Route path="/crea" element={<Crea />} />
           <Route path="/diario" element={<Diario />} />
           <Route path="/richieste" element={<Richieste />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/master" element={<MasterOnly><Master /></MasterOnly>} />
           <Route path="/master/forgia" element={<MasterOnly><Forgia /></MasterOnly>} />
           <Route path="/master/plancia" element={<MasterOnly><Plancia /></MasterOnly>} />
+          <Route path="/master/amministrazione" element={<MasterOnly><Amministrazione /></MasterOnly>} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

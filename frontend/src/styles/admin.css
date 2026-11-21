@@ -1,0 +1,75 @@
+/* Amministrazione e «Il mio account». Solo token del tema (base.css): chiaro e scuro.
+   PC: account a sinistra, personaggi e registro a destra; ≤ 980px una colonna; telefono: bersagli tattili da 44px. */
+.ad-root { display: grid; gap: 20px; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; min-width: 0; }
+.ad-main, .ad-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.ad-mono { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.ad-sum { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.ad-search { width: 100%; }
+
+/* Elenco account: righe compatte, dettagli al passaggio del mouse (title) e nel pannello aperto */
+.ad-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ad-li { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); }
+.ad-li.is-open { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.ad-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto 44px 64px 12px; gap: 10px; align-items: center;
+  width: 100%; padding: 7px 10px; background: transparent; border: 0; color: var(--fg); text-align: left; cursor: pointer;
+  border-radius: var(--radius);
+}
+.ad-row:hover { background: var(--violet-soft); }
+.ad-row.is-off .ad-row-name { opacity: 0.55; text-decoration: line-through; }
+.ad-row-main { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.ad-row-name { font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ad-row-user { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ad-row-pg, .ad-row-seen { text-align: right; white-space: nowrap; }
+.ad-row .caret { color: var(--muted); font-style: normal; transition: transform .12s ease; }
+.ad-row[aria-expanded="true"] .caret { transform: rotate(180deg); }
+
+/* Pannelli: nuovo account e gestione */
+.ad-panel { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-top: 1px dashed var(--line); min-width: 0; }
+form.ad-panel { border: 1px solid var(--violet); border-radius: var(--radius); background: var(--panel-2); }
+.ad-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ad-seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+.ad-check { gap: 8px; cursor: pointer; }
+.ad-check input { width: 16px; height: 16px; accent-color: var(--gold); }
+.ad-meta { display: flex; flex-direction: column; gap: 4px; }
+.ad-acts { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+
+/* Credenziali appena create: mostrate una volta */
+.ad-temp {
+  display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--gold);
+  border-radius: var(--radius); background: var(--gold-soft);
+}
+.ad-cred { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 0; align-items: baseline; }
+.ad-cred dt { color: var(--muted); font-size: var(--fs-xs); }
+.ad-cred dd { margin: 0; }
+.ad-pw { font-size: 1.15em; font-weight: 700; letter-spacing: 0.06em; color: var(--fg); user-select: all; }
+
+/* Assegnazione dei personaggi */
+.ad-chars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ad-char {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 170px); gap: 10px; align-items: center;
+  padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2);
+}
+.ad-char-main { display: flex; flex-direction: column; min-width: 0; }
+.ad-char-name { font-weight: 600; font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ad-char-main .xs { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ad-owner { width: 100%; min-width: 0; padding-top: 4px; padding-bottom: 4px; }
+
+/* Registro */
+.ad-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ad-log li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; align-items: baseline; cursor: default; }
+.ad-log-when { white-space: nowrap; }
+.ad-log-what { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* Il mio account */
+.ad-account { display: flex; flex-direction: column; gap: 20px; max-width: 560px; }
+
+@media (max-width: 1200px) { .ad-root { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .ad-row { grid-template-columns: minmax(0, 1fr) auto 52px 12px; min-height: 44px; }
+  .ad-hide-sm { display: none; }
+  .ad-grid { grid-template-columns: minmax(0, 1fr); }
+  .ad-root .btn, .ad-account .btn, .ad-root .input, .ad-account .input, .ad-seg button, .ad-check { min-height: 44px; }
+  .ad-acts .btn { flex: 1 1 calc(50% - 8px); }
+  .ad-char { grid-template-columns: minmax(0, 1fr) minmax(0, 150px); }
+}

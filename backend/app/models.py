@@ -15,6 +15,22 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(10))
     # Cresce a ogni «Esci da tutti i dispositivi» e cambio password: i token con un valore diverso non valgono più
     token_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    # Amministrazione: account disattivati (niente login), password provvisoria da cambiare, date (ISO, "" se ignote)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="1")
+    must_change_password: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+    created_at: Mapped[str] = mapped_column(String(40), nullable=False, default="", server_default="")
+    last_login_at: Mapped[str] = mapped_column(String(40), nullable=False, default="", server_default="")
+
+
+class AdminLog(Base):
+    """Registro delle operazioni di amministrazione (chi ha fatto cosa a quale account). Tenute le ultime 1.000."""
+    __tablename__ = "admin_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    at: Mapped[str] = mapped_column(String(40))
+    actor: Mapped[str] = mapped_column(String(100))
+    action: Mapped[str] = mapped_column(String(40))
+    target: Mapped[str] = mapped_column(String(100))
+    detail: Mapped[str] = mapped_column(String(300), default="")
 
 
 class RevokedToken(Base):

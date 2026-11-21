@@ -17,7 +17,8 @@ table.t td { overflow-wrap: anywhere; }
 
 /* ---------- Topbar extra ---------- */
 .topbar .user { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); }
-.topbar .user .name { color: var(--fg); font-weight: 600; }
+.topbar .user .name { color: var(--fg); font-weight: 600; text-decoration: none; }
+.topbar .user a.name:hover { color: var(--gold); text-decoration: underline; }
 .topbar .user .role { font-size: var(--fs-xs); }
 .topbar .char-pick { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .topbar .char-pick select { width: auto; max-width: 220px; padding: 5px 8px; }

@@ -206,7 +206,7 @@ def test_logout_all_revokes_every_token(client):
 def test_password_change_revokes_tokens(client, monkeypatch):
     from app import users
     a = login(client, "giocatore1")
-    monkeypatch.setattr(users, "ask_password", lambda: "nuova-password-lunga")
+    monkeypatch.setattr(users, "ask_password", lambda *_: "nuova-password-lunga")
     assert users.main(["passwd", "giocatore1"]) == 0
     assert client.get("/api/auth/me", headers=a).status_code == 401
 

@@ -3,6 +3,7 @@
 Uso (dalla cartella backend):
   .venv\\Scripts\\python -m app.users create NOME [--role master|player] [--display "Nome visibile"]
   .venv\\Scripts\\python -m app.users passwd NOME
+  .venv\\Scripts\\python -m app.users activate NOME   (riattiva un account disattivato)
   .venv\\Scripts\\python -m app.users list
 
 La password si inserisce a terminale (input nascosto) e viene salvata solo come hash bcrypt.
@@ -11,20 +12,22 @@ import argparse
 import getpass
 import sys
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from .auth import hash_password
-from .db import Base, SessionLocal, engine
+from . import accounts
+from .db import Base, SessionLocal, engine, ensure_columns
 from .models import User
 
-MIN_PASSWORD = 6
+MIN_PASSWORD = accounts.PASSWORD_MIN
 
 
-def ask_password() -> str:
+def ask_password(username: str = "") -> str:
     while True:
         pw = getpass.getpass("Password: ")
-        if len(pw) < MIN_PASSWORD:
-            print(f"La password deve avere almeno {MIN_PASSWORD} caratteri.")
+        try:
+            accounts.check_password(pw, username)
+        except accounts.AccountError as e:
+            print(e)
             continue
         if getpass.getpass("Ripeti la password: ") != pw:
             print("Le password non coincidono, riprova.")
@@ -33,20 +36,18 @@ def ask_password() -> str:
 
 
 def cmd_create(args) -> int:
-    name = args.username.strip()
-    if not name or len(name) > 50:
-        print("Nome utente non valido (1–50 caratteri).")
+    try:
+        name = accounts.check_username(args.username)
+    except accounts.AccountError as e:
+        print(e)
         return 1
     with SessionLocal() as db:
-        if db.scalar(select(User).where(User.username == name)):
-            print(f"L'utente '{name}' esiste già.")
+        if accounts.username_taken(db, name):
+            print(f"Esiste già un account '{name}' (anche con maiuscole diverse).")
             return 1
-        similar = db.scalar(select(User).where(func.lower(User.username) == name.lower()))
-        if similar:
-            print(f"Nota: esiste già '{similar.username}'. Il login distingue maiuscole e minuscole.")
-        pw = ask_password()
-        user = User(username=name, password_hash=hash_password(pw), display_name=args.display or name, role=args.role)
-        db.add(user)
+        pw = ask_password(name)
+        user = accounts.create(db, name, pw, args.role, args.display or name)
+        accounts.log(db, None, "crea", user.username, f"ruolo {args.role}")
         db.commit()
         print(f"Creato utente '{name}' (ruolo {args.role}, id {user.id}).")
     return 0
@@ -58,21 +59,37 @@ def cmd_passwd(args) -> int:
         if not user:
             print(f"Utente '{args.username}' non trovato.")
             return 1
-        user.password_hash = hash_password(ask_password())
-        user.token_version = (user.token_version or 0) + 1  # i login fatti con la vecchia password non valgono più
+        accounts.set_password(user, ask_password(user.username))  # i login con la vecchia password non valgono più
+        accounts.log(db, None, "password", user.username, "cambiata da riga di comando")
         db.commit()
         print(f"Password di '{user.username}' aggiornata.")
+    return 0
+
+
+def cmd_activate(args) -> int:
+    """Recupero: riattiva un account (es. l'unico Master disattivato per errore)."""
+    with SessionLocal() as db:
+        user = db.scalar(select(User).where(User.username == args.username))
+        if not user:
+            print(f"Utente '{args.username}' non trovato.")
+            return 1
+        user.active = True
+        accounts.log(db, None, "modifica", user.username, "riattivato da riga di comando")
+        db.commit()
+        print(f"Account '{user.username}' attivo.")
     return 0
 
 
 def cmd_list(_args) -> int:
     with SessionLocal() as db:
         for u in db.scalars(select(User).order_by(User.id)):
-            print(f"{u.id:>3}  {u.username:<20} {u.role:<7} {u.display_name}")
+            state = "" if u.active else "  (disattivato)"
+            print(f"{u.id:>3}  {u.username:<20} {u.role:<7} {u.display_name}{state}")
     return 0
 
 
 def main(argv=None) -> int:
+    ensure_columns(engine)  # DB creato da una versione precedente
     Base.metadata.create_all(engine)
     p = argparse.ArgumentParser(prog="python -m app.users", description="Gestione utenti STATISFY")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -84,6 +101,9 @@ def main(argv=None) -> int:
     pw = sub.add_parser("passwd", help="cambia la password di un utente")
     pw.add_argument("username")
     pw.set_defaults(func=cmd_passwd)
+    ac = sub.add_parser("activate", help="riattiva un account disattivato")
+    ac.add_argument("username")
+    ac.set_defaults(func=cmd_activate)
     ls = sub.add_parser("list", help="elenca gli utenti")
     ls.set_defaults(func=cmd_list)
     args = p.parse_args(argv)

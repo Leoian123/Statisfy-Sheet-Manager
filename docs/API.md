@@ -392,6 +392,30 @@ Il giocatore vede solo le sue; il Master tutte. Chiusa da più di `STATISFY_TICK
   `promote_issue` su una `regola` risolta crea (una volta) una questione delle regole decisa → `issue_id`.
 - `POST /api/tickets/{id}/archive` (Master, solo chiuse) e `POST /api/tickets/rotate` (Master) → `{archived, archive_days}`.
 
+## Account e amministrazione
+
+- `User` = `{id, username, display_name, role, must_change_password}`. Con `must_change_password` (password provvisoria
+  data dal Master) ogni rotta risponde 403 tranne `GET/PATCH /api/auth/me`, `POST /api/auth/password` e le uscite.
+- Account disattivato: login 403 «Account disattivato» (solo con la password giusta), token esistenti 401.
+- `POST /api/auth/password` `{current_password, new_password}` → `{token, user}`: chiude le altre sessioni e dà un token
+  nuovo a questa. Password 8–72 byte, diversa dal nome utente e dall'attuale; tentativi sbagliati contano nel limite del login.
+- `PATCH /api/auth/me` `{display_name}` → `User` (il nome utente lo cambia solo il Master).
+
+Solo Master (`/api/admin`, 403 altrimenti):
+- `GET /admin/users` → `AdminUser[]` = `User` + `{active, created_at, last_login_at, is_self, characters: [{id, name, classe, level}]}`.
+- `POST /admin/users` `{username, display_name?, role, password?}` → 201 `{user, temporary_password?}`. Nome utente 3–30 tra
+  lettere, cifre, `. _ -`, unico senza distinguere maiuscole. Senza `password` il server ne genera una provvisoria, restituita
+  una sola volta; in ogni caso al primo accesso va cambiata.
+- `PATCH /admin/users/{id}` `{username?, display_name?, role?, active?}`. Cambio di ruolo e disattivazione chiudono le sessioni
+  dell'account. 409 se si toglierebbe l'ultimo Master attivo o se il Master cambia ruolo o disattiva se stesso.
+- `POST /admin/users/{id}/reset-password` → `{user, temporary_password}` (non su se stessi); `POST /admin/users/{id}/logout-all` → 204.
+- `DELETE /admin/users/{id}` → 204 solo per account senza personaggi, tiri, pagine di diario e richieste (409 altrimenti:
+  si disattiva). Un nuovo account che riceve lo stesso id non eredita i token del vecchio.
+- `PATCH /admin/characters/{id}/owner` `{owner_id}` → `{id, name, owner_id, owner_name}`: il PG passa a un altro account attivo
+  (409 se disattivato); il vecchio giocatore non lo vede più.
+- `GET /admin/log?limit=1..200` → `[{id, at, actor, action, target, detail}]`: registro delle operazioni (ultime 1.000,
+  mai password).
+
 ## Servizio e produzione
 
 - `GET /api/health` → `{"status": "ok"}` senza login. Con `STATISFY_ENV=production` niente `/docs` e `/openapi.json`. Vedi `docs/DEPLOY.md`.

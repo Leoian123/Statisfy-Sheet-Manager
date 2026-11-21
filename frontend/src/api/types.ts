@@ -7,6 +7,8 @@ export interface User {
   username: string;
   display_name: string;
   role: Role;
+  /** Password provvisoria data dal Master: finché non la cambia, l'utente vede solo la schermata di cambio. */
+  must_change_password?: boolean;
 }
 
 export interface LoginResponse {

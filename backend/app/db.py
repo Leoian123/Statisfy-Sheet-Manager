@@ -30,6 +30,11 @@ _ADDED_COLUMNS = [
     ("rolls", "crit", "ALTER TABLE rolls ADD COLUMN crit VARCHAR(15)"),
     # revoca dei token (esci da tutti i dispositivi, cambio password)
     ("users", "token_version", "ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0"),
+    # amministrazione degli account
+    ("users", "active", "ALTER TABLE users ADD COLUMN active BOOLEAN NOT NULL DEFAULT 1"),
+    ("users", "must_change_password", "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT 0"),
+    ("users", "created_at", "ALTER TABLE users ADD COLUMN created_at VARCHAR(40) NOT NULL DEFAULT ''"),
+    ("users", "last_login_at", "ALTER TABLE users ADD COLUMN last_login_at VARCHAR(40) NOT NULL DEFAULT ''"),
 ]
 
 

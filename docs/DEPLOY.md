@@ -40,7 +40,8 @@ STATISFY_ENV=production STATISFY_SECRET=... STATISFY_DB_URL=sqlite:////srv/stati
 
 - **Un solo worker**: SQLite e il limitatore dei tentativi di login vivono nel processo.
 - Con `STATISFY_ENV=production` e il DB vuoto **non** vengono creati dati né utenti di esempio: crea il Master con
-  `python -m app.users create <nome> --role master` (password chiesta a terminale) e i giocatori con `--role player`.
+  `python -m app.users create <nome> --role master` (password chiesta a terminale). I giocatori li crea poi il Master
+  dalla pagina **Amministrazione** (password provvisoria da cambiare al primo accesso).
   Non copiare in produzione un DB di sviluppo (password = nome utente).
 - Healthcheck: `GET /api/health` → `{"status": "ok"}`.
 
@@ -66,10 +67,15 @@ statisfy.example.it {
 SQLite: copia a caldo con `sqlite3 statisfy.db ".backup 'statisfy-$(date +%F).db'"` una volta al giorno, tenendo
 almeno 14 copie. Prova il ripristino avviando l'app su una copia con `STATISFY_DB_URL`.
 
-## 7. Sessioni
+## 7. Account e sessioni
 
-- «Esci» revoca subito il token di quel dispositivo; `POST /api/auth/logout-all` (esci ovunque) e il cambio password
-  (`python -m app.users passwd <nome>`) invalidano tutti i token dell'utente. I token durano 12 ore.
+- Pagina **Amministrazione** (solo Master): crea account, cambia ruoli e nomi, genera password provvisorie, disattiva,
+  disconnette, assegna i personaggi; ogni operazione finisce nel registro. Resta sempre almeno un Master attivo.
+- «Il mio account» (ogni utente): nome visibile, cambio password, «Esci da tutti i dispositivi».
+- «Esci» revoca subito il token di quel dispositivo; esci ovunque, cambio password, password provvisoria, cambio di ruolo e
+  disattivazione invalidano tutti i token dell'utente. I token durano 12 ore.
+- Recupero da terminale (server spento o acceso): `python -m app.users passwd <nome>` e `python -m app.users activate <nome>`
+  (es. Master disattivato per errore). `python -m app.users list` mostra anche gli account disattivati.
 
 ## 8. Limiti noti
 

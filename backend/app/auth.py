@@ -8,7 +8,7 @@ import bcrypt
 import secrets
 
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -100,10 +100,16 @@ def create_token(user: User) -> str:
 
 
 def user_out(u: User) -> dict:
-    return {"id": u.id, "username": u.username, "display_name": u.display_name, "role": u.role}
+    return {"id": u.id, "username": u.username, "display_name": u.display_name, "role": u.role,
+            "must_change_password": bool(u.must_change_password)}
 
 
-def current_user(cred: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db)) -> User:
+# Con una password provvisoria si può solo leggere il proprio profilo, cambiarla o uscire
+_ALLOWED_BEFORE_CHANGE = {"/api/auth/me", "/api/auth/password", "/api/auth/logout", "/api/auth/logout-all"}
+
+
+def current_user(request: Request, cred: HTTPAuthorizationCredentials | None = Depends(bearer),
+                 db: Session = Depends(get_db)) -> User:
     if cred is None or cred.scheme.lower() != "bearer":
         raise HTTPException(401, "Accesso richiesto.", headers={"WWW-Authenticate": "Bearer"})
     try:
@@ -118,6 +124,10 @@ def current_user(cred: HTTPAuthorizationCredentials | None = Depends(bearer), db
     jti = payload.get("jti")
     if payload.get("tv", 0) != (user.token_version or 0) or (jti and db.get(RevokedToken, str(jti)) is not None):
         raise HTTPException(401, "Sessione chiusa: accedi di nuovo.", headers={"WWW-Authenticate": "Bearer"})
+    if not user.active:
+        raise HTTPException(401, "Account disattivato: chiedi al Master.", headers={"WWW-Authenticate": "Bearer"})
+    if user.must_change_password and request.url.path not in _ALLOWED_BEFORE_CHANGE:
+        raise HTTPException(403, "Prima di continuare scegli una nuova password.")
     return user
 
 

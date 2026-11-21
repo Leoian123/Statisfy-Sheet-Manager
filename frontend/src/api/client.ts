@@ -99,6 +99,9 @@ export const api = {
   me: () => request<User>("GET", "/auth/me"),
   logout: () => request<void>("POST", "/auth/logout"),
   logoutAll: () => request<void>("POST", "/auth/logout-all"),
+  changePassword: (current_password: string, new_password: string) =>
+    request<LoginResponse>("POST", "/auth/password", { current_password, new_password }),
+  updateProfile: (display_name: string) => request<User>("PATCH", "/auth/me", { display_name }),
 
   rules: () => request<RulesConfig>("GET", "/rules"),
   preview: (req: PreviewRequest) => request<PreviewResponse>("POST", "/rules/preview", req),

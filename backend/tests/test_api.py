@@ -8,7 +8,8 @@ def kelvin_id(client, h):
 def test_login_ok_ko(client):
     r = client.post("/api/auth/login", json={"username": "master", "password": "master"})
     assert r.status_code == 200
-    assert r.json()["user"] == {"id": 1, "username": "master", "display_name": "Il Narratore", "role": "master"}
+    assert r.json()["user"] == {"id": 1, "username": "master", "display_name": "Il Narratore", "role": "master",
+                                 "must_change_password": False}
     tok = r.json()["token"]
     assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {tok}"}).json()["role"] == "master"
     r = client.post("/api/auth/login", json={"username": "master", "password": "x"})
