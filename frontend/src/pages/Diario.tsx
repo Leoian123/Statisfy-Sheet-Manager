@@ -178,8 +178,8 @@ export function Diario() {
             </label>
             {allTags.length > 0 && (
               <div className="field">
-                <span className="label">Tag</span>
-                <div className="dj-tags" role="group" aria-label="Filtra per tag">
+                <span className="label" id="dj-f-tag">Tag</span>
+                <div className="dj-tags" role="group" aria-labelledby="dj-f-tag">
                   {allTags.map((t) => (
                     <button key={t} type="button" className="dj-tag" aria-pressed={tag === t} onClick={() => setTag(tag === t ? null : t)}>#{t}</button>
                   ))}
@@ -433,8 +433,8 @@ function Composer({ seed, entry, chars, tagsSuggest, heading, stash, onSaved, on
 
   const tagsLeft = LIMITS.tags - tags.length;
   return (
-    <form className="dj-comp" onSubmit={(ev) => { ev.preventDefault(); void save(); }} onKeyDown={onKey} aria-label={heading}>
-      <p className="label">{heading}</p>
+    <form className="dj-comp" onSubmit={(ev) => { ev.preventDefault(); void save(); }} onKeyDown={onKey} aria-labelledby={`dj-h-${uid}`}>
+      <p className="label" id={`dj-h-${uid}`}>{heading}</p>
       {stash != null && (
         <details className="dj-stash" open>
           <summary className="small">La tua versione non salvata (copiala prima di riscrivere)</summary>
@@ -456,8 +456,8 @@ function Composer({ seed, entry, chars, tagsSuggest, heading, stash, onSaved, on
           </select>
         </label>
         <div className="field">
-          <span className="label">Visibilità</span>
-          <div className="seg dj-seg" role="group" aria-label="Visibilità">
+          <span className="label" id={`dj-vis-${uid}`}>Visibilità</span>
+          <div className="seg dj-seg" role="group" aria-labelledby={`dj-vis-${uid}`}>
             {(["privato", "gruppo"] as const).map((v) => (
               <button key={v} type="button" aria-pressed={vis === v} title={VIS_HINT[v]} onClick={() => setVis(v)}>
                 {v === "privato" ? "Privata" : "Gruppo"}
@@ -492,10 +492,10 @@ function Composer({ seed, entry, chars, tagsSuggest, heading, stash, onSaved, on
         </div>
       </div>
 
-      <div className="field">
+      <div className="field" role="group" aria-labelledby={`dj-att-${uid}`}>
         <div className="dj-att-head">
-          <span className="label">Allegati <span className="muted num">{picked.length}/{LIMITS.attachments}</span></span>
-          <button type="button" className="btn ghost dj-mini" aria-expanded={pickerOpen} aria-controls={`dj-picker-${uid}`} onClick={() => setPickerOpen((x) => !x)}>
+          <span className="label" id={`dj-att-${uid}`}>Allegati <span className="muted num">{picked.length}/{LIMITS.attachments}</span></span>
+          <button type="button" className="btn ghost dj-mini" aria-expanded={pickerOpen} aria-controls={pickerOpen ? `dj-picker-${uid}` : undefined} onClick={() => setPickerOpen((x) => !x)}>
             {pickerOpen ? "Chiudi" : "＋ Allega"}
           </button>
         </div>

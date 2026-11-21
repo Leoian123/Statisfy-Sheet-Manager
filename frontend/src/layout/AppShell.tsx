@@ -70,21 +70,23 @@ function BrandMenu(props: {
         className="brand"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-controls="brand-pop"
+        aria-controls={open ? "brand-pop" : undefined}
         onClick={() => setOpen((o) => !o)}
       >
         <b>STATISFY</b><span>Gestionale schede</span><i className="caret" aria-hidden="true">▾</i>
       </button>
       {open && (
         <div className="brand-pop" id="brand-pop" role="menu">
-          <span className="label">Account</span>
-          <button type="button" role="menuitem" className="brand-item primary" onClick={pick(props.onCreate)}>
-            ＋ Crea nuovo personaggio
-          </button>
+          <div className="brand-group" role="group" aria-labelledby="brand-g-acc">
+            <span className="label" id="brand-g-acc">Account</span>
+            <button type="button" role="menuitem" className="brand-item primary" onClick={pick(props.onCreate)}>
+              ＋ Crea nuovo personaggio
+            </button>
+          </div>
           {props.chars.length > 0 && (
             <>
-              <span className="label">{props.showOwner ? "Personaggi della campagna" : "I miei personaggi"}</span>
-              <div className="brand-list">
+              <span className="label" id="brand-g-pg">{props.showOwner ? "Personaggi della campagna" : "I miei personaggi"}</span>
+              <div className="brand-list" role="group" aria-labelledby="brand-g-pg">
                 {props.chars.map((c) => (
                   <button key={c.id} type="button" role="menuitem" className="brand-item" onClick={pick(() => props.onOpen(c.id))}>
                     <span>{c.name}</span>

@@ -122,7 +122,8 @@ function Library({ meta, lib, setLib, kind, setKind, onChars }: {
   const toast = useToast();
   const [closing, setClosing] = useState<ForgeEntry | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const label = (k: ForgeKind) => meta.kinds.find((x) => x.key === k)?.label ?? k;
+  // Un elemento è uno solo: «Titolo», non «Titoli» (le schede e i filtri restano al plurale)
+  const label = (k: ForgeKind) => WIZARDS.find((w) => w.kind === k)?.title ?? meta.kinds.find((x) => x.key === k)?.label ?? k;
   const rows = lib.filter((e) => kind === "all" || e.kind === kind).slice().reverse();
   const tabs = [{ key: "all" as const, label: "Tutto", count: lib.length }, ...meta.kinds.map((k) => ({ key: k.key, label: k.label, count: lib.filter((e) => e.kind === k.key).length }))];
 

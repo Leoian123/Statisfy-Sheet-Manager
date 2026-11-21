@@ -343,13 +343,13 @@ const AssignPanel = forwardRef<HTMLElement, AssignProps>(function AssignPanel({ 
     <section className="win gold pl-sec" data-sec="assegna" aria-labelledby="pl-a" ref={ref}>
       <header className="win-h" id="pl-a">Assegna a un PG<span className="spacer" /><span className="chip gold">dalla libreria della campagna</span></header>
       <div className="win-b">
-        <div className="field"><span className="label">1 · Personaggio</span>
+        <div className="field" role="group" aria-labelledby="pl-a-pg"><span className="label" id="pl-a-pg">1 · Personaggio</span>
           <div className="pl-chips">{board.party.map((p) => (
             <button key={p.id} type="button" className="btn pl-chipbtn" aria-pressed={p.id === charId} onClick={() => setPc(p.id)}>{p.name}</button>
           ))}</div>
         </div>
-        <div className="field"><span className="label">2 · Che cosa</span>
-          <div className="pl-kinds" role="tablist" aria-label="Tipo da assegnare">{KIND_ORDER.map((k) => (
+        <div className="field"><span className="label" id="pl-a-cosa">2 · Che cosa</span>
+          <div className="pl-kinds" role="tablist" aria-labelledby="pl-a-cosa">{KIND_ORDER.map((k) => (
             <button key={k} type="button" role="tab" aria-selected={k === kind} onClick={() => { setKind(k); setSel(null); }}>
               {label(k)} <span className="mono xs muted">{board.counts[k] ?? 0}</span></button>
           ))}</div>

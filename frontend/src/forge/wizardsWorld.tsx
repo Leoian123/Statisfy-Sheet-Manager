@@ -4,8 +4,7 @@ import { errorText } from "../api/client";
 import { forgeApi, type DropProfile, type Draft } from "../api/forge";
 import {
   CheckF, DASH, Decided, filled, Lines, NameOr, NumF, Picks, Proposal, PvRow, PvSec, PvText, PvWin, RarityChip, Ref,
-  SelF, TextF, nf, ni, useW, type WizardDef,
-} from "./engine";
+  SelF, TextF, nf, ni, useW, type WizardDef, GroupF } from "./engine";
 
 const TRUST_TONE: Record<string, string> = { Scarso: "bad", Neutrale: "muted", Buono: "good", Eccellente: "gold" };
 
@@ -125,7 +124,7 @@ function DropBox() {
     try { await fn(); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }
   return (
-    <div className="field"><span className="label">Profilo di drop <Decided why={DEC_LOOT} /> <Proposal why={PROP_DROP} /></span>
+    <GroupF label={<>Profilo di drop <Decided why={DEC_LOOT} /> <Proposal why={PROP_DROP} /></>}>
       {pf ? <div className="wz-drop">
         <div className="small"><b>Profilo {pf.kind}</b> · <span className="muted">{pf.text}</span></div>
         <div className="table-wrap"><table className="t wz-drop-t"><thead><tr><th>d100</th><th>Risultato</th></tr></thead><tbody>
@@ -142,7 +141,7 @@ function DropBox() {
       </div>
       {err && <span className="hint bad" role="alert">{err}</span>}
       <span className="hint">Rarità di riferimento: {x.c.top_rarity ?? "Comune"} (creatura più rara) · arma {x.c.top_rarity ?? "Comune"}: Base danno {x.c.weapon_base_range ?? "—"}.</span>
-    </div>
+    </GroupF>
   );
 }
 
@@ -170,10 +169,10 @@ const incontro: WizardDef = {
       <Picks path="party" label="PG che partecipano" multi req opts={x.meta.characters.map((c) => ({ v: c.id, l: c.name, sub: `Lv ${c.level} · ${c.classe}` }))} />
       <div className="wz-grid2">
         <NumF path="level" label="Livello del gruppo" req min={1} max={999} />
-        <div className="field"><span className="label">Media</span>
+        <GroupF label="Media">
           <div className="row"><span className="small">Media dei PG scelti: <b className="num">{x.c.avg_level ?? "—"}</b></span>
             <button type="button" className="btn ghost" disabled={!x.c.avg_level} onClick={() => x.set("level", x.c.avg_level)}>Usa la media</button></div>
-        </div>
+        </GroupF>
       </div>
       <Ref>Il livello del gruppo serve per l'EXP indicativa e come livello iniziale delle creature; difficoltà ed EXP alla chiusura usano i PG scelti, uno per uno.</Ref>
     </> },

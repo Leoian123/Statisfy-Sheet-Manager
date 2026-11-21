@@ -171,7 +171,7 @@ def create_entry(data: DraftIn, db: Session = Depends(get_db)):
     if entry is None:
         raise HTTPException(422, err)
     session = _session(db)
-    messages = [f"{forge.KIND_LABEL[data.kind]}: «{entry['name']}» aggiunto alla libreria."]
+    messages = [f"{forge.KIND_ONE[data.kind]}: «{entry['name']}» {'aggiunta' if data.kind in forge.KIND_FEMININE else 'aggiunto'} alla libreria."]
     e = ForgeEntry(kind=data.kind, name=entry["name"][:100], summary=entry.get("summary", ""), session=session, created_at=_now())
     apply = forge.apply_fn(data.kind)
     target = entry.get("assignedTo")

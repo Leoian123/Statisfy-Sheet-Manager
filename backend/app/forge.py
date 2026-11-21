@@ -20,6 +20,10 @@ from . import rules as R
 KIND_LABEL = {"skills": "Skill", "classes": "Classi", "races": "Razze", "titles": "Titoli", "npcs": "PNG",
               "encounters": "Incontri", "spells": "Incantesimi", "miracles": "Miracoli",
               "items": "Oggetti"}
+# Un singolo elemento («Titolo: «Drago» aggiunto»), non la categoria
+KIND_ONE = {"skills": "Skill", "classes": "Classe", "races": "Razza", "titles": "Titolo", "npcs": "PNG",
+            "encounters": "Incontro", "spells": "Incantesimo", "miracles": "Miracolo", "items": "Oggetto"}
+KIND_FEMININE = {"skills", "classes", "races"}
 KINDS = list(KIND_LABEL)
 
 

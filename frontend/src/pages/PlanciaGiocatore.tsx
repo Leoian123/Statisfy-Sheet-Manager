@@ -327,8 +327,8 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
               <input className="input" type="search" placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Cerca tra skill, titoli e talenti" />
               <div className="tv-picker">
                 {shown.length ? shown.map((g) => (
-                  <div key={g.label} className="tv-pk-group">
-                    <span className="label">{g.label}</span>
+                  <div key={g.label} className="tv-pk-group" role="group" aria-labelledby={`tv-pk-${g.label.replace(/\W+/g, "-")}`}>
+                    <span className="label" id={`tv-pk-${g.label.replace(/\W+/g, "-")}`}>{g.label}</span>
                     {g.items.map((it) => {
                       const on = !!attached[it.key];
                       return (

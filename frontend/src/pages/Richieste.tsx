@@ -595,9 +595,9 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
         <InlineError message={err} />
 
         <div className="stack rq-thread-wrap">
-          <span className="label">Messaggi {t.messages.length > 0 && <span className="num">· {t.messages.length}</span>}</span>
+          <span className="label" id="rq-msgs">Messaggi {t.messages.length > 0 && <span className="num">· {t.messages.length}</span>}</span>
           {t.messages.length ? (
-            <ol className="rq-thread">
+            <ol className="rq-thread" aria-labelledby="rq-msgs">
               {t.messages.map((m, i) => (
                 <li key={`${m.at}-${i}`} className={`rq-msg${m.role === "master" ? " is-master" : ""}`}>
                   <span className="xs rq-msg-h">

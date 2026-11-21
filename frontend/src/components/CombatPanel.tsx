@@ -110,9 +110,9 @@ export function CombatPanel({ c, rules, busy, amt, setAmt, apply, onDied, open, 
           </p>
         </div>
 
-        <div className="stack" style={{ gap: 6 }}>
+        <div className="stack" style={{ gap: 6 }} role="group" aria-labelledby="pg-eff-h">
           <div className="row">
-            <span className="label">Effetti attivi</span>
+            <span className="label" id="pg-eff-h">Effetti attivi</span>
             <span className="spacer" />
             {!addOpen && <button type="button" className="btn ghost tv-mini" onClick={() => setAddOpen(true)}>+ Aggiungi effetto</button>}
           </div>

@@ -120,7 +120,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   box-shadow: 0 12px 32px var(--violet-soft);
 }
 .brand-pop .label { padding: 6px 8px 2px; }
-.brand-list { display: flex; flex-direction: column; gap: 2px; }
+.brand-list, .brand-group { display: flex; flex-direction: column; gap: 2px; }
 .brand-item {
   display: flex; justify-content: space-between; align-items: baseline; gap: 10px; width: 100%;
   padding: 8px; border: 0; border-radius: 4px; background: transparent; cursor: pointer; text-align: left;

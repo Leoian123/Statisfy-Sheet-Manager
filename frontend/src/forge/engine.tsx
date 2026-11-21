@@ -135,6 +135,17 @@ export function CheckF({ path, label, hint, cls, after, disabled }: Omit<FieldBa
   );
 }
 
+/** Sezione con più campi (righe ripetute, gruppi di bottoni): il titolo dà il nome al gruppo, non resta un'etichetta orfana. */
+export function GroupF({ label, cls, children }: { label: ReactNode; cls?: string; children: ReactNode }) {
+  const gid = useId();
+  return (
+    <div className={`field ${cls ?? ""}`} role="group" aria-labelledby={gid}>
+      <span className="label" id={gid}>{label}</span>
+      {children}
+    </div>
+  );
+}
+
 export interface PickOpt { v: string | number; l: ReactNode; sub?: ReactNode; disabled?: boolean; title?: string; rarity?: string }
 /** Bottoni a scelta singola o multipla (aria-pressed). */
 export function Picks({ path, label, opts, multi, req, hint, cls, after, onPick }: FieldBase & { path: string; opts: (string | PickOpt)[]; multi?: boolean; onPick?: (v: string | number) => void }) {

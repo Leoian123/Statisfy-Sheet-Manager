@@ -184,8 +184,8 @@ function NewAccount({ users, onCreated }: { users: AdminUser[]; onCreated: (u: A
         </div>
       </div>
       <div className="row">
-        <span className="label">Ruolo</span>
-        <RoleSeg value={role} onChange={setRole} />
+        <span className="label" id="na-role">Ruolo</span>
+        <RoleSeg value={role} onChange={setRole} labelledBy="na-role" />
       </div>
       <label className="row small ad-check">
         <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
@@ -204,9 +204,11 @@ function NewAccount({ users, onCreated }: { users: AdminUser[]; onCreated: (u: A
   );
 }
 
-function RoleSeg({ value, onChange, disabled, why }: { value: Role; onChange: (r: Role) => void; disabled?: boolean; why?: string | null }) {
+function RoleSeg({ value, onChange, disabled, why, labelledBy }: {
+  value: Role; onChange: (r: Role) => void; disabled?: boolean; why?: string | null; labelledBy: string;
+}) {
   return (
-    <div className="seg ad-seg" role="group" aria-label="Ruolo" title={why ?? undefined}>
+    <div className="seg ad-seg" role="group" aria-labelledby={labelledBy} title={why ?? undefined}>
       {(["player", "master"] as Role[]).map((r) => (
         <button key={r} type="button" aria-pressed={value === r} disabled={disabled && value !== r} onClick={() => onChange(r)}>{ROLE_LABEL[r]}</button>
       ))}
@@ -294,8 +296,8 @@ function UserEditor({ u, users, onDone, onTemp, onRemoved }: {
           </div>
         </div>
         <div className="row">
-          <span className="label">Ruolo</span>
-          <RoleSeg value={role} onChange={setRole} disabled={!!demoteWhy} why={demoteWhy} />
+          <span className="label" id={`ed-role-${u.id}`}>Ruolo</span>
+          <RoleSeg value={role} onChange={setRole} disabled={!!demoteWhy} why={demoteWhy} labelledBy={`ed-role-${u.id}`} />
           {demoteWhy && <span className="hint">{demoteWhy}</span>}
         </div>
         <div className="row"><button type="submit" className="btn primary" disabled={busy || !dirty}>Salva</button></div>
