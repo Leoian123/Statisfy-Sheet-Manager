@@ -74,7 +74,6 @@ almeno 14 copie. Prova il ripristino avviando l'app su una copia con `STATISFY_D
 ## 8. Limiti noti
 
 - Limite dei tentativi di login e tetti di diario/richieste sono nel processo: un solo worker, si azzerano al riavvio.
-- FastAPI 0.115.6 usa starlette 0.41.3, nell'intervallo di CVE-2025-62727 (Range sui file statici: mitigata, il
-  frontend è servito senza Range) e CVE-2025-54121 (multipart: solo l'import Excel del Master). Aggiornare FastAPI a
-  una versione con starlette ≥ 0.49.1 e rilanciare i test prima del rilascio.
+- Dipendenze aggiornate il 21/11/2026 (FastAPI 0.162.2, starlette 1.10.0: corrette CVE-2025-62727 e CVE-2025-54121).
+  bcrypt resta 4.2.1: la 5.0 rifiuta le password oltre 72 byte invece di troncarle, da valutare a parte.
 - Nessun limite di frequenza oltre al login e ai tetti per utente (30 richieste al giorno, 1.000 pagine di diario).
