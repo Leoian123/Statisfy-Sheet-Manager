@@ -28,6 +28,8 @@ _ADDED_COLUMNS = [
     # tiro d100: dichiarazione sopra/sotto e critico (righe vecchie: NULL)
     ("rolls", "call", "ALTER TABLE rolls ADD COLUMN call VARCHAR(10)"),
     ("rolls", "crit", "ALTER TABLE rolls ADD COLUMN crit VARCHAR(15)"),
+    # revoca dei token (esci da tutti i dispositivi, cambio password)
+    ("users", "token_version", "ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0"),
 ]
 
 

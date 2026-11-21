@@ -6,7 +6,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from . import rules
+from . import config, rules
 from .auth import hash_password
 from .db import Base, SessionLocal, engine, ensure_columns
 from .models import Campaign, Character, Issue, Npc, User
@@ -384,6 +384,11 @@ def seed_if_empty(db: Session) -> bool:
     migrate_schema(db.get_bind())
     if db.scalar(select(User).limit(1)) is not None:
         migrate(db)
+        return False
+    if config.PRODUCTION:
+        # Mai gli utenti di sviluppo (password = nome utente) in produzione: il Master si crea da terminale
+        print("STATISFY: database vuoto in produzione, nessun dato di esempio creato. "
+              "Crea il Master con: python -m app.users create <nome> --role master", flush=True)
         return False
     seed(db)
     return True

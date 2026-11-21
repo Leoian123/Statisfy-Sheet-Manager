@@ -74,3 +74,15 @@ Nel foglio Excel Corax è di livello 181. La regola dice: a ogni livello +1 auto
 - punti liberi: 1.800 (180 × 10), giusti; ne ha investiti 1.680, gliene restano 120.
 
 Anche Deniel (110 invece di 109) ed Eric (Saggezza 129) hanno punti in più. Il Master ha deciso di tenerli: restano nell'app e sono annotati sulla statistica.
+
+## Diario dell'avventuriero — proposte (21/11/2026)
+- Due visibilità: **privato** (solo l'autore, *nemmeno il Master*) e **gruppo** (tutti). Il Master può eliminare le pagine del gruppo, mai leggere quelle private.
+- Gli allegati (tiri, oggetti, titoli, skill, talenti, quest) sono **istantanee**: restano come erano anche se poi l'oggetto viene venduto o il titolo evolve. Un tiro segreto del Master si allega solo a una pagina privata.
+- Pagine raggruppate per sessione della campagna; al massimo 1.000 pagine per utente, 12 allegati e 8 tag per pagina.
+
+## Richieste al Master — proposte (21/11/2026)
+- Tre tipi: **nuova funzione** dell'app, **nuovo contenuto** (razze, oggetti, classi…), **domanda sul regolamento**.
+- Stati: aperta → in esame → risolta | respinta; l'autore può ritirarla finché non è chiusa. Per chiudere serve la risposta del Master.
+- Archiviazione automatica: una richiesta chiusa va in archivio dopo **7 giorni** (configurabile); in archivio è solo leggibile.
+- Una domanda sul regolamento risolta può diventare una **questione delle regole decisa** (Area Master) con la risposta come decisione.
+- Al massimo 20 richieste in attesa per giocatore e 100 messaggi per richiesta.

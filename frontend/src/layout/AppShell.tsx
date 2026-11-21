@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useAppData } from "../auth/AppData";
 import { ErrorBox, Loading } from "../components/Status";
+import { TICKETS_CHANGED, ticketsApi } from "../api/tickets";
+import { usePolling } from "../lib/usePolling";
 
 const LAST_KEY = "statisfy-last-char";
 
@@ -111,6 +113,17 @@ export function AppShell() {
   const m = useMatch("/personaggi/:id/*");
   const suffix = m ? (m.params["*"] ? `/${m.params["*"]}` : "") : "";
   const topRef = useRef<HTMLElement>(null);
+  // Contatore delle richieste: per il Master le nuove, per il giocatore le risposte non lette (ogni 30 s, pagina visibile)
+  const [ticketCount, setTicketCount] = useState(0);
+  const refreshTickets = useCallback(async () => {
+    try { setTicketCount((await ticketsApi.summary()).count); } catch { /* il contatore è facoltativo */ }
+  }, []);
+  usePolling(refreshTickets, 30000, [refreshTickets, location.pathname]);
+  useEffect(() => {
+    const on = () => { refreshTickets(); };
+    window.addEventListener(TICKETS_CHANGED, on);
+    return () => window.removeEventListener(TICKETS_CHANGED, on);
+  }, [refreshTickets]);
 
   // Altezza della barra in alto (cambia quando va a capo): serve agli elementi sticky sotto di lei (HUD della plancia)
   useEffect(() => {
@@ -193,6 +206,11 @@ export function AppShell() {
           {charLink("", "Scheda personaggio")}
           {charLink("/plancia", "Plancia di gioco")}
           {charLink("/level-up", "Level up")}
+          <NavLink to="/diario">Diario</NavLink>
+          <NavLink to="/richieste">
+            {isMaster ? "Richieste dei giocatori" : "Richieste al Master"}
+            {ticketCount > 0 && <span className="chip gold num nav-count" aria-label={isMaster ? `${ticketCount} nuove` : `${ticketCount} con risposte da leggere`}>{ticketCount}</span>}
+          </NavLink>
           {isMaster && (
             <>
               <div className="nav-sep" />

@@ -17,6 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState<boolean>(() => !!getToken());
 
   const logout = useCallback(() => {
+    // Il server revoca il token (vale anche se qualcuno l'ha copiato); l'uscita locale non aspetta la risposta
+    if (getToken()) api.logout().catch(() => { /* già scaduto o server irraggiungibile: si esce comunque */ });
     setToken(null);
     setUser(null);
   }, []);

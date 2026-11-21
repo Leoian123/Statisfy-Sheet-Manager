@@ -13,6 +13,15 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(100))
     display_name: Mapped[str] = mapped_column(String(100))
     role: Mapped[str] = mapped_column(String(10))
+    # Cresce a ogni «Esci da tutti i dispositivi» e cambio password: i token con un valore diverso non valgono più
+    token_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+
+
+class RevokedToken(Base):
+    """Token usciti con «Esci» prima della scadenza (jti). Le righe scadute si cancellano a ogni nuova uscita."""
+    __tablename__ = "revoked_tokens"
+    jti: Mapped[str] = mapped_column(String(64), primary_key=True)
+    exp: Mapped[int] = mapped_column(Integer, index=True)  # secondi epoch
 
 
 class Campaign(Base):
@@ -136,3 +145,49 @@ class RollRequest(Base):
     status: Mapped[str] = mapped_column(String(10), default="aperta")
     roll_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     created_at: Mapped[str] = mapped_column(String(40), default="")
+
+
+class JournalEntry(Base):
+    """Pagina del diario dell'avventuriero: appunti di un utente, legati facoltativamente a un suo PG.
+    `visibility` = "privato" (solo l'autore) o "gruppo" (tutti i giocatori e il Master).
+    `attachments` = istantanee di tiri, oggetti, titoli, skill, talenti e quest al momento dell'allegato:
+    [{kind, ref, label, detail, rarity}] (restano leggibili anche se l'elemento poi cambia o sparisce)."""
+    __tablename__ = "journal_entries"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    author_id: Mapped[int] = mapped_column(Integer, index=True)
+    char_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True, default=None)  # id del PG, senza FK
+    title: Mapped[str] = mapped_column(String(120))
+    body: Mapped[str] = mapped_column(Text, default="")
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    attachments: Mapped[list] = mapped_column(JSON, default=list)
+    visibility: Mapped[str] = mapped_column(String(10), default="privato")
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    session: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[str] = mapped_column(String(40), default="")
+    updated_at: Mapped[str] = mapped_column(String(40), default="")
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version}
+
+
+class Ticket(Base):
+    """Richiesta di un giocatore al Master: proposta di funzione, di contenuto o domanda sul regolamento.
+    Stati: aperta → in_esame → risolta | respinta (oppure ritirata dall'autore). Chiusa (`closed_at`), dopo
+    `config.TICKET_ARCHIVE_DAYS` giorni va in archivio (`archived_at`) e da lì è solo leggibile."""
+    __tablename__ = "tickets"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    author_id: Mapped[int] = mapped_column(Integer, index=True)
+    char_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    kind: Mapped[str] = mapped_column(String(12))
+    title: Mapped[str] = mapped_column(String(120))
+    body: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(12), default="aperta", index=True)
+    answer: Mapped[str] = mapped_column(Text, default="")
+    messages: Mapped[list] = mapped_column(JSON, default=list)  # [{by, by_name, role, text, at}]
+    issue_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)  # questione delle regole creata
+    seen_by_author: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[str] = mapped_column(String(40), default="")
+    updated_at: Mapped[str] = mapped_column(String(40), default="")
+    closed_at: Mapped[str | None] = mapped_column(String(40), nullable=True, default=None)
+    archived_at: Mapped[str | None] = mapped_column(String(40), nullable=True, default=None, index=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version}

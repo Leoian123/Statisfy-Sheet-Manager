@@ -40,9 +40,26 @@ SECRET = load_secret()
 DATABASE_URL = os.environ.get("STATISFY_DB_URL", f"sqlite:///{(BACKEND_DIR / 'statisfy.db').as_posix()}")
 TOKEN_HOURS = 12
 BCRYPT_ROUNDS = int(os.environ.get("STATISFY_BCRYPT_ROUNDS", "12"))
-CORS_ORIGINS = ["http://localhost:5174", "http://127.0.0.1:5174"]
+# Ambiente: "production" spegne /docs e /openapi.json e aggiunge HSTS; altrimenti sviluppo
+ENV = os.environ.get("STATISFY_ENV", "development").strip().lower()
+PRODUCTION = ENV == "production"
+# Origini ammesse dal browser (CORS), separate da virgola. In produzione il frontend è servito dallo stesso
+# processo (stessa origine): di default nessuna origine esterna.
+_cors = os.environ.get("STATISFY_CORS_ORIGINS")
+CORS_ORIGINS = ([o.strip() for o in _cors.split(",") if o.strip() and o.strip() != "*"] if _cors is not None
+                else [] if PRODUCTION else ["http://localhost:5174", "http://127.0.0.1:5174"])
+# Frontend compilato da servire (npm --prefix frontend run build); vuota = non servirlo
+_dist = os.environ.get("STATISFY_FRONTEND_DIST")
+FRONTEND_DIST = (Path(_dist) if _dist else BACKEND_DIR.parent / "frontend" / "dist") if _dist != "" else None
 # Limiti delle richieste (anti-abuso, proporzionati a un'app tra amici)
 MAX_JSON_BYTES = 1024 * 1024            # corpo JSON
 MAX_UPLOAD_BYTES = 6 * 1024 * 1024      # multipart (import Excel: 5 MB + margine)
 LOGIN_MAX_FAILS = 10                    # tentativi falliti per utente e IP...
 LOGIN_WINDOW_S = 10 * 60                # ...in questa finestra, poi 429
+# Diario e richieste al Master
+JOURNAL_MAX_ENTRIES = 1000              # pagine di diario per utente
+TICKET_MAX_ACTIVE = 20                  # richieste non chiuse per utente
+TICKET_MAX_MESSAGES = 100               # messaggi per richiesta
+# Giorni tra la chiusura di una richiesta (risolta, respinta, ritirata) e l'archiviazione automatica (0 = subito)
+TICKET_ARCHIVE_DAYS = max(0, min(3650, int(os.environ.get("STATISFY_TICKET_ARCHIVE_DAYS", "7"))))
+TICKET_MAX_PER_DAY = 30                 # richieste create per utente nelle ultime 24 ore

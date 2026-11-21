@@ -5,6 +5,8 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import secrets
+
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from . import config
 from .db import get_db
-from .models import User
+from .models import RevokedToken, User
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -92,7 +94,8 @@ login_limiter = LoginLimiter(config.LOGIN_MAX_FAILS, config.LOGIN_WINDOW_S)
 
 def create_token(user: User) -> str:
     now = datetime.now(timezone.utc)
-    payload = {"sub": str(user.id), "role": user.role, "iat": now, "exp": now + timedelta(hours=config.TOKEN_HOURS)}
+    payload = {"sub": str(user.id), "role": user.role, "iat": now, "exp": now + timedelta(hours=config.TOKEN_HOURS),
+               "jti": secrets.token_urlsafe(16), "tv": user.token_version or 0}
     return jwt.encode(payload, config.SECRET, algorithm="HS256")
 
 
@@ -111,7 +114,19 @@ def current_user(cred: HTTPAuthorizationCredentials | None = Depends(bearer), db
     user = db.get(User, uid)
     if user is None:
         raise HTTPException(401, "Utente non trovato.", headers={"WWW-Authenticate": "Bearer"})
+    # Revoca: «Esci» (jti nella lista) o «Esci da tutti i dispositivi»/cambio password (token_version cambiata)
+    jti = payload.get("jti")
+    if payload.get("tv", 0) != (user.token_version or 0) or (jti and db.get(RevokedToken, str(jti)) is not None):
+        raise HTTPException(401, "Sessione chiusa: accedi di nuovo.", headers={"WWW-Authenticate": "Bearer"})
     return user
+
+
+def token_claims(cred: HTTPAuthorizationCredentials | None = Depends(bearer)) -> dict:
+    """Claim del token già validato da current_user (serve a «Esci» per revocarlo)."""
+    try:
+        return jwt.decode(cred.credentials, config.SECRET, algorithms=["HS256"]) if cred else {}
+    except jwt.PyJWTError:
+        return {}
 
 
 def require_master(user: User = Depends(current_user)) -> User:

@@ -40,6 +40,22 @@ def has_non_finite(body: bytes) -> bool:
     return False
 
 
+def has_lone_surrogate(body: bytes) -> bool:
+    """True se il JSON contiene un surrogato UTF-16 isolato (es. "\\udfff"): Python lo accetta, ma salvato rompe
+    ogni risposta successiva che lo contiene (UnicodeEncodeError → 500)."""
+    try:
+        obj = json.loads(body)
+    except (ValueError, UnicodeDecodeError, RecursionError):
+        return False
+    try:
+        json.dumps(obj, ensure_ascii=False).encode("utf-8")
+    except UnicodeEncodeError:
+        return True
+    except (ValueError, RecursionError):
+        return False
+    return False
+
+
 class BodyGuard:
     def __init__(self, app, max_json: int = config.MAX_JSON_BYTES, max_multipart: int = config.MAX_UPLOAD_BYTES):
         self.app = app
@@ -73,6 +89,9 @@ class BodyGuard:
         if (ctype == b"" or ctype.endswith(b"json")) and body and has_non_finite(body):
             return await JSONResponse({"detail": "Dati non validi — i numeri devono essere finiti "
                                                  "(niente NaN o Infinity)."}, 422)(scope, receive, send)
+        if (ctype == b"" or ctype.endswith(b"json")) and body and b"\\u" in body.lower() and has_lone_surrogate(body):
+            return await JSONResponse({"detail": "Dati non validi — testo con caratteri Unicode non validi."},
+                                      422)(scope, receive, send)
         replayed = False
 
         async def replay():

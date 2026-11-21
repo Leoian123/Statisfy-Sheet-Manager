@@ -2,7 +2,7 @@ import copy
 import re
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Response
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -10,7 +10,7 @@ from .. import rules
 from ..auth import current_user
 from ..db import get_db
 from ..errors import validate
-from ..models import Character, User
+from ..models import Character, ForgeEntry, JournalEntry, Roll, RollRequest, Ticket, User
 from ..schemas import (LOCKED_FIELDS, MASTER_FIELDS, MAX_LEVEL, PLAYER_FIELDS, CharacterCreate, CharacterPatch,
                        DistributeIn)
 from ..serialize import character_out, maxes, maxes_of, summary_out
@@ -207,6 +207,13 @@ def delete_character(char_id: int, user: User = Depends(current_user), db: Sessi
     if user.role != "master":
         raise HTTPException(403, "Solo il Master può eliminare un personaggio.")
     c = get_char(char_id, user, db)
+    # Le tabelle collegate usano l'id del PG senza chiave esterna e SQLite può riusare l'id dell'ultimo PG eliminato:
+    # tiri e richieste di tiro spariscono con lui; diario, richieste al Master e Forgia perdono solo il collegamento.
+    db.execute(delete(Roll).where(Roll.char_id == c.id))
+    db.execute(delete(RollRequest).where(RollRequest.char_id == c.id))
+    db.execute(update(JournalEntry).where(JournalEntry.char_id == c.id).values(char_id=None, version=JournalEntry.version + 1))
+    db.execute(update(Ticket).where(Ticket.char_id == c.id).values(char_id=None, version=Ticket.version + 1))
+    db.execute(update(ForgeEntry).where(ForgeEntry.assigned_to == c.id).values(assigned_to=None, version=ForgeEntry.version + 1))
     db.delete(c)
     db.commit()
     return Response(status_code=204)

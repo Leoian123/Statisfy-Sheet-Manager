@@ -97,6 +97,8 @@ const enc = encodeURIComponent;
 export const api = {
   login: (username: string, password: string) => request<LoginResponse>("POST", "/auth/login", { username, password }),
   me: () => request<User>("GET", "/auth/me"),
+  logout: () => request<void>("POST", "/auth/logout"),
+  logoutAll: () => request<void>("POST", "/auth/logout-all"),
 
   rules: () => request<RulesConfig>("GET", "/rules"),
   preview: (req: PreviewRequest) => request<PreviewResponse>("POST", "/rules/preview", req),

@@ -1,5 +1,6 @@
 /* Risultato di un tiro d100 e righe compatte del registro, con il dettaglio al passaggio del mouse (TipRow).
    Critici (regola del Master): prima del tiro si dichiara sopra o sotto; il server calcola `crit` sul naturale. */
+import { Link } from "react-router-dom";
 import type { Roll, RollCall, RollCrit, RollMod } from "../api/types";
 import { faceLabel } from "./DiceTray";
 import { TipRow } from "./TipRow";
@@ -55,7 +56,7 @@ function Detail({ r, who }: { r: Roll; who?: boolean }) {
 /** Risultato dell'ultimo tiro sotto il vassoio: dichiarazione, chip del critico, dettaglio al passaggio del mouse. */
 export function RollResult({ r, empty }: { r: Roll | null; empty: string }) {
   if (!r) return <p className="small muted dt-res-empty">{empty}</p>;
-  return (
+  return (<>
     <TipRow className={`dt-res${crit(r)}`} tip={<Detail r={r} />}>
       <div className="dt-res-main">
         <span className="dt-res-nat"><span className="label">d100</span><b className="num">{r.natural}</b></span>
@@ -67,7 +68,10 @@ export function RollResult({ r, empty }: { r: Roll | null; empty: string }) {
       </div>
       <span className="small dt-res-why">{r.reason || "Tiro libero"}{r.mods.length ? ` · ${r.mods.map((m) => m.name).join(", ")}` : ""}</span>
     </TipRow>
-  );
+    {r.char_id != null && (
+      <Link className="xs dt-res-note" style={{ display: "inline-flex", alignItems: "center", minHeight: 44 }} to={`/diario?char=${encodeURIComponent(r.char_id)}&roll=${encodeURIComponent(r.id)}`}>Annota nel diario</Link>
+    )}
+  </>);
 }
 
 /** Registro dei tiri: righe compatte (ora, chi, motivo + critico, dichiarazione, naturale, totale). */

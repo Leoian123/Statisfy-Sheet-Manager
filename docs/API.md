@@ -368,6 +368,34 @@ RollRequest = {id, char_id, char_name, what, note, status: "aperta"|"risolta", r
 ```
 Il frontend aggiorna tiri e richieste ogni 5 s solo con la pagina visibile (polling leggero), così Master e giocatori si vedono a vicenda.
 
+## Diario dell'avventuriero (`/api/journal`, ogni utente)
+
+Visibilità `privato` (solo l'autore, nemmeno il Master) o `gruppo` (tutti). Solo l'autore modifica; il Master elimina le pagine del gruppo.
+- `GET /api/journal?scope=tutto|miei|gruppo&char_id&tag&q&limit≤200&offset` → `{total, tags, items: JournalEntry[]}` (fissate prima, poi dalla più recente).
+- `GET /api/journal/attachables?char_id` → `{roll, item, title, skill, talent, quest}`: candidati da allegare (tiri non segreti del PG, scheda, quest del PG e della campagna).
+- `POST /api/journal` `{title ≤120, body ≤20000, tags ≤8, char_id?, visibility, pinned, attachments ≤12: [{kind, ref}]}` → 201 `JournalEntry`.
+  Gli allegati li risolve il server in istantanee `{kind, ref, label, detail, rarity}`: 422 se l'elemento non c'è o non è dell'utente;
+  un tiro segreto solo su pagina privata. Max `JOURNAL_MAX_ENTRIES` (1000) pagine per utente.
+- `PATCH /api/journal/{id}` (autore) stessi campi + `version`: 409 se cambiata nel frattempo. `DELETE /api/journal/{id}` → 204.
+
+## Richieste al Master (`/api/tickets`)
+
+Tipi `funzione` | `contenuto` | `regola`; stati `aperta` → `in_esame` → `risolta` | `respinta` (o `ritirata` dall'autore).
+Il giocatore vede solo le sue; il Master tutte. Chiusa da più di `STATISFY_TICKET_ARCHIVE_DAYS` giorni (default 7) → archivio, solo lettura (409 su ogni modifica).
+- `GET /api/tickets/summary` → `{count}`: Master = richieste aperte; giocatore = sue con risposte non lette.
+- `GET /api/tickets?scope=attive|archivio&status&kind&q&limit&offset` → `{total, counts, archive_days, items: Ticket[]}` (archivia prima le scadute).
+- `POST /api/tickets` `{kind, title 3–120, body ≤5000, char_id?}` → 201. 429 oltre 20 richieste in attesa per utente.
+- `GET /api/tickets/{id}`: aprirla come autore la segna come letta.
+- `POST /api/tickets/{id}/messages` `{text ≤2000}` (autore o Master; max 100 messaggi).
+- `PATCH /api/tickets/{id}` `{version?, status?, answer?, title?, body?, promote_issue?}`.
+  Il Master cambia stato e risposta (per chiudere serve la risposta); l'autore solo `ritirata` o, finché `aperta`, titolo e testo (403/409 altrimenti).
+  `promote_issue` su una `regola` risolta crea (una volta) una questione delle regole decisa → `issue_id`.
+- `POST /api/tickets/{id}/archive` (Master, solo chiuse) e `POST /api/tickets/rotate` (Master) → `{archived, archive_days}`.
+
+## Servizio e produzione
+
+- `GET /api/health` → `{"status": "ok"}` senza login. Con `STATISFY_ENV=production` niente `/docs` e `/openapi.json`. Vedi `docs/DEPLOY.md`.
+
 ## Seed
 All'avvio, se il DB è vuoto: utenti sopra, campagna "Campagna di Alba Chiara" (sessione 15), i 6 PG di `mockup/data.js`
 (Kelvin completo con inventario MMORPG: Thanatos a due mani e Spalla del Simbionte equipaggiati → giocatore1, Eric → giocatore2, Corax → 3, Deniel → 4, Connor → 5, Dante → 6), i 3 PNG, quest aperte e questioni (con le decisioni già prese).

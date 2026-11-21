@@ -59,6 +59,7 @@ def cmd_passwd(args) -> int:
             print(f"Utente '{args.username}' non trovato.")
             return 1
         user.password_hash = hash_password(ask_password())
+        user.token_version = (user.token_version or 0) + 1  # i login fatti con la vecchia password non valgono più
         db.commit()
         print(f"Password di '{user.username}' aggiornata.")
     return 0
