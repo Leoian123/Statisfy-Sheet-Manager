@@ -3,6 +3,9 @@ import { NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-route
 import { useAuth } from "../auth/AuthContext";
 import { useAppData } from "../auth/AppData";
 import { ErrorBox, Loading } from "../components/Status";
+import { battleApi } from "../api/scontri";
+import { activeSection, sections, type Icon, type NavSection } from "./nav";
+import "../styles/shell.css";
 import { TICKETS_CHANGED, ticketsApi } from "../api/tickets";
 import { usePolling } from "../lib/usePolling";
 
@@ -36,20 +39,31 @@ export function useCurrentCharId(): number | null {
 
 type CharLite = { id: number; name: string; level: number; owner_name: string };
 
-/** Menu account in alto a sinistra: funzioni dell'utente che non dipendono da una scheda (creazione PG, elenco PG, uscita). */
-function BrandMenu(props: {
-  chars: CharLite[];
-  showOwner: boolean;
-  onCreate: () => void;
-  onOpen: (id: number) => void;
-  onAccount: () => void;
-  onLogout: () => void;
+/** Icone della navigazione (tratto semplice, ereditano il colore). */
+function NavIcon({ name }: { name: Icon }) {
+  const d: Record<Icon, string> = {
+    pg: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0",
+    dice: "M5 4h14v14H5zM9 8h.01M15 8h.01M12 11h.01M9 14h.01M15 14h.01",
+    inbox: "M4 13l3-8h10l3 8M4 13v6h16v-6M4 13h5l1 2h4l1-2h5",
+    book: "M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h10",
+    table: "M4 6h16v12H4zM4 10h16M10 10v8",
+    users: "M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-6 8a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 19a6 6 0 0 0-3-5",
+    world: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18",
+    flag: "M5 21V4h11l-2 4 2 4H5",
+  };
+  return <svg className="sh-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={d[name]} /></svg>;
+}
+
+/** Menu del profilo: account, tema, personaggi (crea / apri), esci. */
+function ProfileMenu(props: {
+  name: string; role: string; chars: CharLite[]; showOwner: boolean; theme: Theme;
+  onTheme: (t: Theme) => void; onCreate: () => void; onOpen: (id: number) => void; onAccount: () => void; onLogout: () => void;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
-
   useEffect(() => { setOpen(false); }, [location.pathname]);
   useEffect(() => {
     if (!open) return;
@@ -59,46 +73,37 @@ function BrandMenu(props: {
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
   }, [open]);
-
   const pick = (fn: () => void) => () => { setOpen(false); fn(); };
-
+  const initials = props.name.split(/\s+/).map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase();
   return (
-    <div className="brand-menu" ref={wrapRef}>
-      <button
-        type="button"
-        ref={btnRef}
-        className="brand"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? "brand-pop" : undefined}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <b>STATISFY</b><span>Gestionale schede</span><i className="caret" aria-hidden="true">▾</i>
+    <div className={`sh-prof${props.compact ? " compact" : ""}`} ref={wrapRef}>
+      <button type="button" ref={btnRef} className="sh-prof-b" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}
+        aria-label={`Menu di ${props.name}`}>
+        <span className="sh-av" aria-hidden="true">{initials || "?"}</span>
+        {!props.compact && <span className="sh-prof-t"><b>{props.name}</b><small>{props.role}</small></span>}
       </button>
       {open && (
-        <div className="brand-pop" id="brand-pop" role="menu">
-          <div className="brand-group" role="group" aria-labelledby="brand-g-acc">
-            <span className="label" id="brand-g-acc">Account</span>
-            <button type="button" role="menuitem" className="brand-item primary" onClick={pick(props.onCreate)}>
-              ＋ Crea nuovo personaggio
-            </button>
+        <div className="sh-pop" role="menu">
+          <button type="button" role="menuitem" className="sh-pi" onClick={pick(props.onAccount)}>Il mio account</button>
+          <div className="sh-pi sh-theme" role="group" aria-label="Tema">
+            <span>Tema</span>
+            <span className="seg">
+              <button type="button" aria-pressed={props.theme === "dark"} onClick={() => props.onTheme("dark")}>Scuro</button>
+              <button type="button" aria-pressed={props.theme === "light"} onClick={() => props.onTheme("light")}>Chiaro</button>
+            </span>
           </div>
-          {props.chars.length > 0 && (
-            <>
-              <span className="label" id="brand-g-pg">{props.showOwner ? "Personaggi della campagna" : "I miei personaggi"}</span>
-              <div className="brand-list" role="group" aria-labelledby="brand-g-pg">
-                {props.chars.map((c) => (
-                  <button key={c.id} type="button" role="menuitem" className="brand-item" onClick={pick(() => props.onOpen(c.id))}>
-                    <span>{c.name}</span>
-                    <span className="muted xs num">Lv {c.level}{props.showOwner ? ` · ${c.owner_name}` : ""}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <div className="brand-sep" />
-          <button type="button" role="menuitem" className="brand-item" onClick={pick(props.onAccount)}>Il mio account</button>
-          <button type="button" role="menuitem" className="brand-item" onClick={pick(props.onLogout)}>Esci</button>
+          <div className="sh-sep" />
+          {props.chars.length > 0 && <span className="label sh-pl">{props.showOwner ? "Personaggi della campagna" : "I miei personaggi"}</span>}
+          <div className="sh-plist">
+            {props.chars.map((c) => (
+              <button key={c.id} type="button" role="menuitem" className="sh-pi" onClick={pick(() => props.onOpen(c.id))}>
+                <span>{c.name}</span><small className="muted num">Lv {c.level}{props.showOwner ? ` · ${c.owner_name}` : ""}</small>
+              </button>
+            ))}
+          </div>
+          <button type="button" role="menuitem" className="sh-pi gold" onClick={pick(props.onCreate)}>＋ Crea un personaggio</button>
+          <div className="sh-sep" />
+          <button type="button" role="menuitem" className="sh-pi" onClick={pick(props.onLogout)}>Esci</button>
         </div>
       )}
     </div>
@@ -110,28 +115,31 @@ export function AppShell() {
   const { chars, error, reload } = useAppData();
   const location = useLocation();
   const navigate = useNavigate();
-  const navRef = useRef<HTMLElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const headRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<Theme>(currentTheme);
   const currentId = useCurrentCharId();
   const m = useMatch("/personaggi/:id/*");
   const suffix = m ? (m.params["*"] ? `/${m.params["*"]}` : "") : "";
-  const topRef = useRef<HTMLElement>(null);
-  // Contatore delle richieste: per il Master le nuove, per il giocatore le risposte non lette (ogni 30 s, pagina visibile)
+  const isMaster = user?.role === "master";
+
+  // Richieste da guardare (Master: nuove; giocatore: risposte non lette) e scontro in corso: richiami nel menu
   const [ticketCount, setTicketCount] = useState(0);
-  const refreshTickets = useCallback(async () => {
-    try { setTicketCount((await ticketsApi.summary()).count); } catch { /* il contatore è facoltativo */ }
+  const [battle, setBattle] = useState(false);
+  const refreshCounts = useCallback(async () => {
+    try { setTicketCount((await ticketsApi.summary()).count); } catch { /* facoltativo */ }
+    try { setBattle(!!(await battleApi.active()).scontro); } catch { /* facoltativo */ }
   }, []);
-  usePolling(refreshTickets, 30000, [refreshTickets, location.pathname]);
+  usePolling(refreshCounts, 30000, [refreshCounts, location.pathname]);
   useEffect(() => {
-    const on = () => { refreshTickets(); };
+    const on = () => { refreshCounts(); };
     window.addEventListener(TICKETS_CHANGED, on);
     return () => window.removeEventListener(TICKETS_CHANGED, on);
-  }, [refreshTickets]);
+  }, [refreshCounts]);
 
-  // Altezza della barra in alto (cambia quando va a capo): serve agli elementi sticky sotto di lei (HUD della plancia)
+  // Altezza dell'intestazione sticky: serve agli elementi sticky sotto di lei (HUD della plancia)
   useEffect(() => {
-    const el = topRef.current;
+    const el = headRef.current;
     if (!el) return;
     const set = () => document.documentElement.style.setProperty("--topbar-h", `${Math.round(el.getBoundingClientRect().height)}px`);
     set();
@@ -142,14 +150,7 @@ export function AppShell() {
   }, []);
 
   useEffect(() => { if (currentId) writeLast(currentId); }, [currentId]);
-
-  // Su mobile la nav è una riga scorrevole: porta in vista la voce attiva
-  useEffect(() => {
-    const nav = navRef.current;
-    const active = nav?.querySelector<HTMLElement>('a[aria-current="page"]');
-    if (nav && active && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = active.offsetLeft - 16;
-    mainRef.current?.focus({ preventScroll: true });
-  }, [location.pathname]);
+  useEffect(() => { mainRef.current?.focus({ preventScroll: true }); }, [location.pathname]);
 
   function pickTheme(t: Theme) {
     document.documentElement.dataset.theme = t;
@@ -157,80 +158,55 @@ export function AppShell() {
     setTheme(t);
   }
 
-  function onPick(id: number) {
-    navigate(`/personaggi/${id}${suffix}`);
-  }
-
-  const isMaster = user?.role === "master";
-  const hasChar = currentId != null;
-  const charLink = (s: string, label: string) =>
-    hasChar
-      ? <NavLink to={`/personaggi/${currentId}${s}`} end>{label}</NavLink>
-      : <a aria-disabled="true" title="Crea prima un personaggio">{label}</a>;
+  const list = sections({ role: isMaster ? "master" : "player", charId: currentId, tickets: ticketCount, battle });
+  const sec = activeSection(list, location.pathname);
+  const title = location.pathname.startsWith("/account") ? "Il mio account" : sec?.label ?? "";
+  const profile = (compact?: boolean) => (
+    <ProfileMenu compact={compact} name={user?.display_name ?? ""} role={isMaster ? "Master" : "Giocatore"} chars={chars ?? []}
+      showOwner={isMaster} theme={theme} onTheme={pickTheme} onCreate={() => navigate("/crea")}
+      onOpen={(id) => navigate(`/personaggi/${id}`)} onAccount={() => navigate("/account")} onLogout={logout} />
+  );
+  const badge = (s: NavSection) => (s.badge ? <span className="sh-badge num" aria-label={`${s.badge} da guardare`}>{s.badge}</span>
+    : s.dot ? <span className="sh-dot" aria-label="in corso" /> : null);
+  const link = (s: NavSection, cls: string) => (
+    <NavLink key={s.key} to={s.to} className={() => `${cls}${sec?.key === s.key ? " on" : ""}`}
+      aria-current={sec?.key === s.key ? "page" : undefined}>
+      <NavIcon name={s.icon} /><span className="sh-lt">{s.label}</span>{badge(s)}
+    </NavLink>
+  );
 
   return (
-    <>
-      <header className="topbar" ref={topRef}>
-        <BrandMenu
-          chars={chars ?? []}
-          showOwner={isMaster}
-          onCreate={() => navigate("/crea")}
-          onOpen={(id) => navigate(`/personaggi/${id}`)}
-          onAccount={() => navigate("/account")}
-          onLogout={logout}
-        />
-        {chars && chars.length > 0 && (
-          <label className="char-pick small" htmlFor="char-select">
-            <span className="label">Personaggio</span>
-            <select
-              className="input"
-              id="char-select"
-              value={currentId ?? ""}
-              onChange={(e) => onPick(Number(e.target.value))}
-            >
-              {currentId != null && !chars.some((c) => c.id === currentId) && <option value={currentId}>PG #{currentId}</option>}
-              {chars.map((c) => (
-                <option key={c.id} value={c.id}>{c.name} · Lv {c.level}{isMaster ? ` · ${c.owner_name}` : ""}</option>
-              ))}
-            </select>
-          </label>
-        )}
-        <span className="user">
-          <NavLink to="/account" className="name" title="Il mio account: nome visibile, password, sessioni">{user?.display_name}</NavLink>
-          <span className="chip muted role">{isMaster ? "Master" : "Giocatore"}</span>
-          <button type="button" className="btn ghost" onClick={logout}>Esci</button>
-        </span>
-        <div className="seg" role="group" aria-label="Tema">
-          <button type="button" aria-pressed={theme === "dark"} title="Tema scuro" onClick={() => pickTheme("dark")}>Scuro</button>
-          <button type="button" aria-pressed={theme === "light"} title="Tema chiaro" onClick={() => pickTheme("light")}>Chiaro</button>
-        </div>
-      </header>
+    <div className="sh">
+      <nav className="sh-rail" aria-label="Sezioni">
+        <span className="sh-logo"><b>STATISFY</b></span>
+        {list.map((s) => link(s, "sh-link"))}
+        <span className="sh-grow" />
+        {profile()}
+      </nav>
 
-      <div className="app">
-        <nav className="nav" aria-label="Sezioni" ref={navRef}>
-          {charLink("", "Scheda personaggio")}
-          {charLink("/plancia", "Plancia di gioco")}
-          <NavLink to="/scontro">Scontro</NavLink>
-          {charLink("/level-up", "Level up")}
-          <NavLink to="/diario">Diario</NavLink>
-          <NavLink to="/richieste">
-            {isMaster ? "Richieste dei giocatori" : "Richieste al Master"}
-            {ticketCount > 0 && <span className="chip gold num nav-count" aria-label={isMaster ? `${ticketCount} nuove` : `${ticketCount} con risposte da leggere`}>{ticketCount}</span>}
-          </NavLink>
-          {isMaster && (
-            <>
-              <div className="nav-sep" />
-              <NavLink to="/master/plancia">Plancia di comando</NavLink>
-              <NavLink to="/master" end>Area Master</NavLink>
-              <NavLink to="/master/forgia">Forgia del Master</NavLink>
-              <NavLink to="/master/amministrazione">Amministrazione</NavLink>
-            </>
+      <div className="sh-body">
+        <header className="sh-head" ref={headRef}>
+          <div className="sh-head-r">
+            <h2 className="sh-title">{title}</h2>
+            {sec?.charPicker && chars && chars.length > 0 && (
+              <label className="sh-pick small">
+                <span className="sh-sr">Personaggio</span>
+                <select className="input" value={currentId ?? ""} onChange={(e) => navigate(`/personaggi/${e.target.value}${suffix}`)}>
+                  {currentId != null && !chars.some((c) => c.id === currentId) && <option value={currentId}>PG #{currentId}</option>}
+                  {chars.map((c) => <option key={c.id} value={c.id}>{c.name} · Lv {c.level}{isMaster ? ` · ${c.owner_name}` : ""}</option>)}
+                </select>
+              </label>
+            )}
+            <span className="sh-mobile-prof">{profile(true)}</span>
+          </div>
+          {sec && sec.tabs.length > 0 && (
+            <nav className="sh-tabs" aria-label={`Sezione ${sec.label}`}>
+              {sec.tabs.map((t) => (
+                <NavLink key={t.to} to={t.to} end={t.end} className="sh-tab">{t.label}{t.dot && <span className="sh-dot" aria-label="in corso" />}</NavLink>
+              ))}
+            </nav>
           )}
-          <div className="nav-sep" />
-          <p className="nav-note footnote">
-            Le regole sono calcolate dal server: passa sopra un valore per vedere formula e origine dei punti.
-          </p>
-        </nav>
+        </header>
         <main id="view" tabIndex={-1} ref={mainRef}>
           {error ? (
             <ErrorBox title="Connessione" message={error} action={<button type="button" className="btn" onClick={reload}>Riprova</button>} />
@@ -241,6 +217,10 @@ export function AppShell() {
           )}
         </main>
       </div>
-    </>
+
+      <nav className="sh-bottom" aria-label="Sezioni">
+        {list.map((s) => link(s, "sh-bl"))}
+      </nav>
+    </div>
   );
 }
