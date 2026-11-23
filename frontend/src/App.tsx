@@ -14,6 +14,7 @@ import { Master } from "./pages/Master";
 import { Forgia } from "./pages/Forgia";
 import { Plancia } from "./pages/Plancia";
 import { PlanciaGiocatore } from "./pages/PlanciaGiocatore";
+import { Scontro } from "./pages/Scontro";
 import { Diario } from "./pages/Diario";
 import { Richieste } from "./pages/Richieste";
 import { Account, ForcedPassword } from "./pages/Account";
@@ -51,6 +52,7 @@ function Gate() {
           <Route path="/personaggi/:id/plancia" element={<PlanciaGiocatore />} />
           <Route path="/personaggi/:id/level-up" element={<LevelUp />} />
           <Route path="/personaggi/:id/combattimento" element={<ToPlancia />} />
+          <Route path="/scontro" element={<Scontro />} />
           <Route path="/crea" element={<Crea />} />
           <Route path="/diario" element={<Diario />} />
           <Route path="/richieste" element={<Richieste />} />

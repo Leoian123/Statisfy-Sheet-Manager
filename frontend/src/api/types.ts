@@ -1,4 +1,5 @@
 // Tipi del contratto API v1 (docs/API.md). Il frontend non calcola regole: mostra ciò che riceve.
+import type { Mech } from "./mech";
 
 export type Role = "master" | "player";
 
@@ -59,14 +60,16 @@ export interface Title {
   /** Campi facoltativi (voci della Forgia o aggiunte a mano): come si ottiene, effetto, evoluzione */
   how?: string; effect?: { type: string | null; text: string } | string | null; next?: string | null; evoCond?: string; prev?: string | null;
 }
-export interface Skill { name: string; lvl: number; pct: number | "MAX"; type: string; passive?: string | null }
+export interface Skill { name: string; lvl: number; pct: number | "MAX"; type: string; passive?: string | null; mech?: Mech }
 /** Skill attive, incantesimi e miracoli stanno tutti in `active_skills`: li distingue `kind` (assente = skill attiva). */
 export type ActiveKind = "Skill" | "Incantesimo" | "Miracolo";
 export interface ActiveSkill {
   name: string; effect: string; lvl: number; pct: number | "MAX"; cost: string; cd: number;
   kind?: ActiveKind | string; spheres?: string[]; god?: string;
+  /** Meccanica strutturata (motore di combattimento): facoltativa */
+  mech?: Mech; efficacia?: number;
 }
-export interface Talent { name: string; rarity: string; origin: string; effect: string }
+export interface Talent { name: string; rarity: string; origin: string; effect: string; mech?: Mech }
 export type SlotKey =
   | "testa" | "collo" | "spalle" | "mantello" | "torso" | "polsi" | "mani" | "cintura" | "gambe" | "piedi"
   | "anello1" | "anello2" | "ninnolo1" | "ninnolo2" | "manoPrincipale" | "manoSecondaria";

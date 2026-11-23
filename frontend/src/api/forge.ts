@@ -1,6 +1,7 @@
 // API della Forgia del Master (/api/forge, solo Master). Le regole e i calcoli sono tutti nel backend:
 // il frontend tiene la bozza del wizard e chiede al server validazione per passo e valori dell'anteprima.
 import { request } from "./client";
+import type { MechVocabulary } from "./mech";
 
 export type ForgeKind = "skills" | "classes" | "races" | "titles" | "npcs" | "encounters" | "spells" | "miracles" | "items";
 export type ExpMode = "intera" | "divisa";
@@ -68,6 +69,8 @@ export interface ForgeMeta {
   item_bonus: { v: string; l: string }[];
   equip_types: { key: string; label: string; slots: string[]; two_handed: boolean }[];
   assignable: ForgeKind[];
+  /** Vocabolario della meccanica strutturata (passo Meccanica): assente nella modalità demo */
+  mech?: MechVocabulary;
 }
 
 export interface ForgePreview { kind: ForgeKind; steps: string[]; first_bad: number; computed: Computed }

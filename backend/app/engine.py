@@ -83,7 +83,8 @@ class Ctx:
 
     def value(self, key: str, label: str, lo: float, hi: float) -> float:
         lo, hi = (lo, hi) if lo <= hi else (hi, lo)
-        self._req(key, "valore", label, lo, hi, None)
+        if lo != hi:  # un valore fisso non è un tiro
+            self._req(key, "valore", label, lo, hi, None)
         if self.mode == "min":
             return lo
         if self.mode == "max":
@@ -1081,14 +1082,17 @@ def cast(ctx: Ctx, actor: dict, ab: dict, m: Mech, chosen: list[str], reaction: 
     drain(ctx)
 
 
-def reaction_candidates(s: dict, actor: dict, targets: list[str]) -> list[dict]:
-    """Chi può reagire a un'azione di `actor`: i nemici di actor con un'abilità reazione pronta."""
+def reaction_candidates(s: dict, actor: dict, targets: list[str], kind: str = "") -> list[dict]:
+    """Chi può reagire a un'azione di `actor`: i nemici di actor con un'abilità reazione pronta.
+    Le reazioni fatte solo di «interrompi» (counterspell) non rispondono agli attacchi con l'arma."""
     out = []
     for c in enemies_of(s, actor):
         if int((c.get("azioni") or {}).get("reazione", 0)) <= 0 or has(c, "salta_turno"):
             continue
         for ab in c.get("abilita") or []:
             m = mech_of(ab)
+            if kind == "attacco" and m.effetti and all(e.azione.op == "interrompi" for e in m.effetti):
+                continue
             if m.timing in ("reazione", "entrambi") and m.tipo != "passiva" \
                     and can_use(s, c, ab, m, True, False) is None:
                 out.append({"id": c["id"], "nome": c["nome"], "abilita": ab["nome"], "bersaglio": c["id"] in targets})
@@ -1113,7 +1117,7 @@ def act(state: dict, azione: dict, rng: random.Random | None = None, tiri: dict 
     start = len(state.get("registro") or [])
     pay(ctx, actor, ab, m, False, force)
     if reactions and mode == "real":
-        cands = reaction_candidates(state, actor, chosen)
+        cands = reaction_candidates(state, actor, chosen, m.tipo)
         if cands:
             w = {"id": new_id(state, "r"), "tipo": "reazione", "attore": actor["id"], "abilita": ab["nome"],
                  "bersagli": chosen, "candidati": cands, "tiri": dict(tiri or {})}
@@ -1171,7 +1175,9 @@ def preview(state: dict, azione: dict) -> dict:
     lo = act(lo_s, azione, mode="min", reactions=False)
     hi = act(hi_s, azione, mode="max", reactions=False)
     actor = state["combattenti"].get(str(azione.get("attore")))
-    reactors = reaction_candidates(state, actor, [str(x) for x in azione.get("bersagli") or []]) if actor else []
+    pab = ability(actor, str(azione.get("abilita") or "")) if actor else None
+    reactors = reaction_candidates(state, actor, [str(x) for x in azione.get("bersagli") or []],
+                                   mech_of(pab).tipo if pab else "") if actor else []
     stima = {}
     for cid in set(lo["totali"]) | set(hi["totali"]):
         a, b = lo["totali"].get(cid, {}), hi["totali"].get(cid, {})

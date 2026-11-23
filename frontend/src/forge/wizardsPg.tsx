@@ -3,6 +3,7 @@ import type { Draft, ForgeMeta } from "../api/forge";
 import {
   CheckF, clone, DASH, Decided, filled, Lines, NameOr, NumF, Picks, PvRow, PvSec, PvText, PvWin, RarityChip, Ref, Req,
   RuleChip, SelF, TextF, charOpts, nf, ni, signed, type WCtx, type WizardDef, GroupF } from "./engine";
+import { MechStep } from "./MechStep";
 
 const STAT_NAME: Record<string, string> = { STR: "Forza", DEX: "Destrezza", VIT: "Vitalità", INT: "Intelligenza", FIN: "Finesse", AUT: "Autorità" };
 const statOpts = (meta: ForgeMeta) => meta.stat_codes.map((k) => ({ v: k, l: STAT_NAME[k] ? `${k} · ${STAT_NAME[k]}` : k }));
@@ -32,7 +33,7 @@ const skill: WizardDef = {
   intro: "Le skill crescono per Gradi I–X (Progressione, Sezione 4). Al Grado X chi la usa crea la propria passiva; oltre il X nasce una scuola personale.",
   fresh: (meta) => ({ name: "", type: "Combat", mode: "passiva", res: "SP", cost: "", cd: "", effect: "",
     rows: clone(meta.weapon_grade_rows), costRed: 0, passiveX: "", school: false, schoolName: "",
-    grade1: meta.grade1_rule.Combat || "", method: "Level up", charId: "" }),
+    grade1: meta.grade1_rule.Combat || "", method: "Level up", charId: "", mech: null }),
   steps: [
     { render: (x) => <>
       <TextF path="name" label="Nome della skill" req max={40} ph="es. Lancia, Conciatura, Comando: Ritirata" />
@@ -78,6 +79,8 @@ const skill: WizardDef = {
         hint="Regola: armi al primo uso vero in combattimento; mestieri dopo un lavoro completo sotto la guida di un PNG del mestiere." />
       <SelF path="method" label="Come si acquisisce" opts={x.meta.acquire.map((a) => ({ v: a.v, l: a.l }))} hint="Metodi di acquisizione della Progressione, Sezione 3." />
     </> },
+    { render: () => <MechStep kind={(x) => (x.d.mode === "attiva" ? "skill" : "passiva")}
+      launch={(x) => (x.d.mode === "attiva" && Number(x.d.cost) > 0 ? { risorsa: x.d.res === "MP" ? "MP" : "SP", valore: Number(x.d.cost) } : null)} /> },
     { render: (x) => <>
       <SelF path="charId" label="Assegna a un PG (facoltativo)" opts={charOpts(x.meta)}
         hint={x.d.mode === "attiva" ? "Finisce tra le Skill attive del PG, al Grado I e 0%." : "Finisce tra le Skill del PG, al Grado I e 0%."} />

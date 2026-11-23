@@ -4,7 +4,7 @@
    Tavolo (porting di mockup/screens/plancia.js, vista Master): tiro del Master con il vassoio d100 (anche segreto),
    richieste di tiro ai PG, registro di tutti i tiri e ultimo tiro di ogni PG; tiri e richieste si aggiornano ogni 5 s. */
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, errorText } from "../api/client";
 import type { Roll, RollCall, RollRequest } from "../api/types";
 import { forgeApi, type AssignPreview, type Board, type BoardEncounter, type BoardPc, type ForgeEntry, type ForgeKind, type ForgeMeta } from "../api/forge";
@@ -19,6 +19,8 @@ import { CallPicker } from "../components/CallPicker";
 import { usePolling } from "../lib/usePolling";
 import { quickAsks } from "../lib/asks";
 import { CloseEncounter, WIZARDS } from "./Forgia";
+import { battleApi } from "../api/scontri";
+import { BattleBanner } from "../components/combat/BattleBanner";
 import "../styles/forge.css";
 import "../styles/plancia.css";
 import "../styles/tavolo.css";
@@ -121,6 +123,7 @@ export function Plancia() {
 
       <div className="pl-cols">
         <div className="pl-main">
+          <BattleBanner />
           {active && <EncounterBanner enc={active} onOpen={() => setTab("incontro")} />}
           <Party board={board} rolls={rolls ?? []} reqs={reqs} onAsk={goAsk} onAssign={goAssign} onChanged={refresh} />
           <MasterRoll onRolled={refreshTable} />
@@ -414,6 +417,8 @@ function EncounterBanner({ enc, onOpen }: { enc: BoardEncounter; onOpen: () => v
 
 function EncounterPanel({ board, active, onChanged }: { board: Board; active: BoardEncounter | null; onChanged: () => void }) {
   const toast = useToast();
+  const navigate = useNavigate();
+  const fight = (id: number) => run(async () => { await battleApi.start({ encounter_id: id }); navigate("/scontro"); });
   const [amounts, setAmounts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState(false);
   const [loot, setLoot] = useState<string | null>(null);
@@ -472,7 +477,8 @@ function EncounterPanel({ board, active, onChanged }: { board: Board; active: Bo
           <p className="small muted">Nessun incontro in corso. Avvia uno degli incontri preparati nella Forgia.</p>
           {board.encounters.map((e) => (
             <div key={e.id} className="pl-li"><div className="pl-li-t"><b>{e.name}</b><span className="xs muted">{e.summary}</span></div>
-              <button type="button" className="btn" disabled={busy} onClick={() => live(e.id, "start")}>Avvia</button></div>
+              <button type="button" className="btn" disabled={busy} onClick={() => live(e.id, "start")}>Avvia</button>
+              <button type="button" className="btn primary" disabled={busy} title="Plancia di scontro: turni, abilità con anteprima del calcolo, reazioni" onClick={() => fight(e.id)}>Scontro</button></div>
           ))}
           <Link className="btn" to="/master/forgia?w=incontro">Prepara un incontro</Link>
         </>}

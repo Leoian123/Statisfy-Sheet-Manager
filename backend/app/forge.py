@@ -45,8 +45,11 @@ def mech_final(d: dict, tipo: str, cost: Any = None, res: str = "MP", cd: Any = 
         return None
     m = dict(raw)
     m["tipo"] = "passiva" if m.get("tipo") == "passiva" else tipo
-    if not m.get("costi") and cost and m["tipo"] != "passiva":
-        m["costi"] = [{"risorsa": res if res in MECH.RESOURCES else "MP", "valore": cost, "per": "lancio"}]
+    costi = list(m.get("costi") or [])
+    has_launch = any(k.get("per", "lancio") == "lancio" and k.get("risorsa") in ("MP", "SP", "KI", "HP", "FEDE")
+                     for k in costi if isinstance(k, dict))
+    if not has_launch and cost and m["tipo"] != "passiva":  # il costo calcolato dal wizard, se il Master non ne ha messo uno
+        m["costi"] = [{"risorsa": res if res in MECH.RESOURCES else "MP", "valore": cost, "per": "lancio"}, *costi][:4]
     if not (m.get("cooldown") or {}).get("valore") and cd:
         m["cooldown"] = {"valore": int(cd), "unita": "turni"}
     et = [str(x) for x in (m.get("etichette") or [])]

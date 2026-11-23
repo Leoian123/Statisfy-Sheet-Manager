@@ -1,11 +1,14 @@
 // Moduli di modifica della scheda per il Master. Ogni modulo salva solo il proprio campo con PATCH /characters/{id}.
 import { useState, type ReactNode } from "react";
 import { api } from "../../api/client";
+import type { Mech } from "../../api/mech";
 import type { Character, Profile, Pvp, ResourceKey, Resources, RulesConfig, StatRow } from "../../api/types";
 import { useAppData } from "../../auth/AppData";
 import { n, ROMAN } from "../../lib/format";
 import { RESOURCE_DEFS } from "../../lib/resources";
 import { useBusy } from "../../lib/useCharacter";
+import { MechField } from "../mech/MechField";
+import type { MechKindHint } from "../mech/MechEditor";
 import { useToast } from "../Toast";
 import { EditActions, NumField, SelectField, TextField } from "./fields";
 import { ListEditor, type FieldDef, type Item, type ListDef } from "./ListEditor";
@@ -283,6 +286,33 @@ function listDefs(c: Character): Record<ListKey, ListDef> {
   };
 }
 
+/* ---------- Meccanica strutturata (skill attive, incantesimi, miracoli, skill, talenti) ---------- */
+const MECH_LISTS: Partial<Record<ListKey, (it: Item) => MechKindHint>> = {
+  active_skills: (it) => (it.kind === "Incantesimo" ? "incantesimo" : it.kind === "Miracolo" ? "miracolo" : "skill"),
+  skills: () => "passiva",
+  talents: () => "passiva",
+};
+
+/** Aggiunge il campo «Meccanica» (pop-up con l'editor) alle liste che la prevedono. */
+function withMech(def: ListDef, field: ListKey, items: Item[], set: (d: Item[]) => void): ListDef {
+  const hint = MECH_LISTS[field];
+  if (!hint) return def;
+  const mechField: FieldDef = {
+    key: "mech", label: "Meccanica", kind: "static",
+    render: (it) => (
+      <MechField value={it.mech as Mech | null | undefined} kindHint={hint(it)} name={String(it.name ?? "")}
+        onChange={(m) => set(items.map((x) => {
+          if (x !== it) return x;
+          const { mech: _old, ...rest } = x;
+          void _old;
+          return m ? { ...rest, mech: m } : rest;
+        }))} />
+    ),
+  };
+  const add = (fs: FieldDef[]) => [...fs, mechField];
+  return { ...def, fields: add(def.fields), ...(def.fieldsFor ? { fieldsFor: (it: Item) => add(def.fieldsFor!(it)) } : {}) };
+}
+
 /** Parte di una lista modificata da sola (es. gli incantesimi dentro `active_skills`): le altre voci restano
     al loro posto, le voci nuove prendono i campi di `blank`. */
 export interface ListSubset { match: (it: Item) => boolean; blank?: Item; noun?: string }
@@ -307,7 +337,7 @@ export function ListSectionEditor({ field, what, subset, ...p }: Props & { field
     <SectionForm<Item[]> {...p} what={what}
       init={(c) => clone((c[field] as Item[]).filter((it) => !subset || subset.match(it)))}
       toPatch={(d) => ({ [field]: subset ? mergeSubset(all, d, subset.match) : d })}>
-      {(d, set) => <ListEditor items={d} onChange={set} def={def} />}
+      {(d, set) => <ListEditor items={d} onChange={set} def={withMech(def, field, d, set)} />}
     </SectionForm>
   );
 }

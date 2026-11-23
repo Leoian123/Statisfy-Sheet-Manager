@@ -465,3 +465,9 @@ def test_rolls_requested_in_preview():
     p = E.preview(s, {"attore": "p1", "abilita": "Proc", "bersagli": ["n1"]})
     kinds = {r["key"].split(":")[0] for r in p["richieste"]}
     assert {"colpo", "crit", "danno", "proc"} <= kinds
+
+
+def test_counterspell_does_not_answer_weapon_attacks():
+    s = base_state(enemy_abilities=[ab("Counterspell", TPL[12])])
+    s["combattenti"]["n1"]["mp"] = s["combattenti"]["n1"]["mp_max"] = 500
+    assert use(s, "Attacco")["esito"] == "ok"

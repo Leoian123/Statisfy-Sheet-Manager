@@ -5,6 +5,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { ActiveSkill, Character, Skill, Talent, Title } from "../api/types";
 import { useAppData } from "../auth/AppData";
 import { rarityKey } from "../lib/format";
+import type { Mech } from "../api/mech";
+import { mechSummary } from "./mech/summary";
 import { gradeRarity, initials, Kv, Mastery, OgOpts, OgRow, OgTipHead, roman, TipLayer, useOgTip } from "./og";
 import { SysMsg } from "./Status";
 import { Win } from "./Win";
@@ -55,6 +57,20 @@ function Chips<T extends string>({ options, active, onChange, label, count, rend
 
 function Hint({ children }: { children: ReactNode }) {
   return <><span className="inv-tsep" /><span className="inv-hint">{children}</span></>;
+}
+
+/** Distintivo «meccanica» per le abilità con meccanica strutturata: riepilogo nel tooltip. */
+function MechBadge({ m }: { m?: Mech | null }) {
+  if (!m) return null;
+  const s = mechSummary(m);
+  return <> · <span className="chip violet mc-badge" title={[s.short, ...s.lines].join("\n")}>meccanica</span></>;
+}
+
+/** Sezione «Meccanica» nella finestra informativa. */
+function MechTip({ m }: { m?: Mech | null }) {
+  if (!m) return null;
+  const s = mechSummary(m);
+  return <><div className="og-sep">Meccanica</div><OgOpts lines={s.lines.length ? s.lines : [s.short]} /></>;
 }
 
 function ListBody({ rows, empty }: { rows: ReactNode[]; empty: string }) {
@@ -195,7 +211,7 @@ export function SkillsTab({ c }: { c: Character }) {
         <ListBody empty={c.skills.length ? "Nessuna skill trovata." : "Nessuna skill."} rows={shown.map(({ s, i }) => (
           <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
             label={`Skill ${s.name}, Grado ${roman(s.lvl)} ${gradeName(s.lvl)}, maestria ${s.pct === "MAX" ? "massima" : `${s.pct}%`}`}
-            meta={<>{s.type || "—"} · {gradeName(s.lvl) || `Grado ${roman(s.lvl)}`}{s.passive ? <> · <span className="og-good">Passiva</span></> : null}</>}
+            meta={<>{s.type || "—"} · {gradeName(s.lvl) || `Grado ${roman(s.lvl)}`}{s.passive ? <> · <span className="og-good">Passiva</span></> : null}<MechBadge m={s.mech} /></>}
             right={<><span>{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
             tipProps={bind(i)} />
         ))} />
@@ -222,6 +238,7 @@ function SkillTip({ s, gradeName }: { s: Skill; gradeName: (l: number) => string
       <div className="og-sep">Passiva del Grado X</div>
       {s.passive ? <OgOpts lines={[s.passive]} />
         : <span className="muted">{s.lvl >= 10 ? "Nessuna passiva registrata." : `Si sblocca al Grado X (ora ${roman(s.lvl)}).`}</span>}
+      <MechTip m={s.mech} />
       <Hint>Le skill passive non hanno costo né cooldown.</Hint>
     </>
   );
@@ -264,7 +281,7 @@ export function ActiveListTab({ c, kind }: { c: Character; kind: ActiveSection }
           return (
             <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
               label={`${T.one} ${s.name}, Grado ${roman(s.lvl)}, costo ${s.cost || "nessuno"}, cooldown ${s.cd} turni`}
-              meta={<>{s.cost || "—"} · CD {s.cd}{extra ? ` · ${extra}` : ""}</>}
+              meta={<>{s.cost || "—"} · CD {s.cd}{extra ? ` · ${extra}` : ""}<MechBadge m={s.mech} /></>}
               right={<><span>{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
               tipProps={bind(i)} />
           );
@@ -295,6 +312,7 @@ function ActiveTip({ s, type, gradeName }: { s: ActiveSkill; type: string; grade
       {s.god && <Kv k="Divinità">{s.god}</Kv>}
       <div className="og-sep">Effetto</div>
       {s.effect ? <OgOpts lines={[s.effect]} /> : <span className="muted">Nessun effetto descritto.</span>}
+      <MechTip m={s.mech} />
     </>
   );
 }
@@ -322,7 +340,7 @@ export function TalentsTab({ c }: { c: Character }) {
         <ListBody empty={c.talents.length ? "Nessun talento trovato." : "Nessun talento."} rows={shown.map(({ t, i }) => (
           <OgRow key={i} rarity={rarityKey(t.rarity)} icon={initials(t.name)} name={t.name}
             label={`Talento ${t.name}, ${t.rarity}, ${t.origin}${isEvolving(t) ? ", evolutivo" : ""}`}
-            meta={<>{t.rarity} · {t.origin || "—"}{t.effect ? ` · ${t.effect}` : ""}</>}
+            meta={<>{t.rarity} · {t.origin || "—"}<MechBadge m={t.mech} />{t.effect ? ` · ${t.effect}` : ""}</>}
             right={isEvolving(t) ? <span className="og-v xs">EVO</span> : undefined}
             tipProps={bind(i)} />
         ))} />
@@ -345,6 +363,7 @@ function TalentTip({ t }: { t: Talent }) {
       {t.origin && <Kv k="Origine">{t.origin}</Kv>}
       <div className="og-sep">Effetto</div>
       {t.effect ? <OgOpts lines={t.effect.split(/(?<=\.)\s+/).filter(Boolean)} /> : <span className="muted">Nessun effetto descritto.</span>}
+      <MechTip m={t.mech} />
       {evo && <Kv k="Evoluzione">Cresce evolvendo</Kv>}
     </>
   );

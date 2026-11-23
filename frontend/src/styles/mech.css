@@ -1,0 +1,122 @@
+/* Meccanica strutturata delle abilità: editor (Forgia, passo Meccanica; scheda del Master) e distintivo nelle liste.
+   Righe compatte che vanno a capo, dettagli nei tooltip; nessuno scroll orizzontale a 375px; telefono: bersagli da 44px. */
+.mc { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.mc-intro { margin: 0; }
+.mc-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Campi compatti: etichetta piccola sopra, controllo sotto */
+.mc-f { display: inline-flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%; }
+.mc-f.mc-wide { flex: 1 1 220px; }
+.mc-k, .mc-ax {
+  font-size: var(--fs-xs); color: var(--muted); font-family: var(--font-display); font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.mc-ax { color: var(--violet); cursor: default; }
+.mc-ax[title] { cursor: help; }
+.mc-in { padding: 5px 8px; font-size: var(--fs-sm); min-width: 0; max-width: 100%; }
+select.mc-in { width: auto; }
+.mc-txt { width: 16ch; }
+.mc-f.mc-wide .mc-txt, .mc-f.mc-wide select.mc-in { width: 100%; }
+.mc-numw { display: inline-flex; align-items: center; gap: 4px; }
+.mc-num { width: 8ch; text-align: right; font-family: var(--font-mono); }
+.mc-unit { font-size: var(--fs-xs); color: var(--muted); }
+.mc-bad { border-color: var(--bad); }
+.mc-picks { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.mc-pick {
+  flex-direction: row; padding: 4px 10px; gap: 0; font-size: var(--fs-sm); color: inherit; font-family: inherit;
+  border-radius: 999px; white-space: nowrap;
+}
+.mc-check { display: inline-flex; gap: 6px; align-items: center; font-size: var(--fs-sm); cursor: pointer; align-self: flex-end; min-height: 30px; }
+.mc-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--gold); flex: none; }
+
+/* Intestazione dell'abilità */
+.mc-head {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; padding: 10px 12px; min-width: 0;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2);
+}
+.mc-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.mc-tag { text-transform: none; gap: 2px; padding-right: 2px; }
+.mc-x { background: none; border: 0; color: inherit; cursor: pointer; font-size: var(--fs-xs); padding: 0 4px; line-height: 1; }
+.mc-tagin { flex: 1 1 12ch; width: 12ch; }
+
+/* Effetti: card a fisarmonica */
+.mc-effs { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mc-eff { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); min-width: 0; }
+.mc-eff.is-open { border-color: var(--line-strong); }
+.mc-sub .mc-eff { background: var(--panel); }
+.mc-effh { display: flex; align-items: center; gap: 4px; min-width: 0; padding-right: 4px; }
+.mc-exp {
+  flex: 1 1 auto; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 8px 10px; text-align: left;
+  background: none; border: 0; color: inherit; cursor: pointer; font: inherit;
+}
+.mc-caret { color: var(--muted); flex: none; }
+.mc-effn { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-sm); flex: none; }
+.mc-effs-t { font-size: var(--fs-xs); color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-ctl { display: inline-flex; gap: 2px; flex: none; }
+.mc-effb { display: flex; flex-direction: column; gap: 10px; padding: 4px 10px 12px; min-width: 0; }
+.mc-axis {
+  display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 4px 10px; align-items: start; min-width: 0;
+  border-top: 1px dashed var(--line); padding-top: 8px;
+}
+.mc-axis > .mc-ax { padding-top: 2px; }
+.mc-axb { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; min-width: 0; }
+.mc-line {
+  flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: flex-end; min-width: 0;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius);
+}
+.mc-rm { margin-left: auto; }
+.mc-add { align-self: flex-start; }
+.mc-kids { display: flex; flex-direction: column; gap: 6px; min-width: 0; border-top: 1px dashed var(--line); padding-top: 8px; }
+.mc-sub { padding-left: 10px; border-left: 2px solid var(--violet-soft); }
+
+/* Riepilogo leggibile ed errori */
+.mc-sum {
+  display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; min-width: 0;
+  border: 1px solid var(--violet); border-radius: var(--radius); background: var(--violet-soft);
+}
+.mc-text { margin: 0; overflow-wrap: anywhere; }
+.mc-lines, .mc-errs { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.mc-errs { list-style: none; padding-left: 0; }
+
+/* Galleria dei modelli */
+.mc-gal {
+  display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; min-width: 0;
+  border: 1px solid var(--gold); border-radius: var(--radius); background: var(--panel);
+}
+.mc-galh { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mc-galq { flex: 1 1 160px; width: auto; min-width: 0; }
+.mc-galg { display: flex; flex-direction: column; gap: 6px; }
+.mc-galgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 6px; }
+.mc-tpl { padding: 8px 10px; gap: 2px; color: inherit; font-family: inherit; }
+.mc-tpl b { font-family: var(--font-display); font-size: var(--fs-sm); }
+.mc-tpl:hover, .mc-tpl:focus-visible { border-color: var(--gold); }
+
+/* Campo «Meccanica» nell'editor della scheda */
+.ed-f:has(.mc-field) { grid-column: 1 / -1; }
+.ed-static:has(> .mc-field) { font-family: var(--font-body); padding: 0; }
+.mc-field { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.mc-fsum { min-width: 0; overflow-wrap: anywhere; flex: 1 1 160px; }
+.mc-dlg {
+  border: 1px solid var(--gold); border-radius: var(--radius); background: var(--panel); color: var(--fg);
+  padding: 0; width: min(820px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); box-shadow: 0 0 32px var(--gold-soft);
+}
+.mc-dlg[open] { display: flex; flex-direction: column; }
+.mc-dlg::backdrop { background: rgba(0, 0, 0, 0.6); }
+.mc-dlgh { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.mc-dlgt { font-size: var(--fs-md); margin: 0; overflow-wrap: anywhere; min-width: 0; }
+.mc-dlgb { padding: 12px 16px; overflow-y: auto; overflow-x: hidden; min-height: 0; flex: 1 1 auto; }
+.mc-dlgf { justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.mc-dlgf > .xs { margin-right: auto; }
+
+/* Distintivo nelle liste della scheda */
+.mc-badge { text-transform: none; cursor: help; padding: 0 6px; }
+
+@media (max-width: 560px) {
+  .mc-axis { grid-template-columns: minmax(0, 1fr); }
+  .mc-sub { padding-left: 6px; }
+  .mc-effb { padding: 4px 8px 10px; }
+}
+@media (pointer: coarse) {
+  .mc-pick, .mc .btn, .mc-in, .mc-check, .mc-exp, .mc-tpl, .mc-fbtn, .mc-dlg .btn { min-height: 44px; }
+  .mc-x { min-width: 44px; min-height: 44px; }
+}

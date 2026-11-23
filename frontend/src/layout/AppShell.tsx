@@ -210,6 +210,7 @@ export function AppShell() {
         <nav className="nav" aria-label="Sezioni" ref={navRef}>
           {charLink("", "Scheda personaggio")}
           {charLink("/plancia", "Plancia di gioco")}
+          <NavLink to="/scontro">Scontro</NavLink>
           {charLink("/level-up", "Level up")}
           <NavLink to="/diario">Diario</NavLink>
           <NavLink to="/richieste">

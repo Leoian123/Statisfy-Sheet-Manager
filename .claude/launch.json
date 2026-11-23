@@ -4,20 +4,75 @@
     {
       "name": "backend",
       "runtimeExecutable": "backend/.venv/Scripts/python.exe",
-      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--app-dir", "backend", "--host", "127.0.0.1", "--port", "8000"],
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--app-dir",
+        "backend",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
       "port": 8000
     },
     {
       "name": "frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
       "port": 5174
     },
     {
       "name": "mockup",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["mockup/serve.py", "5173"],
+      "runtimeArgs": [
+        "mockup/serve.py",
+        "5173"
+      ],
       "port": 5173
+    },
+    {
+      "name": "backend-test",
+      "runtimeExecutable": "backend/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--app-dir",
+        "backend",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8051"
+      ],
+      "port": 8051,
+      "env": {
+        "STATISFY_DB_URL": "sqlite:///C:/Users/giuse/AppData/Local/Temp/claude/bbb041ab17305557/bff5e19d-e0e6-45e1-9b2b-7549b0a3c4a9/scratchpad/scontro-test.db",
+        "STATISFY_SECRET_FILE": "C:/Users/giuse/AppData/Local/Temp/claude/bbb041ab17305557/bff5e19d-e0e6-45e1-9b2b-7549b0a3c4a9/scratchpad/secret_key"
+      }
+    },
+    {
+      "name": "frontend-test",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5175"
+      ],
+      "port": 5175,
+      "env": {
+        "STATISFY_API": "http://127.0.0.1:8051"
+      }
     }
   ]
 }

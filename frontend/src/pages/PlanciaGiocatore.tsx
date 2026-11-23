@@ -27,6 +27,7 @@ import { attachables, clampMod, filterGroups, fromRoll, type AttachItem as Item,
 import { SHORTCUT_HELP, boardShortcut } from "../lib/shortcuts";
 import { useBusy, useCharacter } from "../lib/useCharacter";
 import { usePolling } from "../lib/usePolling";
+import { BattleBanner } from "../components/combat/BattleBanner";
 import "../styles/tavolo.css";
 import "../styles/gioco.css";
 
@@ -238,6 +239,7 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
 
   return (
     <div className="pg-root" data-tab={tab}>
+      <BattleBanner charId={c.id} />
       <PlayerHud c={c} amt={amt} setAmt={setAmt} busy={busy} error={actErr} positions={positions}
         onAction={onAction} onRestore={onRestore} onPosition={onPosition} />
 

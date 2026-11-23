@@ -1,6 +1,7 @@
 /* Forgia · gruppo "Magia": Incantesimo e Miracolo (porting di mockup/screens/wizards-magia.js).
    Tutti i numeri (livelli, costo, backlash, danno, Fede, favore) li calcola il server: decisioni 6–22 di docs/PROPOSTE.md. */
 import type { Draft } from "../api/forge";
+import { MechStep } from "./MechStep";
 import { CheckF, DASH, Decided, NameOr, Picks, PvRow, PvWin, Ref, SelF, TextF, ni, nf, readNum, useW, type WCtx, type WizardDef } from "./engine";
 
 const D = {
@@ -82,7 +83,7 @@ const incantesimo: WizardDef = {
   intro: "Il giocatore descrive l'effetto, il narratore ne valuta costo, livello e rischi in base alle sfere (Magia_Creazione_Incantesimi.txt, Magic.txt).",
   fresh: (meta) => ({ name: "", effect: "", category: "attacco", origin: "grimorio", spheres: [], combo: false, level: 1, meta: [],
     env: { zone: "", ley: 0, anti: false }, risk: { fatigue: false, emotion: false, interrupt: false, overcast: "auto", protections: 0 },
-    cost: null, cd: null, charId: meta.characters[0] ? String(meta.characters[0].id) : "", assign: true, force: false }),
+    cost: null, cd: null, mech: null, charId: meta.characters[0] ? String(meta.characters[0].id) : "", assign: true, force: false }),
   saveLabel: (x) => (x.d.assign && x.c.can_skill && x.c.char ? `Salva e aggiungi a ${x.c.char.name}` : "Salva nella libreria"),
   steps: [
     { render: (x) => <>
@@ -204,6 +205,7 @@ const incantesimo: WizardDef = {
         </div>
       </>;
     } },
+    { render: () => <MechStep kind={() => "incantesimo"} launch={(x) => (Number(x.c.cost) > 0 ? { risorsa: "MP", valore: Number(x.c.cost) } : null)} /> },
     { render: (x) => {
       const reqs = (x.c.reqs ?? []) as Draft[];
       const ch = x.c.char as Draft | null;
@@ -291,7 +293,7 @@ const miracolo: WizardDef = {
   heading: "Nuovo miracolo",
   intro: "Il chierico non usa le sfere arcane: riceve il potere dal dio in cui crede. I domini sono due, Luce e Ombra; gli altri dèi ne sono derivati.",
   fresh: (meta) => ({ god: "", name: "", nature: "guarigione", effect: "", level: 1, fede: null, favor: null, cost: null, cd: null,
-    vows: [], customVows: "", against: "indebolito", againstNote: "",
+    vows: [], customVows: "", against: "indebolito", againstNote: "", mech: null,
     charId: String((meta.characters.find((c) => /chieric/i.test(c.classe)) ?? meta.characters[0])?.id ?? ""), assign: true, force: false }),
   saveLabel: (x) => (x.d.assign && x.c.char ? `Salva e assegna a ${x.c.char.name}` : "Salva nella libreria"),
   steps: [
@@ -354,6 +356,7 @@ const miracolo: WizardDef = {
         <TextF path="againstNote" label="Nota del Master (facoltativa)" max={200} ph="Es. Morteus manda un corvo a reclamare il debito" />
       </>;
     } },
+    { render: () => <MechStep kind={() => "miracolo"} launch={(x) => (Number(x.c.cost) > 0 ? { risorsa: "MP", valore: Number(x.c.cost) } : null)} /> },
     { render: (x) => {
       const ch = x.c.char as Draft | null;
       const issues = (x.c.issues ?? []) as string[];
