@@ -285,7 +285,7 @@ function TabProfilo({ c }: { c: Character }) {
 function TabPet({ c }: { c: Character }) {
   if (!c.pets.length) return <Empty text="Nessun pet." />;
   return (
-    <div className="sc-cards">{c.pets.map((p, i) => (
+    <div className="sc-cards scroll-y">{c.pets.map((p, i) => (
       <article className="sc-card" key={i}>
         <div className="row"><h4>{p.name}</h4><span className="chip gold num">Lv {p.lvl}</span></div>
         <span className="small muted">{p.species}</span>
@@ -306,7 +306,7 @@ function TabPet({ c }: { c: Character }) {
 function TabMaledizioni({ c }: { c: Character }) {
   if (!c.curses.length) return <Empty text="Nessuna maledizione." />;
   return (
-    <div className="sc-cards">{c.curses.map((m, i) => (
+    <div className="sc-cards scroll-y">{c.curses.map((m, i) => (
       <article className="sc-card" key={i}>
         <h4>{m.name}</h4>
         <p className="small">{m.desc}</p>
@@ -320,7 +320,7 @@ function TabMaledizioni({ c }: { c: Character }) {
 function TabQuest({ c }: { c: Character }) {
   if (!c.quests.length) return <Empty text="Nessuna quest." />;
   return (
-    <ul className="sc-list">{c.quests.map((q, i) => (
+    <ul className="sc-list scroll-y">{c.quests.map((q, i) => (
       <li key={i}>
         <div className="sc-grow"><b>{q.name}</b> {q.rarity && <RarityChip rarity={q.rarity} />}<div className="xs muted">Ricompensa: {q.reward}</div></div>
         <span className="chip violet num">{q.progress}</span>
@@ -332,7 +332,7 @@ function TabQuest({ c }: { c: Character }) {
 function TabReputazione({ c }: { c: Character }) {
   if (!c.reputation.length) return <Empty text="Nessuna reputazione registrata." />;
   return (
-    <div className="stack" style={{ gap: 16 }}>{c.reputation.map((r, i) => {
+    <div className="stack scroll-y" style={{ gap: 16 }}>{c.reputation.map((r, i) => {
       const title = (
         <div className="row" style={{ justifyContent: "space-between" }}>
           <span><span className="label">{r.scope}</span> <b>{r.target}</b></span>

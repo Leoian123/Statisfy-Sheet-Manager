@@ -146,3 +146,5 @@
 .tv-picker.scroll-y .tv-pk-group > .label { position: sticky; top: 0; z-index: 1; background: var(--panel); padding: 2px 0; }
 .tv-att.scroll-y { --scroll-max: 240px; }
 .tv-picker.scroll-y { --scroll-max: min(42vh, 420px); }
+
+.dt-log.scroll-y { --scroll-max: min(55vh, 560px); }

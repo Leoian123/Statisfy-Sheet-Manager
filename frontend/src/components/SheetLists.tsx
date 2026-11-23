@@ -128,7 +128,7 @@ function evoRow(s: Skill, key: string | number, tipProps: ReturnType<ReturnType<
 
 function ListBody({ rows, empty }: { rows: ReactNode[]; empty: string }) {
   return (
-    <div className="og-list">
+    <div className="og-list scroll-y">
       {rows.length ? rows : <div className="og-empty">{empty}</div>}
     </div>
   );

@@ -106,3 +106,6 @@
 .og-tree-g { cursor: default; }
 @media (prefers-reduced-motion: reduce) { .og-tree-a { transition: none; } }
 @media (max-width: 760px) { .og-tree-h { grid-template-columns: 44px minmax(0, 1fr); } .og-tree-t { min-height: 44px; } .og-tree-k { margin-left: 21px; padding-left: 12px; } .og-tree-k > .og-row::before { left: -14px; width: 10px; } }
+
+/* Elenchi della scheda: scorrono nella finestra (la pagina non si allunga) */
+.og-list.scroll-y { --scroll-max: min(62vh, 640px); }

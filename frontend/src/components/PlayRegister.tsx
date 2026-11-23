@@ -46,7 +46,7 @@ export function PlayRegister({ c, rolls, error, loading }: { c: Character; rolls
         {loading && !rolls.length && filter !== "combattimento" ? <p className="small muted">Caricamento…</p>
           : !all.length ? <p className="small muted">{filter === "tiri" ? "Ancora nessun tiro." : filter === "combattimento" ? "Nessun evento di combattimento." : "Ancora niente nel registro."}</p>
           : (
-            <div className="dt-log pg-log-list">
+            <div className="dt-log pg-log-list scroll-y">
               {all.map((e, i) => {
                 const up = i >= all.length - 3 && all.length > 4 ? " tip-up" : "";
                 if (e.kind === "roll") {

@@ -547,7 +547,7 @@ function InventoryView({ c, rules, onChange }: { c: Character; rules: RulesConfi
               <button key={f.key} type="button" className="btn ghost" aria-pressed={f.key === filter} onClick={() => setFilter(f.key)}>{f.label}</button>
             ))}
           </div>
-          <div className={`og-list${bagDrop}`} data-bagzone="1" aria-label="Borsa">
+          <div className={`og-list scroll-y${bagDrop}`} data-bagzone="1" aria-label="Borsa">
             {rules.item_categories.map((g) => {
               const rows = sorted.filter((it) => it.category === g.key);
               if (!rows.length) return null;
