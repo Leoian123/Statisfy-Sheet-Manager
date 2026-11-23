@@ -6,7 +6,7 @@ import { resourceMaxes, resourcesFor } from "../lib/resources";
 import { useAppData } from "../auth/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { EditToggle } from "../components/edit/fields";
-import { HeaderEditor, ListSectionEditor, ResourcesEditor, StatsEditor, type ListKey, type ListSubset } from "../components/edit/sections";
+import { HeaderEditor, ListSectionEditor, PROFILE_FIELDS, ProfileEditor, ResourcesEditor, StatsEditor, type ListKey, type ListSubset } from "../components/edit/sections";
 import { Bar } from "../components/Bar";
 import { DerivedLegend, DerivedRow } from "../components/DerivedRow";
 import { Grade, Progress } from "../components/Grade";
@@ -20,7 +20,7 @@ import { Win } from "../components/Win";
 import { n } from "../lib/format";
 import { useBusy, useCharacter } from "../lib/useCharacter";
 
-type TabKey = "titoli" | "skill" | "attive" | "incantesimi" | "miracoli" | "talenti" | "inventario" | "pet" | "maledizioni" | "quest" | "reputazione";
+type TabKey = "profilo" | "titoli" | "skill" | "attive" | "incantesimi" | "miracoli" | "talenti" | "inventario" | "pet" | "maledizioni" | "quest" | "reputazione";
 
 export function PvpChip({ flag }: { flag: string }) {
   const cls = ({ Bianco: "muted", Grigio: "warn", Rosso: "bad" } as Record<string, string>)[flag] || "muted";
@@ -197,7 +197,7 @@ function StatsWin({ c, onChange }: { c: Character; onChange: (c: Character) => v
 }
 
 /* ---------- Tab ---------- */
-const TAB_FIELD: Record<TabKey, ListKey> = {
+const TAB_FIELD: Record<Exclude<TabKey, "profilo">, ListKey> = {
   titoli: "titles", skill: "skills", attive: "active_skills", incantesimi: "active_skills", miracoli: "active_skills",
   talenti: "talents", inventario: "inventory", pet: "pets", maledizioni: "curses", quest: "quests", reputazione: "reputation",
 };
@@ -214,10 +214,11 @@ function tabSubset(tab: TabKey): ListSubset | undefined {
 }
 
 function Details({ c, onChange }: { c: Character; onChange: (c: Character) => void }) {
-  const [tab, setTab] = useState<TabKey>("titoli");
+  const [tab, setTab] = useState<TabKey>(() => (hasProfile(c) ? "profilo" : "titoli"));
   const master = useIsMaster();
   const [edit, setEdit] = useState(false);
   const tabs: TabDef<TabKey>[] = [
+    { key: "profilo", label: "Profilo" },
     { key: "titoli", label: "Titoli", count: c.titles.length },
     { key: "skill", label: "Skill", count: c.skills.length },
     { key: "attive", label: "Skill attive", count: c.active_skills.filter((s) => activeKind(s) === "Skill").length },
@@ -234,13 +235,16 @@ function Details({ c, onChange }: { c: Character; onChange: (c: Character) => vo
   if (edit) {
     return (
       <Win title={<>Dettagli · Modifica {label}</>} right={<EditToggle on onClick={() => setEdit(false)} label={label} />}>
-        <ListSectionEditor key={`${c.id}-${tab}`} c={c} field={TAB_FIELD[tab]} subset={tabSubset(tab)} what={label} onChange={onChange} onClose={() => setEdit(false)} />
+        {tab === "profilo"
+          ? <ProfileEditor key={c.id} c={c} onChange={onChange} onClose={() => setEdit(false)} />
+          : <ListSectionEditor key={`${c.id}-${tab}`} c={c} field={TAB_FIELD[tab]} subset={tabSubset(tab)} what={label} onChange={onChange} onClose={() => setEdit(false)} />}
       </Win>
     );
   }
   return (
     <Win title="Dettagli" right={master ? <EditToggle on={false} onClick={() => setEdit(true)} label={label} /> : undefined}>
       <Tabs tabs={tabs} active={tab} onChange={setTab} label="Sezioni della scheda">
+        {tab === "profilo" && <TabProfilo c={c} />}
         {tab === "titoli" && <TitlesTab c={c} />}
         {tab === "skill" && <SkillsTab c={c} />}
         {ACTIVE_TABS[tab] && <ActiveListTab key={tab} c={c} kind={ACTIVE_TABS[tab]!} />}
@@ -253,6 +257,29 @@ function Details({ c, onChange }: { c: Character; onChange: (c: Character) => vo
       </Tabs>
     </Win>
   );
+}
+
+function hasProfile(c: Character) {
+  return PROFILE_FIELDS.some((f) => c.profile?.[f.key]);
+}
+
+function TabProfilo({ c }: { c: Character }) {
+  if (!hasProfile(c)) return <Empty text="Profilo non compilato." />;
+  const group = (g: "id" | "look", title: string) => {
+    const rows = PROFILE_FIELDS.filter((f) => f.group === g && c.profile[f.key]);
+    if (!rows.length) return null;
+    return (
+      <section className="sc-prof-g" aria-label={title}>
+        <h4 className="label">{title}</h4>
+        <dl className="sc-prof">
+          {rows.map((f) => (
+            <div key={f.key} className={f.area ? "wide" : undefined}><dt className="xs muted">{f.label}</dt><dd className="small">{c.profile[f.key]}</dd></div>
+          ))}
+        </dl>
+      </section>
+    );
+  };
+  return <div className="sc-prof-wrap">{group("id", "Identità")}{group("look", "Aspetto")}</div>;
 }
 
 function TabPet({ c }: { c: Character }) {

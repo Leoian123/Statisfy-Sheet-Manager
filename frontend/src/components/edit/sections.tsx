@@ -1,7 +1,7 @@
 // Moduli di modifica della scheda per il Master. Ogni modulo salva solo il proprio campo con PATCH /characters/{id}.
 import { useState, type ReactNode } from "react";
 import { api } from "../../api/client";
-import type { Character, Pvp, ResourceKey, Resources, RulesConfig, StatRow } from "../../api/types";
+import type { Character, Profile, Pvp, ResourceKey, Resources, RulesConfig, StatRow } from "../../api/types";
 import { useAppData } from "../../auth/AppData";
 import { n, ROMAN } from "../../lib/format";
 import { RESOURCE_DEFS } from "../../lib/resources";
@@ -64,6 +64,34 @@ export function HeaderEditor(p: Props) {
           <TextField label="Ruolo in gilda" value={d.gilda.ruolo} onChange={(v) => set({ ...d, gilda: { ...d.gilda, ruolo: v } })} />
           <NumField label="Corone" value={d.corone} int min={0} onChange={(v) => set({ ...d, corone: v })} />
           <NumField label="Scellini" value={d.scellini} int min={0} onChange={(v) => set({ ...d, scellini: v })} />
+        </div>
+      )}
+    </SectionForm>
+  );
+}
+
+/* ---------- Profilo: identità, alleanze, aspetto (solo testo) ---------- */
+export const PROFILE_FIELDS: { key: keyof Profile; label: string; area?: boolean; group: "id" | "look" }[] = [
+  { key: "razza", label: "Razza / Specie", group: "id" },
+  { key: "eta", label: "Età", group: "id" },
+  { key: "sesso", label: "Sesso", group: "id" },
+  { key: "patria", label: "Patria / Regno d'origine", group: "id" },
+  { key: "alleanze", label: "Alleanze e legami", area: true, group: "id" },
+  { key: "capelli", label: "Capelli", area: true, group: "look" },
+  { key: "occhi", label: "Occhi", area: true, group: "look" },
+  { key: "statura", label: "Statura e corporatura", group: "look" },
+  { key: "abbigliamento", label: "Vestiti / Armatura", area: true, group: "look" },
+  { key: "segni", label: "Segni particolari", area: true, group: "look" },
+];
+
+export function ProfileEditor(p: Props) {
+  return (
+    <SectionForm<Profile> {...p} what="Profilo" init={(c) => ({ ...c.profile })} toPatch={(d) => ({ profile: d })}>
+      {(d, set) => (
+        <div className="ed-grid">
+          {PROFILE_FIELDS.map((f) => (
+            <TextField key={f.key} label={f.label} area={f.area} value={d[f.key]} onChange={(v) => set({ ...d, [f.key]: v })} />
+          ))}
         </div>
       )}
     </SectionForm>

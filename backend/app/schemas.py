@@ -60,6 +60,25 @@ class Gilda(BaseModel):
     ruolo: str = ""
 
 
+ProfileText = Annotated[str, Field(max_length=2000)]
+PROFILE_KEYS = ("razza", "eta", "sesso", "patria", "alleanze", "capelli", "occhi", "abbigliamento", "segni", "statura")
+
+
+class Profile(BaseModel):
+    """Profilo descrittivo del PG: solo testo, nessun effetto sulle regole."""
+    model_config = ConfigDict(extra="forbid")
+    razza: ProfileText = ""
+    eta: ProfileText = ""
+    sesso: ProfileText = ""
+    patria: ProfileText = ""
+    alleanze: ProfileText = ""
+    capelli: ProfileText = ""
+    occhi: ProfileText = ""
+    abbigliamento: ProfileText = ""
+    segni: ProfileText = ""
+    statura: ProfileText = ""
+
+
 class Resources(BaseModel):
     # Una risorsa assente resta quella salvata: chi cambia solo l'MP non riscrive HP magari vecchi di un'altra sessione
     hp: float | None = Field(default=None, ge=0)
@@ -86,7 +105,7 @@ class CombatPatch(BaseModel):
 
 # Campi modificabili dal player e dal solo master
 PLAYER_FIELDS = {"resources", "combat"}
-MASTER_FIELDS = {"level", "exp_pct", "regno", "pvp", "gilda", "corone", "scellini", "stats", "item_bonus", "equip",
+MASTER_FIELDS = {"level", "exp_pct", "regno", "pvp", "gilda", "profile", "corone", "scellini", "stats", "item_bonus", "equip",
                  "magia", "titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests",
                  "reputation"}
 LOCKED_FIELDS = {"name", "classe", "id", "owner_id"}
@@ -198,6 +217,7 @@ class CharacterPatch(BaseModel):
     regno: str | None = None
     pvp: Literal["Bianco", "Grigio", "Rosso"] | None = None
     gilda: Gilda | None = None
+    profile: Profile | None = None
     corone: int | None = Field(None, ge=0, le=MAX_COINS)
     scellini: int | None = Field(None, ge=0, le=MAX_COINS)
     stats: list[StatRowEdit] | None = None

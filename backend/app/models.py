@@ -64,6 +64,7 @@ class Character(Base):
     corone: Mapped[int] = mapped_column(Integer, default=0)
     scellini: Mapped[int] = mapped_column(Integer, default=0)
     gilda: Mapped[dict] = mapped_column(JSON, default=dict)
+    profile: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=dict)  # razza, età, aspetto, alleanze…
     stats: Mapped[list] = mapped_column(JSON, default=list)
     item_bonus: Mapped[dict] = mapped_column(JSON, default=dict)
     equip: Mapped[dict] = mapped_column(JSON, default=dict)

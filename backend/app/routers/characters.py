@@ -161,6 +161,8 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
     if "stats" in fields:
         fields["stats"] = merge_stats(c.stats or [], fields["stats"])
     fields = {k: tidy(v) for k, v in fields.items() if k in PLAYER_FIELDS or k in MASTER_FIELDS}
+    if "profile" in fields:
+        fields["profile"] = {k: v.strip() for k, v in fields["profile"].items()}
     if "inventory" in fields:
         # Inventario MMORPG: id agli oggetti e slot coerenti (i requisiti no: il Master può forzare)
         inv = rules.normalize_inventory(fields["inventory"])

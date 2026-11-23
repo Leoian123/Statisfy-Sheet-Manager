@@ -35,6 +35,8 @@ _ADDED_COLUMNS = [
     ("users", "must_change_password", "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT 0"),
     ("users", "created_at", "ALTER TABLE users ADD COLUMN created_at VARCHAR(40) NOT NULL DEFAULT ''"),
     ("users", "last_login_at", "ALTER TABLE users ADD COLUMN last_login_at VARCHAR(40) NOT NULL DEFAULT ''"),
+    # profilo del personaggio (razza, età, aspetto, alleanze): le righe vecchie restano NULL = profilo vuoto
+    ("characters", "profile", "ALTER TABLE characters ADD COLUMN profile JSON"),
 ]
 
 

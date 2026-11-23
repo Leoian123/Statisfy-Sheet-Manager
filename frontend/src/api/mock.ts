@@ -316,11 +316,12 @@ type Stored = Omit<Character, "derived" | "totals" | "free_points" | "power_rank
 const st = (code: string, name: string, kind: "base" | "avanzata", iniziale: number, creazione: number, investiti: number, levelup: number, altro: number, titoli: number, note?: string): StatRow =>
   ({ code, name, kind, iniziale, creazione, investiti, levelup, altro, titoli, oggetti: 0, note: note ?? null, total: 0 });
 
+const emptyProfile = { razza: "", eta: "", sesso: "", patria: "", alleanze: "", capelli: "", occhi: "", abbigliamento: "", segni: "", statura: "" };
 const emptyLists = { titles: [], skills: [], active_skills: [], talents: [], inventory: [], pets: [], curses: [], quests: [], reputation: [] };
 
 const kelvin: Stored = {
   id: 1, owner_id: 2, owner_name: "Giocatore 1", name: "Kelvin", classe: "Domatore", level: 77, exp_pct: 0, regno: "Valeria", pvp: "Bianco",
-  gilda: { nome: "—", ruolo: "Nessuna gilda" }, corone: 25, scellini: 30,
+  gilda: { nome: "—", ruolo: "Nessuna gilda" }, profile: { ...emptyProfile }, corone: 25, scellini: 30,
   stats: [
     st("STR", "Forza", "base", 10, 0, 84, 76, 0, 0), st("DEX", "Destrezza", "base", 10, 0, 401, 76, 0, 5),
     st("VIT", "Vitalità", "base", 10, 20, 75, 76, 0, 5), st("INT", "Intelligenza", "base", 10, 0, 0, 76, 0, 0),
@@ -453,7 +454,7 @@ function real(id: number, owner: number, data: RealIn): Stored {
   const c: Stored = {
     id, owner_id: owner + 1, owner_name: `Giocatore ${owner}`, item_bonus: {}, equip: { difesa: 0, difesaMagica: 0, blocco: 0 },
     magia: { nucleo: 0, talenti: 0 }, resources: { hp: 0, mp: 0, sp: 0 }, ...clone(emptyLists),
-    combat: { position: "Mischia", turn: 1, effects: [], cooldowns: [], log: [] }, death: null, ...data,
+    combat: { position: "Mischia", turn: 1, effects: [], cooldowns: [], log: [] }, death: null, profile: { ...emptyProfile }, ...data,
   };
   if (!data.resources) c.resources = maxesOf(c);
   return c;
@@ -705,7 +706,7 @@ export async function handle(method: string, path: string, body: unknown, token:
     const owner = isMaster && typeof b.owner_id === "number" ? USERS.find((u) => u.id === b.owner_id) || me : me;
     const c: Stored = {
       id: db.nextId++, owner_id: owner.id, owner_name: owner.display_name, name, classe: cls.name, level: 1, exp_pct: 0, regno: reg.name, pvp: "Bianco",
-      gilda: { nome: "—", ruolo: "Nessuna gilda" }, corone: 20, scellini: 0,
+      gilda: { nome: "—", ruolo: "Nessuna gilda" }, profile: { ...emptyProfile }, corone: 20, scellini: 0,
       stats: codes.map((k) => st(k, names[k], "base", C.base, Number(s[k]) - C.base, 0, 0, 0, 0)),
       item_bonus: {}, equip: { difesa: 0, difesaMagica: 0, blocco: 0 }, magia: { nucleo: 0, talenti: 0 }, resources: { hp: 0, mp: 0, sp: 0 },
       ...clone(emptyLists),
@@ -735,7 +736,7 @@ export async function handle(method: string, path: string, body: unknown, token:
       return { status: 204, data: null };
     }
     if (sub === "" && method === "PATCH") {
-      const masterKeys = ["level", "exp_pct", "regno", "pvp", "gilda", "corone", "scellini", "stats", "item_bonus", "equip", "magia",
+      const masterKeys = ["level", "exp_pct", "regno", "pvp", "gilda", "profile", "corone", "scellini", "stats", "item_bonus", "equip", "magia",
         "titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests", "reputation"];
       const sent = Object.keys(b).filter((k) => masterKeys.includes(k));
       if (sent.length && !isMaster) return err(403, `Solo il Master può modificare: ${sent.join(", ")}.`);

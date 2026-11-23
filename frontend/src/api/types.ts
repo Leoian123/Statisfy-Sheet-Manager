@@ -141,6 +141,12 @@ export interface Death {
 export interface Resources { hp: number; mp: number; sp: number; ki?: number }
 export type ResourceKey = keyof Resources;
 
+/** Profilo descrittivo (solo testo, nessun effetto sulle regole). */
+export interface Profile {
+  razza: string; eta: string; sesso: string; patria: string; alleanze: string;
+  capelli: string; occhi: string; abbigliamento: string; segni: string; statura: string;
+}
+
 export interface Character {
   id: number;
   owner_id: number;
@@ -152,6 +158,7 @@ export interface Character {
   regno: string;
   pvp: Pvp;
   gilda: { nome: string; ruolo: string };
+  profile: Profile;
   corone: number;
   scellini: number;
   stats: StatRow[];

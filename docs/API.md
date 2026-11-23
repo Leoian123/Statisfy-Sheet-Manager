@@ -99,7 +99,9 @@ Derived = { key: string; label: string; fmt: "int"|"int1"|"kg"|"pct"|"permin"|"m
 Character = {
   id: int; owner_id: int; owner_name: string;
   name: string; classe: string; level: int; exp_pct: number; regno: string; pvp: "Bianco"|"Grigio"|"Rosso";
-  gilda: {nome: string; ruolo: string}; corone: int; scellini: int;
+  gilda: {nome: string; ruolo: string};
+  profile: {razza; eta; sesso; patria; alleanze; capelli; occhi; abbigliamento; segni; statura};  // solo testo, max 2000 caratteri
+  corone: int; scellini: int;
   stats: StatRow[]; item_bonus: {[key: string]: number};
   equip: {difesa: number; difesaMagica: number; blocco: number}; magia: {nucleo: int; talenti: int};
   resources: {hp: number; mp: number; sp: number; ki?: number};  // ki solo per chi ha la statistica avanzata KI
@@ -154,7 +156,7 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
 - `PATCH /api/characters/{id}` — modifica parziale → `Character`. Si inviano solo le sezioni da cambiare; le liste
   si sostituiscono per intero. Tutto viene validato prima di salvare: se un controllo fallisce (422) non cambia nulla.
   - **Player** (solo i propri PG): `resources`, `combat.position`. Qualsiasi campo del Master → 403.
-  - **Master**: anche `level` (int ≥ 1), `exp_pct` (0–100), `regno`, `pvp`, `gilda`, `corone`, `scellini`, `stats`,
+  - **Master**: anche `level` (int ≥ 1), `exp_pct` (0–100), `regno`, `pvp`, `gilda`, `profile`, `corone`, `scellini`, `stats`,
     `item_bonus`, `equip`, `magia` e le liste `titles, skills, active_skills, talents, inventory, pets, curses, quests, reputation`.
   - Non modificabili da nessuno: `name`, `classe`, `id`, `owner_id` → 422.
   - `stats`: elenco completo delle righe `{code, name, kind, iniziale, creazione, investiti, levelup, altro, titoli, note}`.

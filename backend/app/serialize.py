@@ -1,6 +1,7 @@
 """Conversione dei modelli in risposte JSON, con i valori calcolati da rules.py."""
 from . import rules
 from .models import Character, Npc, Issue, Campaign
+from .schemas import PROFILE_KEYS
 
 LIST_FIELDS = ["titles", "skills", "active_skills", "talents", "inventory", "pets", "curses", "quests", "reputation"]
 
@@ -39,6 +40,11 @@ def num_out(v):
     return rules.clean(rules.num(v))
 
 
+def profile_out(p: dict | None) -> dict:
+    p = p or {}
+    return {k: str(p.get(k) or "").strip() for k in PROFILE_KEYS}
+
+
 def character_out(c: Character) -> dict:
     ri = rules_input(c)
     combat = {"position": "Mischia", "turn": 1, "effects": [], "cooldowns": [], "log": [], **(c.combat or {})}
@@ -46,7 +52,7 @@ def character_out(c: Character) -> dict:
         "id": c.id, "owner_id": c.owner_id, "owner_name": c.owner.display_name if c.owner else "",
         "name": c.name, "classe": c.classe, "level": c.level, "exp_pct": num_out(c.exp_pct),
         "regno": c.regno, "pvp": c.pvp, "gilda": {"nome": "", "ruolo": "", **(c.gilda or {})},
-        "corone": c.corone, "scellini": c.scellini,
+        "profile": profile_out(c.profile), "corone": c.corone, "scellini": c.scellini,
         "stats": stats_out(ri["stats"]), "item_bonus": c.item_bonus or {},
         "equip": rules.equip({"equip": c.equip}), "magia": rules.magic(ri),
         "resources": c.resources or {"hp": 0, "mp": 0, "sp": 0},

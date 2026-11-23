@@ -295,3 +295,12 @@ table.t td { overflow-wrap: anywhere; }
 
 /* Contatore accanto a una voce del menu (richieste nuove o risposte da leggere) */
 .nav a .nav-count { margin-left: auto; padding: 0 6px; font-size: var(--fs-xs); }
+
+/* Scheda: tab Profilo (identità e aspetto, solo testo) */
+.sc-prof-wrap { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; }
+.sc-prof-g { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sc-prof-g h4 { margin: 0; }
+.sc-prof { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 0; }
+.sc-prof > div { min-width: 0; }
+.sc-prof > div.wide { grid-column: 1 / -1; }
+.sc-prof dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
