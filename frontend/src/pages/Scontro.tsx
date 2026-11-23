@@ -1,13 +1,13 @@
 /* Plancia di scontro (Master e giocatori): ordine dei turni, schieramenti, abilità con anteprima del calcolo,
    reazioni, registro. PC: tre colonne. Telefono (≤ 760px): una sezione alla volta (Azione · Campo · Registro)
    con i comandi del turno in basso. Lo stato arriva dal server ogni 3 s (GET /api/scontri/attivo). */
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, errorText } from "../api/client";
 import { battleApi, type Battle } from "../api/scontri";
 import { useAppData } from "../auth/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { ActionPanel } from "../components/combat/ActionPanel";
-import { BattleLog, Pending, ReactionPrompt, StartBattle, TurnStrip, resultLines } from "../components/combat/BattleParts";
+import { AddCombatants, BattleLog, Pending, ReactionPrompt, StartBattle, TurnStrip, resultLines } from "../components/combat/BattleParts";
 import { CombatantCard } from "../components/combat/CombatantCard";
 import { ErrorBox, Loading, SysMsg } from "../components/Status";
 import { useToast } from "../components/Toast";
@@ -27,6 +27,8 @@ export function Scontro() {
   const [sel, setSel] = useState<string[]>([]);
   const [actorPick, setActorPick] = useState<string | null>(null);
   const mutations = useRef(0);
+  const turnKey = battle ? `${battle.id}:${battle.state.round}:${battle.state.turno}` : "";
+  useEffect(() => { setActorPick(null); setSel([]); }, [turnKey]);
 
   const load = useCallback(async () => {
     const seq = mutations.current;
@@ -114,6 +116,7 @@ export function Scontro() {
         <section className="cb-sec cb-side" data-sec="campo" aria-label="Schieramenti">
           {side("Alleati", allies)}
           {side("Nemici", foes)}
+          {b.master && <AddCombatants battle={b} busy={busy} onAdd={(body) => run(() => battleApi.add(b.id, b.version, body))} />}
         </section>
 
         <section className="cb-sec cb-main" data-sec="azione" aria-label="Azione">
@@ -121,19 +124,17 @@ export function Scontro() {
             <ReactionPrompt key={w.id} battle={b} w={w} busy={busy}
               onReact={(f, a, ab) => run(() => battleApi.react(b.id, b.version, f, a, ab))} />
           ))}
-          {b.master && (
-            <label className="cb-actor small">
-              <span className="label">Agisce</span>
-              <select className="input" value={actorId ?? ""} onChange={(e) => { setActorPick(e.target.value || null); setSel([]); }}>
-                {st.ordine.map((id) => st.combattenti[id] && (
-                  <option key={id} value={id}>{st.combattenti[id].nome}{id === curId ? " (turno)" : ""}{st.combattenti[id].vivo ? "" : " · a terra"}</option>
-                ))}
-              </select>
-            </label>
-          )}
           {actor ? (
-            <Win title={actor.id === curId ? "Turno" : "Azione"} className="cb-win">
-              <ActionPanel battle={b} actor={actor} myTurn={actor.id === curId && (b.master || myTurn)} sel={sel} setSel={setSel} busy={busy}
+            <Win title={actor.id === curId ? "Turno" : "Azione fuori turno"} className="cb-win">
+              <ActionPanel battle={b} actor={actor}
+                picker={b.master ? (
+                  <select className="input cb-actor" aria-label="Chi agisce" value={actorId ?? ""}
+                    onChange={(e) => { setActorPick(e.target.value === curId ? null : e.target.value || null); setSel([]); }}>
+                    {st.ordine.map((id) => st.combattenti[id] && (
+                      <option key={id} value={id}>{st.combattenti[id].nome}{id === curId ? " (turno)" : ""}{st.combattenti[id].vivo ? "" : " · a terra"}</option>
+                    ))}
+                  </select>
+                ) : undefined} myTurn={actor.id === curId && (b.master || myTurn)} sel={sel} setSel={setSel} busy={busy}
                 onAct={(ab, tg, tiri, forza) => run(() => battleApi.act(b.id, b.version, actor.id, ab, tg, tiri, forza)).then((r) => { if (r) setSel([]); })}
                 onStop={(ab) => run(() => battleApi.stopMaintained(b.id, b.version, actor.id, ab))} />
             </Win>
@@ -171,10 +172,33 @@ function NoBattle({ onStarted }: { onStarted: (b: Battle) => void }) {
   }
   return (
     <div className="stack">
-      <Win title="Nuovo scontro">
-        <p className="small muted">Le abilità con meccanica (Forgia, passo Meccanica) diventano azioni con anteprima del calcolo; ogni PG ha anche l'Attacco base dell'arma equipaggiata.</p>
-      </Win>
-      <StartBattle onStarted={onStarted} />
+      <QuickStart onStarted={onStarted} />
+      <details className="cb-more">
+        <summary className="small">Altri modi: da un incontro della Forgia o scegliendo PG e creature</summary>
+        <StartBattle onStarted={onStarted} />
+      </details>
     </div>
+  );
+}
+
+/** Un clic: plancia con tutto il gruppo; i nemici si aggiungono dalla plancia quando servono. */
+function QuickStart({ onStarted }: { onStarted: (b: Battle) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
+    setBusy(true);
+    setErr(null);
+    try { onStarted(await battleApi.start({ tutti: true })); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+  }
+  return (
+    <Win title="Plancia di scontro">
+      <p className="small muted">Apre la plancia con tutto il gruppo e tira l'iniziativa. I nemici li aggiungi dalla plancia (a mano o da un
+        incontro della Forgia), anche a scontro iniziato. Ogni abilità della scheda è usabile: quelle senza meccanica pagano il costo e
+        scrivono l'effetto nel registro, e lo applichi tu.</p>
+      <div className="row">
+        <button type="button" className="btn primary" disabled={busy} onClick={go}>Apri la plancia con il gruppo</button>
+      </div>
+      {err && <p className="hint bad" role="alert">{err}</p>}
+    </Win>
   );
 }

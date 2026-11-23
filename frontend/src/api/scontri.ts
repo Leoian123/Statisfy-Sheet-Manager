@@ -12,6 +12,8 @@ export interface CombatAbility {
   nome: string; grado: number | null; tipo: MechKind; timing: MechTiming; azione: MechActionSlot; durata: MechDuration;
   etichette: string[]; costi: MechCost[]; cd: { valore: number; unita: string }; bersaglio: MechTarget | null;
   descrizione: string; base: boolean;
+  /** Senza meccanica: si paga il costo e l'effetto (testo) lo applica il Master */
+  testo?: boolean;
 }
 export interface Combatant {
   id: string; nome: string; rif: string; lato: Side; vivo: boolean; tipo: string; taglia: string;
@@ -56,7 +58,7 @@ const enc = encodeURIComponent;
 export const battleApi = {
   active: () => request<{ scontro: Battle | null }>("GET", "/scontri/attivo"),
   candidates: () => request<BattleCandidates>("GET", "/scontri/candidati"),
-  start: (body: { name?: string; encounter_id?: number | null; pg_ids?: number[]; creature?: ManualCreature[] }) =>
+  start: (body: { name?: string; encounter_id?: number | null; pg_ids?: number[]; creature?: ManualCreature[]; tutti?: boolean }) =>
     request<Battle>("POST", "/scontri", body),
   preview: (id: number, attore: string, abilita: string, bersagli: string[]) =>
     request<BattlePreview>("POST", `/scontri/${enc(id)}/anteprima`, { attore, abilita, bersagli }),
@@ -70,6 +72,9 @@ export const battleApi = {
   endTurn: (id: number, version: number) => request<Battle>("POST", `/scontri/${enc(id)}/fine-turno`, { version }),
   adjust: (id: number, version: number, cid: string, patch: { hp?: number; mp?: number; sp?: number; remove_status?: string; vivo?: boolean }) =>
     request<Battle>("POST", `/scontri/${enc(id)}/combattenti/${enc(cid)}`, { version, ...patch }),
+  /** Il Master aggiunge creature (a mano o da un incontro) o PG a uno scontro in corso. */
+  add: (id: number, version: number, body: { creature?: ManualCreature[]; encounter_id?: number | null; pg_ids?: number[] }) =>
+    request<Battle>("POST", `/scontri/${enc(id)}/aggiungi`, { version, ...body }),
   undo: (id: number, version: number) => request<Battle>("POST", `/scontri/${enc(id)}/annulla`, { version }),
   close: (id: number, version: number) => request<Battle>("POST", `/scontri/${enc(id)}/chiudi`, { version }),
 };

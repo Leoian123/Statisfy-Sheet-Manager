@@ -206,3 +206,19 @@ TEMPLATES: list[dict] = [
 
 def templates() -> list[dict]:
     return TEMPLATES
+
+
+# Skill iniziali delle classi (rules.CLASSES): meccanica di default quando la scheda non ne ha una
+_INVIS = {"soggetto": "se", "test": "ha_status", "status": "Invisibile"}
+_VIS = {"soggetto": "se", "test": "non_ha_status", "status": "Invisibile"}
+CLASS_MECH: dict[str, dict] = {
+    "dardo magico": M(E("danno", F(tipo="Vis")), mp=20, tiro_colpire=False, cooldown={"valore": 1, "unita": "turni"},
+                      etichette=["Vis", "Proiettile"]),
+    "attacco possente": M(E("danno", F("arma", tipo="fisico"), scaling=[{"da": "grado", "passo": 50, "max": 50}]),
+                          tipo="skill", mp=15, cooldown={"valore": 3, "unita": "turni"}),
+    "colpo furtivo": M(E("danno", F("arma", tipo="fisico"), condizioni=[_VIS]),
+                       E("danno", F("arma", tipo="fisico"), critico=100, condizioni=[_INVIS]),
+                       tipo="skill", mp=10, cooldown={"valore": 2, "unita": "turni"}),
+    "cura minore": M(E("cura", F("intervallo", min=40, max=60, tipo="Vita"), lato="alleato"), tipo="miracolo", mp=0,
+                     costi=[{"risorsa": "MP", "valore": 25, "per": "lancio"}], cooldown={"valore": 1, "unita": "turni"}),
+}

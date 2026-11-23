@@ -471,3 +471,13 @@ def test_counterspell_does_not_answer_weapon_attacks():
     s = base_state(enemy_abilities=[ab("Counterspell", TPL[12])])
     s["combattenti"]["n1"]["mp"] = s["combattenti"]["n1"]["mp_max"] = 500
     assert use(s, "Attacco")["esito"] == "ok"
+
+
+def test_stealth_attack_crits_while_invisible_then_reveals():
+    from app.mech_templates import CLASS_MECH
+    s = base_state([ab("Colpo Furtivo", CLASS_MECH["colpo furtivo"], 1), ab("Invisibilità", TPL[29])])
+    p1 = s["combattenti"]["p1"]
+    E.add_status(ctx(s), p1, p1, "Invisibile", turni=3)
+    use(s, "Colpo Furtivo", tiri={"danno:a.1:n1": 50})
+    assert s["combattenti"]["n1"]["hp"] == 1000 - 100  # critico ×2 mentre invisibile
+    assert not E.statuses(p1, nome="Invisibile")

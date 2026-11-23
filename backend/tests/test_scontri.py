@@ -159,3 +159,37 @@ def test_forge_spell_with_mech_reaches_sheet(client, master):
     assert sk["mech"]["costi"][0]["risorsa"] == "MP" and "Vis" in sk["mech"]["etichette"]
     meta = client.get("/api/forge/meta", headers=master).json()
     assert len(meta["mech"]["templates"]) == 74 and "Gelo" in meta["mech"]["status"]["status"]
+
+
+def test_quick_start_text_abilities_and_add_enemies(client, master):
+    c = client.get("/api/characters/1", headers=master).json()
+    client.patch("/api/characters/1", json={"active_skills": c["active_skills"] + [
+        {"name": "Dardo Magico", "effect": "Colpisce sempre", "lvl": 1, "pct": 0, "cost": "20 MP", "cd": 1}]}, headers=master)
+    r = client.post("/api/scontri", json={"tutti": True}, headers=master)
+    assert r.status_code == 200, r.text
+    sc = r.json()
+    st = sc["state"]
+    assert all(c["lato"] == "alleati" for c in st["combattenti"].values()) and len(st["combattenti"]) >= 6
+    lock = next(c for c in st["combattenti"].values() if c["nome"] == "Kelvin")
+    dm = next(a for a in lock["abilita"] if a["nome"] == "Dardo Magico")
+    assert not dm["testo"] and dm["costi"][0]["valore"] == 20  # skill di classe con meccanica di default
+    kel = next(c for c in st["combattenti"].values() if c["nome"] == "Kelvin")
+    sott = next(a for a in kel["abilita"] if a["nome"].startswith("Comando: Sottomissione"))
+    assert sott["testo"] and sott["costi"][0] == {"risorsa": "MP", "valore": 120, "per": "lancio", "status": ""}
+    cur = st["ordine"][st["turno"]]
+    r = client.post(f"/api/scontri/{sc['id']}/aggiungi", json={"version": sc["version"], "creature": [
+        {"name": "Lupo", "count": 2, "level": 3}]}, headers=master)
+    assert r.status_code == 200, r.text
+    st2 = r.json()["state"]
+    assert {"Lupo A", "Lupo B"} <= {c["nome"] for c in st2["combattenti"].values()}
+    assert st2["ordine"][st2["turno"]] == cur  # chi aveva il turno lo tiene
+    p1 = login(client, "giocatore1")
+    assert client.post(f"/api/scontri/{sc['id']}/aggiungi", json={"version": r.json()["version"], "creature": [
+        {"name": "X"}]}, headers=p1).status_code == 403
+    # Un'abilità di solo testo si usa: paga il costo e scrive l'effetto nel registro
+    v = r.json()["version"]
+    kid = next(k for k, c in st2["combattenti"].items() if c["nome"] == "Kelvin")
+    r = client.post(f"/api/scontri/{sc['id']}/azione", json={"version": v, "attore": kid, "abilita": "Comando: Battaglia",
+                                                             "bersagli": [], "forza": True}, headers=master)
+    assert r.status_code == 200, r.text
+    assert any("Comando: Battaglia" in l["t"] for l in r.json()["state"]["registro"])

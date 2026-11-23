@@ -1,6 +1,6 @@
 /* Pannello azione: abilità di chi agisce (per tipo), bersagli, anteprima del calcolo dal server e tiri
    (del server oppure inseriti dal tavolo). I numeri li calcola solo il backend (POST /scontri/{id}/anteprima). */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { errorText } from "../../api/client";
 import { battleApi, type Battle, type BattlePreview, type CombatAbility, type Combatant } from "../../api/scontri";
 import { ni } from "./CombatantCard";
@@ -58,6 +58,8 @@ export function maxTargets(a: CombatAbility | null): number {
 interface Props {
   battle: Battle;
   actor: Combatant;
+  /** Selettore di chi agisce (solo Master): al posto del nome */
+  picker?: ReactNode;
   myTurn: boolean;
   sel: string[];
   setSel: (ids: string[]) => void;
@@ -66,7 +68,7 @@ interface Props {
   onStop: (abilita: string) => void;
 }
 
-export function ActionPanel({ battle, actor, myTurn, sel, setSel, busy, onAct, onStop }: Props) {
+export function ActionPanel({ battle, actor, picker, myTurn, sel, setSel, busy, onAct, onStop }: Props) {
   const usable = actor.abilita.filter((a) => a.tipo !== "passiva");
   const passives = actor.abilita.filter((a) => a.tipo === "passiva");
   const tabs = KIND_TABS.filter((t) => usable.some((a) => a.tipo === t.key));
@@ -124,8 +126,8 @@ export function ActionPanel({ battle, actor, myTurn, sel, setSel, busy, onAct, o
     <div className="cb-act">
       <div className="cb-act-h">
         <div className="stack" style={{ gap: 0 }}>
-          <span className="label">{myTurn ? "Tocca a" : "Agisce"}</span>
-          <b className="cb-act-name">{actor.nome}</b>
+          <span className="label">{myTurn ? "Tocca a" : "Agisce fuori turno"}</span>
+          {picker ?? <b className="cb-act-name">{actor.nome}</b>}
         </div>
         <span className="spacer" />
         <span className="chip muted xs" title="Azioni rimaste in questo turno">
@@ -151,7 +153,7 @@ export function ActionPanel({ battle, actor, myTurn, sel, setSel, busy, onAct, o
           return (
             <button key={a.nome} type="button" role="listitem" className={`cb-ab${abName === a.nome ? " on" : ""}${no ? " off" : ""}`}
               onClick={() => pick(a)} title={[a.descrizione, no ? `Ora non disponibile: ${no}` : ""].filter(Boolean).join("\n")}>
-              <span className="cb-ab-t"><b>{a.nome}</b>{a.grado ? <span className="muted"> {ROMAN[Math.min(10, a.grado)] ?? a.grado}</span> : null}</span>
+              <span className="cb-ab-t"><b>{a.nome}</b>{a.grado && !a.base ? <span className="muted"> {ROMAN[Math.min(10, a.grado)] ?? a.grado}</span> : null}{a.testo ? <span className="chip muted cb-txt" title="Senza meccanica: paga il costo e scrive l'effetto nel registro; gli effetti li applica il Master">testo</span> : null}</span>
               <span className="xs muted">{[a.etichette.slice(0, 2).join(" · "), a.durata !== "istantaneo" ? a.durata : "", costText(a)].filter(Boolean).join(" · ")}</span>
               {no && <span className="xs cb-ab-no">{no}</span>}
             </button>
@@ -197,6 +199,7 @@ export function ActionPanel({ battle, actor, myTurn, sel, setSel, busy, onAct, o
                   </div>
                 )}
           </div>
+          {ab.testo && <p className="xs muted">Abilità senza meccanica: si paga il costo e l'effetto finisce nel registro. Il Master lo applica con «Correggi»; per automatizzarla aggiungi la meccanica nella scheda o nella Forgia.</p>}
           {pvErr && <p className="hint bad" role="alert">{pvErr}</p>}
           {pv && (
             <>

@@ -1001,9 +1001,15 @@ def pay(ctx: Ctx, c: dict, ab: dict, m: Mech, reaction: bool, force: bool):
                 az[slot] = int(az.get(slot, 0)) - 1
                 if slot == "principale" and m.tipo == "incantesimo" and has(c, "lanci_doppi"):
                     c["lancio_doppio"] = True
-    for x in statuses(c, "si_rompe_agisce"):
+
+
+def reveal(ctx: Ctx, c: dict, before: list[dict]):
+    """Dopo aver agito: finiscono gli status che si rompono agendo e che c'erano già prima dell'azione
+    (l'invisibilità vale ancora per il colpo; quella appena lanciata resta)."""
+    gone = [x for x in statuses(c, "si_rompe_agisce") if any(x is b for b in before)]
+    for x in gone:
         ctx.log(f"{c['nome']} non è più {x['nome'].lower()}.", "status")
-    remove_status(c, lambda x: (x.get("mod") or {}).get("si_rompe_agisce"))
+    remove_status(c, lambda x: any(x is g for g in gone))
 
 
 def cast(ctx: Ctx, actor: dict, ab: dict, m: Mech, chosen: list[str], reaction: bool, force: bool,
@@ -1011,6 +1017,7 @@ def cast(ctx: Ctx, actor: dict, ab: dict, m: Mech, chosen: list[str], reaction: 
     """Esegue un'abilità già validata e pagata."""
     s = ctx.s
     ab = {**ab, "_m": m}
+    hidden = list(statuses(actor, "si_rompe_agisce"))
     bonus_lv = 0
     my_tags = {t.lstrip("#").lower() for t in m.etichette}
     for other in actor.get("abilita") or []:
@@ -1031,6 +1038,7 @@ def cast(ctx: Ctx, actor: dict, ab: dict, m: Mech, chosen: list[str], reaction: 
             "id": new_id(s, "c"), "tipo": "canalizzazione", "fonte": actor["id"], "abilita": ab["nome"],
             "turni": m.durata.turni, "bersagli": list(chosen), "interrompibile": m.durata.interrompibile})
         ctx.log(f"{actor['nome']} canalizza {ab['nome']} ({m.durata.turni} turni).", "azione")
+        reveal(ctx, actor, hidden)
         return
     effs = m.effetti
     trap_effs = [e for e in effs if e.trigger.evento == "azione_nemica"]
@@ -1080,6 +1088,7 @@ def cast(ctx: Ctx, actor: dict, ab: dict, m: Mech, chosen: list[str], reaction: 
     kind = "lancio" if m.tipo in ("incantesimo", "miracolo") else "attacco"
     enemy_acted(ctx, actor, kind)
     drain(ctx)
+    reveal(ctx, actor, hidden)
 
 
 def reaction_candidates(s: dict, actor: dict, targets: list[str], kind: str = "") -> list[dict]:
@@ -1150,12 +1159,14 @@ def react(state: dict, finestra_id: str, reazione: dict | None, rng: random.Rand
         err = can_use(state, r, rab, rm, True, False)
         if err:
             raise EngineError(err)
+        hidden_r = list(statuses(r, "si_rompe_agisce"))
         pay(ctx, r, rab, rm, True, False)
         targets = [str(x) for x in reazione.get("bersagli") or []] or [w["attore"]]
         ctx.log(f"{r['nome']} reagisce con {rab['nome']}.", "azione")
         remember(state, r, "lancio", ab=rab["nome"], bersagli=targets)
         run_effects(ctx, r, rm.effetti, targets, {**rab, "_m": rm}, "rea", False, only_event=None)
         drain(ctx)
+        reveal(ctx, r, hidden_r)
     actor = state["combattenti"].get(w["attore"])
     if w.get("interrotta") or not actor or not actor.get("vivo", True):
         ctx.log(f"{w['abilita']} viene annullato.", "azione")
@@ -1447,6 +1458,39 @@ def public(state: dict) -> dict:
             out.append({"nome": ab["nome"], "grado": ab.get("grado"), "tipo": m.tipo, "timing": m.timing,
                         "azione": m.azione, "durata": m.durata.tipo, "etichette": m.etichette,
                         "costi": [k.model_dump() for k in m.costi], "cd": m.cooldown.model_dump(),
-                        "bersaglio": first, "descrizione": ab.get("descrizione", ""), "base": bool(ab.get("base"))})
+                        "bersaglio": first, "descrizione": ab.get("descrizione", ""), "base": bool(ab.get("base")),
+                        "testo": bool(ab.get("testo"))})
         c["abilita"] = out
     return s
+
+
+def add_combatants(state: dict, new: list[dict], rng: random.Random | None = None, tiri: dict | None = None) -> dict:
+    """Aggiunge combattenti a uno scontro in corso: tira l'iniziativa e li mette in ordine senza cambiare chi ha il
+    turno. Gli id devono essere già unici nello stato."""
+    ctx = Ctx(state, tiri, rng)
+    cur = current(state)
+    for c in new:
+        if c["id"] in state["combattenti"]:
+            raise EngineError(f"Combattente già presente: {c['nome']}.")
+        d = ctx.value(f"ini:{c['id']}", f"Iniziativa di {c['nome']}", 1, 20)
+        c["iniziativa"] = rnd(stat(c, "iniziativa") + d)
+        state["combattenti"][c["id"]] = c
+        for ab in c.get("abilita") or []:
+            m = mech_of(ab)
+            if m.tipo == "passiva":
+                run_effects(ctx, c, [e for e in m.effetti if e.trigger.evento == "passivo"], [], {**ab, "_m": m},
+                            f"pas0.{ab['nome']}", False, only_event=None)
+    order = [x for x in state.get("ordine") or [] if x in state["combattenti"]] + [c["id"] for c in new]
+    order.sort(key=lambda i: (-state["combattenti"][i].get("iniziativa", 0), state["combattenti"][i]["lato"] != "alleati",
+                              state["combattenti"][i]["nome"]))
+    state["ordine"] = order
+    if cur is not None:
+        state["turno"] = order.index(cur["id"])
+    ctx.log("Entrano nello scontro: " + ", ".join(f"{c['nome']} (iniziativa {c['iniziativa']})" for c in new) + ".", "round")
+    if cur is None:
+        state["turno"] = 0
+        first = current(state)
+        if first:
+            ctx.log(f"Turno di {first['nome']}.", "turno")
+            start_turn(ctx, first)
+    return {"esito": "ok"}

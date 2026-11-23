@@ -182,3 +182,57 @@ export function resultLines(b: Battle): string[] {
 }
 
 export { ni };
+
+/** Master: aggiunge nemici (a mano o da un incontro della Forgia) o PG a uno scontro in corso. */
+export function AddCombatants({ battle, busy, onAdd }: {
+  battle: Battle; busy: boolean;
+  onAdd: (body: { creature?: ManualCreature[]; encounter_id?: number | null; pg_ids?: number[] }) => Promise<unknown>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [cand, setCand] = useState<BattleCandidates | null>(null);
+  const [c, setC] = useState<ManualCreature>({ ...EMPTY_CREATURE });
+  const [enc, setEnc] = useState("");
+  const [pc, setPc] = useState("");
+  useEffect(() => { if (open && !cand) battleApi.candidates().then(setCand).catch(() => setCand({ encounters: [], characters: [] })); }, [open, cand]);
+  const inBattle = new Set(Object.values(battle.state.combattenti).map((x) => x.rif));
+  const freePcs = (cand?.characters ?? []).filter((x) => !inBattle.has(`pg:${x.id}`));
+  return (
+    <details className="cb-add" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary>+ Aggiungi nemici o personaggi</summary>
+      <div className="cb-add-row">
+        <input className="input" placeholder="Lupo" aria-label="Nome della creatura" maxLength={60} value={c.name}
+          onChange={(e) => setC({ ...c, name: e.target.value })} />
+        <input className="input num" type="number" min={1} max={20} aria-label="Quante" value={c.count}
+          onChange={(e) => setC({ ...c, count: Math.max(1, Number(e.target.value) || 1) })} />
+        <input className="input num" type="number" min={0} aria-label="Livello" value={c.level}
+          onChange={(e) => setC({ ...c, level: Math.max(0, Number(e.target.value) || 0) })} />
+      </div>
+      <div className="row">
+        <select className="input" aria-label="Rarità" value={c.rarity} style={{ flex: 1 }} onChange={(e) => setC({ ...c, rarity: e.target.value })}>
+          {RARITIES.map((r) => <option key={r}>{r}</option>)}
+        </select>
+        <button type="button" className="btn" disabled={busy || !c.name.trim()}
+          onClick={() => onAdd({ creature: [{ ...c, name: c.name.trim() }] }).then(() => setC({ ...EMPTY_CREATURE }))}>Aggiungi</button>
+      </div>
+      <span className="xs muted">nome · quante · livello · rarità</span>
+      {cand && cand.encounters.length > 0 && (
+        <div className="row">
+          <select className="input" aria-label="Incontro della Forgia" value={enc} style={{ flex: 1 }} onChange={(e) => setEnc(e.target.value)}>
+            <option value="">Creature da un incontro…</option>
+            {cand.encounters.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.creatures} creature</option>)}
+          </select>
+          <button type="button" className="btn" disabled={busy || !enc} onClick={() => onAdd({ encounter_id: Number(enc) }).then(() => setEnc(""))}>Aggiungi</button>
+        </div>
+      )}
+      {freePcs.length > 0 && (
+        <div className="row">
+          <select className="input" aria-label="Personaggio" value={pc} style={{ flex: 1 }} onChange={(e) => setPc(e.target.value)}>
+            <option value="">Personaggio non in scontro…</option>
+            {freePcs.map((x) => <option key={x.id} value={x.id}>{x.name} · Lv {x.level}</option>)}
+          </select>
+          <button type="button" className="btn" disabled={busy || !pc} onClick={() => onAdd({ pg_ids: [Number(pc)] }).then(() => setPc(""))}>Aggiungi</button>
+        </div>
+      )}
+    </details>
+  );
+}

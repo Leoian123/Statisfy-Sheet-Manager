@@ -399,6 +399,8 @@ def describe_effect(e: Effetto) -> str:
     s = pre + body
     if e.probabilita < 100:
         s += f" ({_n(e.probabilita)}% di probabilità)"
+    if e.critico:
+        s += f" (+{_n(e.critico)}% critico)"
     if e.ritardo:
         s += f" dopo {e.ritardo} turni"
     for c in e.condizioni:

@@ -146,3 +146,13 @@
   .cb-cr-row select, .cb-cr-row button { grid-column: span 1; }
   .cb-pc { min-height: 44px; }
 }
+
+.cb-act-h .cb-actor { min-width: 10em; max-width: 100%; font-family: var(--font-display); font-size: var(--fs-md); }
+.cb-txt { margin-left: 6px; font-size: var(--fs-xs); padding: 0 6px; }
+.cb-more > summary { cursor: pointer; color: var(--muted); padding: 6px 0; }
+.cb-more[open] > summary { margin-bottom: 10px; }
+.cb-add { border: 1px dashed var(--line); border-radius: var(--radius); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.cb-add > summary { cursor: pointer; font-size: var(--fs-sm); color: var(--muted); }
+.cb-add-row { display: grid; grid-template-columns: minmax(0, 1fr) 3.6em 4.2em; gap: 6px; }
+.cb-add-row .input, .cb-add select { min-width: 0; width: 100%; }
+@media (max-width: 760px) { .cb-add .btn, .cb-add > summary { min-height: 44px; } .cb-add > summary { display: flex; align-items: center; } }

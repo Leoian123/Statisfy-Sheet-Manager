@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import random
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -23,6 +24,7 @@ from .. import rules
 from ..auth import current_user, require_master
 from ..db import get_db
 from ..models import Character, ForgeEntry, Scontro, User
+from ..mech_templates import CLASS_MECH
 from ..serialize import maxes_of, rules_input
 from .characters import tidy
 
@@ -48,6 +50,7 @@ class StartIn(BaseModel):
     encounter_id: int | None = None
     pg_ids: list[int] = Field(default_factory=list, max_length=20)
     creature: list[CreatureIn] = Field(default_factory=list, max_length=12)
+    tutti: bool = False  # tutto il gruppo (ogni PG della campagna)
     tiri: dict[str, float] = Field(default_factory=dict, max_length=60)
 
 
@@ -103,14 +106,44 @@ def now() -> str:
 
 # ---------- Costruzione dei combattenti ----------
 
+COST_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(MP|SP|KI|HP|PM|PS)\b", re.I)
+KIND_OF = {"Incantesimo": "incantesimo", "Miracolo": "miracolo"}
+
+
+def text_mech(x: dict) -> dict:
+    """Abilità attiva senza meccanica: si usa lo stesso (costo e ricarica dalla scheda), l'effetto è il testo
+    e lo applica il Master a mano."""
+    costi = []
+    for v, k in COST_RE.findall(str(x.get("cost") or "")):
+        k = {"PM": "MP", "PS": "SP"}.get(k.upper(), k.upper())
+        costi.append({"risorsa": k, "valore": float(v.replace(",", ".")), "per": "lancio"})
+    cd = int(rules.num(x.get("cd")) or 0)
+    text = str(x.get("effect") or "").strip() or "Effetto descritto nella scheda."
+    return {"v": 1, "tipo": KIND_OF.get(str(x.get("kind") or ""), "skill"), "costi": costi[:4],
+            "cooldown": {"valore": min(999, max(0, cd)), "unita": "turni"}, "tiro_colpire": False,
+            "etichette": [str(s) for s in x.get("spheres") or []][:12],
+            "effetti": [{"bersaglio": {"lato": "se"}, "azione": {"op": "narrativo", "testo": text[:600]}}]}
+
+
 def abilities_of(c: Character) -> list[dict]:
-    """Abilità con meccanica di un PG: skill attive, incantesimi, miracoli, skill passive, talenti e titoli."""
+    """Abilità di un PG per lo scontro. Con meccanica: skill attive, incantesimi, miracoli, skill passive, talenti,
+    titoli. Senza meccanica: le skill di classe hanno quella di default (es. Dardo Magico), le altre abilità attive
+    si usano come «solo testo» (costo e ricarica dalla scheda, effetto applicato dal Master)."""
     out, seen = [], set()
     for field in ABILITY_SOURCES:
         for x in getattr(c, field) or []:
-            raw = x.get("mech") if isinstance(x, dict) else None
-            name = str(x.get("name") or "").strip() if isinstance(x, dict) else ""
-            if not raw or not name or name.lower() in seen:
+            if not isinstance(x, dict):
+                continue
+            raw = x.get("mech")
+            name = str(x.get("name") or "").strip()
+            if not name or name.lower() in seen:
+                continue
+            testo = False
+            if not raw and field == "active_skills":
+                raw = CLASS_MECH.get(name.lower())
+                if raw is None:
+                    raw, testo = text_mech(x), True
+            if not raw:
                 continue
             m, errs = MECH.parse(raw)
             if errs:
@@ -118,7 +151,8 @@ def abilities_of(c: Character) -> list[dict]:
             seen.add(name.lower())
             lvl = int(rules.num(x.get("lvl")) or 1)
             out.append({"nome": name, "grado": lvl, "efficacia": int(rules.num(x.get("efficacia")) or lvl),
-                        "mech": MECH.dump(m), "descrizione": str(x.get("effect") or "")[:300], "fonte": field})
+                        "mech": MECH.dump(m), "descrizione": str(x.get("effect") or "")[:300], "fonte": field,
+                        **({"testo": True} if testo else {})})
     return out
 
 
@@ -153,8 +187,10 @@ def active_recharges(c: Character) -> dict:
     return out
 
 
-def creature_combatants(rows: list[dict], ref: Any = "x", k: int = 0) -> list[dict]:
+def creature_combatants(rows: list[dict], ref: Any = "x", k: int = 0, taken: set | None = None) -> list[dict]:
+    """Combattenti dalle righe di creature. `taken` = id già usati (scontro in corso): si salta oltre."""
     out = []
+    taken = set(taken or ())
     for row in rows:
         n = max(0, int(rules.num(row.get("count")) or 1))
         hp = rules.num(row.get("hp")) or rules.creature(row.get("level"), row.get("rarity"), row.get("size"))["hp"]
@@ -162,6 +198,8 @@ def creature_combatants(rows: list[dict], ref: Any = "x", k: int = 0) -> list[di
         lv = rules.num(row.get("level"))
         for i in range(n):
             k += 1
+            while f"n{k}" in taken:
+                k += 1
             name = str(row.get("name") or "Creatura").strip()[:60]
             if n > 1:
                 name += f" {chr(65 + i) if i < 26 else i + 1}"
@@ -304,6 +342,8 @@ def start(data: StartIn, user: User = Depends(require_master), db: Session = Dep
     combattenti: list[dict] = []
     name = data.name.strip()
     pg_ids = list(dict.fromkeys(data.pg_ids))
+    if data.tutti:
+        pg_ids = list(db.scalars(select(Character.id).order_by(Character.id)))
     if data.encounter_id is not None:
         e = db.get(ForgeEntry, data.encounter_id)
         if e is None or e.kind != "encounters":
@@ -320,8 +360,8 @@ def start(data: StartIn, user: User = Depends(require_master), db: Session = Dep
     if len(chars) != len(pg_ids):
         raise HTTPException(404, "Personaggio non trovato.")
     combattenti = [pg_combatant(c) for c in chars] + combattenti
-    if not any(c["lato"] == "alleati" for c in combattenti) or not any(c["lato"] == "nemici" for c in combattenti):
-        raise HTTPException(422, "Servono almeno un personaggio e una creatura.")
+    if not any(c["lato"] == "alleati" for c in combattenti):
+        raise HTTPException(422, "Serve almeno un personaggio: i nemici si possono aggiungere dopo.")
     state = E.new_state(combattenti)
     _engine(E.start, state, _rng(), data.tiri)
     s = Scontro(name=name or "Scontro", encounter_id=data.encounter_id, state=tidy(state), history=[], active=True,
@@ -452,6 +492,46 @@ def adjust(sid: int, cid: str, data: AdjustIn, user: User = Depends(require_mast
     return out(s, user, db)
 
 
+class AddIn(VersionIn):
+    creature: list[CreatureIn] = Field(default_factory=list, max_length=12)
+    encounter_id: int | None = None
+    pg_ids: list[int] = Field(default_factory=list, max_length=20)
+
+
+@router.post("/{sid}/aggiungi")
+def add(sid: int, data: AddIn, user: User = Depends(require_master), db: Session = Depends(get_db)):
+    """Il Master aggiunge creature (a mano o da un incontro della Forgia) o PG a uno scontro in corso."""
+    s = _get(db, sid)
+    if not s.active:
+        raise HTTPException(409, "Lo scontro è chiuso.")
+    _check_version(s, data.version)
+    state = copy.deepcopy(s.state)
+    taken = set(state["combattenti"])
+    new: list[dict] = []
+    rows = [c.model_dump() for c in data.creature]
+    if data.encounter_id is not None:
+        e = db.get(ForgeEntry, data.encounter_id)
+        if e is None or e.kind != "encounters":
+            raise HTTPException(404, "Incontro non trovato.")
+        rows += (e.data or {}).get("creatures") or []
+    if rows:
+        new += creature_combatants(rows, data.encounter_id or "manuale", 0, taken)
+    for cid in dict.fromkeys(data.pg_ids):
+        if f"p{cid}" in taken:
+            continue
+        ch = db.get(Character, cid)
+        if ch is None:
+            raise HTTPException(404, "Personaggio non trovato.")
+        new.append(pg_combatant(ch))
+    if not new:
+        raise HTTPException(422, "Niente da aggiungere.")
+    before = copy.deepcopy(s.state)
+    pull(db, state)
+    _engine(E.add_combatants, state, new, _rng())
+    _commit(db, s, state, before)
+    return out(s, user, db)
+
+
 @router.post("/{sid}/annulla")
 def undo(sid: int, data: VersionIn, user: User = Depends(require_master), db: Session = Depends(get_db)):
     s = _get(db, sid)
@@ -498,6 +578,6 @@ def candidates(user: User = Depends(require_master), db: Session = Depends(get_d
                         "creatures": sum(int(rules.num(c.get("count")) or 1) for c in (e.data or {}).get("creatures") or [])}
                        for e in encs if not e.closed],
         "characters": [{"id": c.id, "name": c.name, "level": c.level, "classe": c.classe,
-                        "abilities": len(abilities_of(c))} for c in chars],
+                        "abilities": len([a for a in abilities_of(c) if not a.get("testo")])} for c in chars],
     }
 
