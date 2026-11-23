@@ -156,3 +156,8 @@
 .cb-add-row { display: grid; grid-template-columns: minmax(0, 1fr) 3.6em 4.2em; gap: 6px; }
 .cb-add-row .input, .cb-add select { min-width: 0; width: 100%; }
 @media (max-width: 760px) { .cb-add .btn, .cb-add > summary { min-height: 44px; } .cb-add > summary { display: flex; align-items: center; } }
+
+/* Colonne lunghe dello scontro: scorrono nel loro spazio */
+.cb-side-list { --scroll-max: min(46vh, 420px); display: flex; flex-direction: column; gap: 8px; }
+.cb-log.scroll-y { --scroll-max: min(70vh, 640px); }
+@media (max-width: 760px) { .cb-side-list { --scroll-max: none; } }

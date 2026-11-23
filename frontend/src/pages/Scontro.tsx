@@ -80,11 +80,13 @@ export function Scontro() {
   const side = (title: string, list: typeof allies) => (
     <div className="cb-side-g">
       <span className="label">{title} <span className="muted">{list.filter((c) => c.vivo).length}/{list.length}</span></span>
-      {list.map((c) => (
-        <CombatantCard key={c.id} c={c} current={c.id === curId} selected={sel.includes(c.id)} selectable={!!actor}
-          onToggle={() => toggle(c.id)} showRes={b.master || c.lato === "alleati"} master={b.master}
-          onAdjust={(patch) => run(() => battleApi.adjust(b.id, b.version, c.id, patch))} />
-      ))}
+      <div className="cb-side-list scroll-y">
+        {list.map((c) => (
+          <CombatantCard key={c.id} c={c} current={c.id === curId} selected={sel.includes(c.id)} selectable={!!actor}
+            onToggle={() => toggle(c.id)} showRes={b.master || c.lato === "alleati"} master={b.master}
+            onAdjust={(patch) => run(() => battleApi.adjust(b.id, b.version, c.id, patch))} />
+        ))}
+      </div>
     </div>
   );
 

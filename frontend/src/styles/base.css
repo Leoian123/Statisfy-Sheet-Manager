@@ -315,3 +315,13 @@ table.t tfoot td { font-weight: 600; border-top: 1px solid var(--line-strong); }
 @keyframes sys-in { from { transform: translateY(6px); opacity: 0.4; } to { transform: none; opacity: 1; } }
 .anim-in { animation: sys-in .25s ease-out; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Elenchi lunghi: scorrono dentro il loro pannello invece di allungare la pagina (barra sottile, solo verticale,
+   spazio della barra riservato così il contenuto non si sposta). --scroll-max sceglie l'altezza. */
+.scroll-y {
+  max-height: var(--scroll-max, min(60vh, 520px)); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; scrollbar-gutter: stable; padding-right: 2px;
+}
+.scroll-y::-webkit-scrollbar { width: 8px; }
+.scroll-y::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+.scroll-y::-webkit-scrollbar-track { background: transparent; }

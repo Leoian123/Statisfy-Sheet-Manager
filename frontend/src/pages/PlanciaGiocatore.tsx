@@ -310,7 +310,7 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
           </div>
           <Win title="Allegati al tiro" className="pg-sec sec-allegati" right={list.length ? <span className="chip gold num">{signed(sum)}</span> : undefined}>
             {list.length ? (
-              <ul className="tv-att">
+              <ul className="tv-att scroll-y">
                 {list.map((a) => (
                   <li key={a.key} className="tv-att-row" title={`${a.kind} · ${a.name}${a.text ? `\n${a.text}` : ""}`}>
                     <span className="tv-att-name"><span className="xs muted">{a.kind}</span> {a.name}</span>
@@ -327,7 +327,7 @@ function Board({ c, setChar }: { c: Character; setChar: (c: Character) => void }
           <Win title="Skill, titoli e talenti" className="pg-sec sec-allegati">
             {groups.length ? <>
               <input className="input" type="search" placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Cerca tra skill, titoli e talenti" />
-              <div className="tv-picker">
+              <div className="tv-picker scroll-y">
                 {shown.length ? shown.map((g) => (
                   <div key={g.label} className="tv-pk-group" role="group" aria-labelledby={`tv-pk-${g.label.replace(/\W+/g, "-")}`}>
                     <span className="label" id={`tv-pk-${g.label.replace(/\W+/g, "-")}`}>{g.label}</span>

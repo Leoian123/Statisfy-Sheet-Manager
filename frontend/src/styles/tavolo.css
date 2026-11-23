@@ -141,3 +141,8 @@
   .pl-root[data-tab="tiri"] .pl-sec:not([data-sec="tiri"]) { display: none; }
   .pl-pc-roll .btn, .tv-roll, .tv-req-row .btn { min-height: 44px; }
 }
+
+/* Elenco da allegare: le etichette dei gruppi restano visibili mentre si scorre */
+.tv-picker.scroll-y .tv-pk-group > .label { position: sticky; top: 0; z-index: 1; background: var(--panel); padding: 2px 0; }
+.tv-att.scroll-y { --scroll-max: 240px; }
+.tv-picker.scroll-y { --scroll-max: min(42vh, 420px); }

@@ -80,7 +80,7 @@ export function Pending({ battle }: { battle: Battle }) {
 export function BattleLog({ battle }: { battle: Battle }) {
   const lines = battle.state.registro.slice(-80).reverse();
   return (
-    <ol className="cb-log" aria-label="Registro dello scontro">
+    <ol className="cb-log scroll-y" aria-label="Registro dello scontro" tabIndex={0}>
       {lines.map((l, i) => (
         <li key={battle.state.registro.length - i} className={`cb-l k-${l.k}`}>
           <span className="cb-l-r mono">R{l.r}</span><span>{l.t}</span>
