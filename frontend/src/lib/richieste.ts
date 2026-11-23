@@ -141,3 +141,43 @@ export function pruneSeen(seen: unknown, max = 300): Record<string, string> {
     .slice(0, max);
   return Object.fromEntries(ok);
 }
+
+/* ---------- Coda di lavoro: compiti e gruppi di tipi ---------- */
+export type Bucket = "todo" | "waiting" | "closed";
+export const BUCKET_LABELS: Record<"master" | "giocatore", Record<Bucket, string>> = {
+  master: { todo: "Da fare", waiting: "In attesa", closed: "Chiuse" },
+  giocatore: { todo: "Da fare", waiting: "In attesa", closed: "Chiuse" },
+};
+export const BUCKET_EMPTY: Record<"master" | "giocatore", Record<Bucket, string>> = {
+  master: { todo: "Niente da fare: la coda è vuota.", waiting: "Nessuna richiesta aspetta i giocatori.", closed: "Nessuna richiesta chiusa di recente." },
+  giocatore: { todo: "Niente da fare: il Master non ti ha scritto.", waiting: "Nessuna richiesta in attesa del Master.", closed: "Nessuna richiesta chiusa di recente." },
+};
+
+/** In quale compito sta una richiesta, dal punto di vista di chi guarda.
+ *  Master: da fare se tocca a lui rispondere; le comunicazioni al giocatore sono sempre «in attesa» (le copie delle
+ *  sue risposte arrivano nella richiesta di evoluzione). Giocatore: da fare se il Master gli ha scritto per ultimo. */
+export function bucketOf(t: Ticket, role: "master" | "giocatore"): Bucket {
+  if (isClosed(t.status)) return "closed";
+  const last = t.messages[t.messages.length - 1];
+  const masterLast = !!last && last.role === "master";
+  if (role === "master") {
+    if (t.kind === "comunicazione") return "waiting";
+    return masterLast ? "waiting" : "todo";
+  }
+  if (t.to_me) return last && !masterLast ? "waiting" : "todo";
+  return masterLast || (t.unread && !!t.answer) ? "todo" : "waiting";
+}
+
+export interface KindGroup { key: string; label: string; kinds: TicketKind[] }
+export const KIND_GROUPS: KindGroup[] = [
+  { key: "evoluzione", label: "Evoluzioni", kinds: ["evoluzione"] },
+  { key: "comunicazione", label: "Dal Master", kinds: ["comunicazione"] },
+  { key: "regola", label: "Domande", kinds: ["regola"] },
+  { key: "idee", label: "Idee", kinds: ["funzione", "contenuto"] },
+];
+
+export function countBuckets(items: Ticket[], role: "master" | "giocatore"): Record<Bucket, number> {
+  const out: Record<Bucket, number> = { todo: 0, waiting: 0, closed: 0 };
+  for (const t of items) out[bucketOf(t, role)] += 1;
+  return out;
+}

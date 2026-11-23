@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Ticket } from "../src/api/tickets.ts";
 import {
-  activeTotal, ageText, archiveText, canEdit, canWithdraw, isClosed, masterMoves, masterUnread, newTicketError, pruneSeen, sortTickets,
+  activeTotal, ageText, bucketOf, countBuckets, archiveText, canEdit, canWithdraw, isClosed, masterMoves, masterUnread, newTicketError, pruneSeen, sortTickets,
 } from "../src/lib/richieste.ts";
 
 const NOW = Date.parse("2026-11-21T12:00:00+00:00");
@@ -94,4 +94,24 @@ test("mappa delle viste del Master ripulita e limitata", () => {
   assert.deepEqual(pruneSeen([1, 2]), {});
   assert.deepEqual(pruneSeen({ "1": "a", x: "b", "2": 3, "3": "c" }), { "1": "a", "3": "c" });
   assert.deepEqual(Object.keys(pruneSeen({ "1": "a", "5": "b", "9": "c" }, 2)).sort(), ["5", "9"]);
+});
+
+
+const msg = (role: "master" | "player") => ({ by: 1, by_name: "x", role, text: "t", at: "2026-11-20T11:00:00+00:00" });
+
+test("coda del Master: da fare, in attesa, chiuse", () => {
+  assert.equal(bucketOf(tk(), "master"), "todo");
+  assert.equal(bucketOf(tk({ messages: [msg("master")] }), "master"), "waiting");
+  assert.equal(bucketOf(tk({ messages: [msg("master"), msg("player")] }), "master"), "todo");
+  assert.equal(bucketOf(tk({ kind: "comunicazione", messages: [msg("player")] }), "master"), "waiting");
+  assert.equal(bucketOf(tk({ kind: "evoluzione" }), "master"), "todo");
+  assert.equal(bucketOf(tk({ status: "risolta" }), "master"), "closed");
+  assert.deepEqual(countBuckets([tk(), tk({ status: "respinta" }), tk({ messages: [msg("master")] })], "master"), { todo: 1, waiting: 1, closed: 1 });
+});
+
+test("coda del giocatore: il Master ti ha scritto = da fare", () => {
+  assert.equal(bucketOf(tk(), "giocatore"), "waiting");
+  assert.equal(bucketOf(tk({ messages: [msg("master")] }), "giocatore"), "todo");
+  assert.equal(bucketOf(tk({ mine: false, to_me: true, kind: "comunicazione" }), "giocatore"), "todo");
+  assert.equal(bucketOf(tk({ mine: false, to_me: true, kind: "comunicazione", messages: [msg("player")] }), "giocatore"), "waiting");
 });

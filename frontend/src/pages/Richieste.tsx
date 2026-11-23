@@ -6,7 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ApiError, errorText } from "../api/client";
 import {
   KIND_LABELS, STATUS_LABELS, TICKET_LIMITS, ticketsApi,
-  type PlayerTicketKind, type Ticket, type TicketKind, type TicketList, type TicketPatch, type TicketStatus,
+  type PlayerTicketKind, type Ticket, type TicketList, type TicketPatch, type TicketStatus,
 } from "../api/tickets";
 import { EvolutionForm } from "../components/EvolutionForm";
 import { useAppData } from "../auth/AppData";
@@ -16,21 +16,19 @@ import { Tabs } from "../components/Tabs";
 import { useToast } from "../components/Toast";
 import { Win } from "../components/Win";
 import {
-  KIND_FILTER, KIND_HINTS, KIND_ORDER, KIND_SHORT, STATUS_TONE, isSystemKind, activeTotal, ageText, archiveText, canEdit, canWithdraw, dayText, isClosed,
-  isUnread, masterMoves, newTicketError, pruneSeen, sortTickets, type Move,
+  BUCKET_EMPTY, BUCKET_LABELS, KIND_GROUPS, KIND_HINTS, KIND_ORDER, KIND_SHORT, STATUS_TONE, isSystemKind, ageText, archiveText,
+  bucketOf, canEdit, canWithdraw, countBuckets, dayText, isClosed, isUnread, masterMoves, newTicketError, pruneSeen, sortTickets,
+  type Bucket, type Move,
 } from "../lib/richieste";
 import { usePolling } from "../lib/usePolling";
 import "../styles/richieste.css";
 
 type Scope = "attive" | "archivio";
+type View = Bucket | "archivio";
 type Role = "master" | "giocatore";
 const POLL_MS = 20000;
 const LIST_LIMIT = 200;
 const SEEN_KEY = "statisfy-rq-seen";
-const STATUS_FILTERS: TicketStatus[] = ["aperta", "in_esame", "risolta", "respinta", "ritirata"];
-const STATUS_PLURAL: Record<TicketStatus, string> = {
-  aperta: "Aperte", in_esame: "In esame", risolta: "Risolte", respinta: "Respinte", ritirata: "Ritirate",
-};
 
 function loadSeen(): Record<string, string> {
   try { return pruneSeen(JSON.parse(localStorage.getItem(SEEN_KEY) || "{}")); } catch { return {}; }
@@ -53,9 +51,9 @@ export function Richieste() {
   const [params, setParams] = useSearchParams();
   const selId = Number(params.get("t")) || null;
 
-  const [scope, setScope] = useState<Scope>("attive");
-  const [status, setStatus] = useState<TicketStatus | "">("");
-  const [kind, setKind] = useState<TicketKind | "">("");
+  const [view, setView] = useState<View>("todo");
+  const scope: Scope = view === "archivio" ? "archivio" : "attive";
+  const [group, setGroup] = useState("");
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
   const [list, setList] = useState<TicketList | null>(null);
@@ -78,19 +76,14 @@ export function Richieste() {
   const loadList = useCallback(async () => {
     const n = ++reqNo.current;
     try {
-      const res = await ticketsApi.list({
-        scope, limit: LIST_LIMIT,
-        status: scope === "attive" && status ? status : undefined,
-        kind: kind || undefined,
-        q: scope === "archivio" && q ? q : undefined,
-      });
+      const res = await ticketsApi.list({ scope, limit: LIST_LIMIT, q: scope === "archivio" && q ? q : undefined });
       if (n !== reqNo.current) return; // risposta superata da una più recente
       setList(res);
       setListErr(null);
     } catch (e) {
       if (n === reqNo.current) setListErr(errorText(e));
     }
-  }, [scope, status, kind, q]);
+  }, [scope, q]);
 
   usePolling(loadList, POLL_MS, [loadList]);
 
@@ -151,10 +144,9 @@ export function Richieste() {
     next.delete("t");
     setParams(next);
   }
-  function changeScope(s: Scope) {
-    setScope(s);
-    setStatus("");
-    setList(null);
+  function changeView(v: View) {
+    if ((v === "archivio") !== (view === "archivio")) setList(null);
+    setView(v);
     if (selId != null) close();
   }
 
@@ -172,66 +164,72 @@ export function Richieste() {
 
   function created(t: Ticket) {
     setList((l) => (l ? { ...l, items: [t, ...l.items], counts: { ...l.counts, aperta: l.counts.aperta + 1 } } : l));
+    setView("waiting");
     open(t.id);
     loadList();
   }
 
-  const items = useMemo(() => (list ? sortTickets(list.items, role, seen) : []), [list, role, seen]);
+  // Coda di lavoro: compiti (da fare, in attesa, chiuse) e gruppi di tipi; l'archivio a parte
+  const all = list?.items ?? [];
+  const buckets = useMemo(() => countBuckets(scope === "attive" ? all : [], role), [all, scope, role]);
+  const inView = scope === "archivio" ? all : all.filter((t) => bucketOf(t, role) === view);
+  const groups = KIND_GROUPS.filter((g) => inView.some((t) => g.kinds.includes(t.kind)));
+  const activeGroup = groups.find((g) => g.key === group) ?? null;
+  const items = useMemo(() => sortTickets(activeGroup ? inView.filter((t) => activeGroup.kinds.includes(t.kind)) : inView, role, seen),
+    [inView, activeGroup, role, seen]); // eslint-disable-line react-hooks/exhaustive-deps
   const counts = list?.counts;
   const archiveDays = list?.archive_days;
+  const L = BUCKET_LABELS[role];
 
+  const viewHint = view === "todo" ? (master ? "Tocca a te: rispondi o risolvi." : "Il Master ti ha scritto: leggi e rispondi.")
+    : view === "waiting" ? (master ? "Hai risposto: si aspetta il giocatore." : "Hai scritto: si aspetta il Master.") : null;
+  const chips = groups.length > 1 && (
+    <div className="rq-filters" role="group" aria-label="Filtra per tipo">
+      <button type="button" className="rq-fbtn" aria-pressed={!activeGroup} onClick={() => setGroup("")}>Tutte <span className="num">{inView.length}</span></button>
+      {groups.map((g) => (
+        <button key={g.key} type="button" className="rq-fbtn" aria-pressed={activeGroup?.key === g.key} onClick={() => setGroup(activeGroup?.key === g.key ? "" : g.key)}>
+          {g.label} <span className="num">{inView.filter((t) => g.kinds.includes(t.kind)).length}</span>
+        </button>
+      ))}
+    </div>
+  );
   const toolbar = scope === "archivio" ? (
-    <div className="rq-tools">
+    <div className="stack rq-tools-m">
       <div className="field rq-search">
         <label className="label" htmlFor="rq-q">Cerca in archivio</label>
         <input className="input" id="rq-q" type="search" autoComplete="off" maxLength={100} placeholder="Titolo, testo o decisione"
           value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
-      {master && <KindSelect kind={kind} setKind={setKind} />}
+      {chips}
     </div>
-  ) : master ? (
+  ) : (
     <div className="stack rq-tools-m">
-      <div className="rq-filters" role="group" aria-label="Filtra per stato">
-        <button type="button" className="rq-fbtn" aria-pressed={status === ""} onClick={() => setStatus("")}>
-          Tutte <span className="num">{counts ? activeTotal(counts) : "…"}</span>
-        </button>
-        {STATUS_FILTERS.map((s) => (
-          <button key={s} type="button" className={`rq-fbtn rq-f-${STATUS_TONE[s]}`} aria-pressed={status === s} onClick={() => setStatus(status === s ? "" : s)}>
-            {STATUS_PLURAL[s]} <span className="num">{counts ? counts[s] : "…"}</span>
-          </button>
-        ))}
-      </div>
-      <div className="rq-tools">
-        <KindSelect kind={kind} setKind={setKind} />
+      {viewHint && <p className="xs muted rq-sum">{viewHint}</p>}
+      {chips}
+      {master && view === "closed" && (
         <div className="rq-rotate">
           <button type="button" className="btn ghost" disabled={rotating} onClick={rotate}>Archivia le chiuse scadute</button>
-          {archiveDays != null && <span className="hint">Le chiuse vanno in archivio dopo {archiveDays} {archiveDays === 1 ? "giorno" : "giorni"}.</span>}
+          {archiveDays != null && <span className="hint">Vanno in archivio da sole dopo {archiveDays} {archiveDays === 1 ? "giorno" : "giorni"}.</span>}
         </div>
-      </div>
+      )}
     </div>
-  ) : counts ? (
-    <p className="xs muted rq-sum">
-      {counts.aperta + counts.in_esame} in attesa · {counts.risolta + counts.respinta + counts.ritirata} chiuse
-      {archiveDays != null && <> · le chiuse vanno in archivio dopo {archiveDays} {archiveDays === 1 ? "giorno" : "giorni"}</>}
-    </p>
-  ) : null;
+  );
 
   const emptyText = scope === "archivio"
     ? (q ? `Nessuna richiesta in archivio contiene "${q}".` : "L'archivio è vuoto.")
-    : master
-      ? (status || kind ? "Nessuna richiesta con questi filtri." : "Nessuna richiesta dai giocatori.")
-      : "Non hai richieste in corso. Scrivine una qui sopra.";
+    : activeGroup ? "Nessuna richiesta di questo tipo qui." : BUCKET_EMPTY[role][view as Bucket];
 
   return (
     <div className="rq-root" ref={rootRef}>
       <div className={`rq-split${selId != null ? " has-sel" : ""}`}>
         <div className="rq-listcol">
-          {!master && scope === "attive" && <NewTicket startOpen={list != null && list.items.length === 0 && !list.counts.archivio} onCreated={created} />}
-          <Win title={master ? "Richieste dei giocatori" : "Le tue richieste"}
-            right={counts && master ? <span className={`chip ${counts.aperta ? "gold" : "muted"}`}>{counts.aperta} nuove</span> : undefined}>
-            <Tabs<Scope> label="Richieste" active={scope} onChange={changeScope}
+          {!master && <NewTicket startOpen={list != null && list.items.length === 0 && !list.counts.archivio} onCreated={created} />}
+          <Win title={master ? "Coda delle richieste" : "Le tue richieste"}>
+            <Tabs<View> label="Richieste" active={view} onChange={changeView}
               tabs={[
-                { key: "attive", label: master ? "In arrivo" : "In corso", count: counts ? activeTotal(counts) : undefined },
+                { key: "todo", label: L.todo, count: scope === "attive" && list ? buckets.todo : undefined },
+                { key: "waiting", label: L.waiting, count: scope === "attive" && list ? buckets.waiting : undefined },
+                { key: "closed", label: L.closed, count: scope === "attive" && list ? buckets.closed : undefined },
                 { key: "archivio", label: "Archivio", count: counts?.archivio },
               ]}>
               <div className="stack rq-panel">
@@ -243,7 +241,7 @@ export function Richieste() {
                   </ul>
                 )}
                 {list && list.total > list.items.length && (
-                  <p className="footnote">Mostrate {list.items.length} di {list.total}: {scope === "archivio" ? "affina la ricerca." : "usa i filtri."}</p>
+                  <p className="footnote">Mostrate {list.items.length} di {list.total}: {scope === "archivio" ? "affina la ricerca." : "chiudi o archivia le più vecchie."}</p>
                 )}
               </div>
             </Tabs>
@@ -252,7 +250,7 @@ export function Richieste() {
         <div className="rq-detailcol">
           {selId == null ? (
             <div className="rq-placeholder ms-empty">
-              {master ? "Seleziona una richiesta per rispondere, cambiarne lo stato o archiviarla." : "Seleziona una richiesta per leggere la risposta del Master e i messaggi."}
+              {master ? "Scegli una richiesta dalla coda: rispondi, risolvila con il suo modulo o chiedi altro al giocatore." : "Scegli una richiesta per leggere la risposta del Master e rispondere."}
             </div>
           ) : detail ? (
             <Detail key={detail.id} t={detail} role={role} onChange={applyTicket} onReload={() => loadDetail(detail.id)} onBack={close}
@@ -265,18 +263,6 @@ export function Richieste() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function KindSelect({ kind, setKind }: { kind: TicketKind | ""; setKind: (k: TicketKind | "") => void }) {
-  return (
-    <div className="field rq-kindsel">
-      <label className="label" htmlFor="rq-kind">Tipo</label>
-      <select className="input" id="rq-kind" value={kind} onChange={(e) => setKind(e.target.value as TicketKind | "")}>
-        <option value="">Tutti i tipi</option>
-        {KIND_FILTER.map((k) => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}
-      </select>
     </div>
   );
 }
