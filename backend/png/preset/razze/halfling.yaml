@@ -1,0 +1,17 @@
+# razze/halfling. I documenti dicono solo che abitano Eldermoor.
+descrizione: null
+dove_vive:
+  - Eldermoor, uno su dieci                                                          # FONTE Ambientazione.txt
+longevita: null
+numeri: {}
+conta_per_i_suoi: null
+segni: []
+limiti: []
+nomi: null
+tacciono:
+  - aspetto, corpo e taglia
+  - quanti anni vive
+  - che cosa conta per loro
+  - come guardano i forestieri
+  - stile dei nomi
+  - se vivono fuori da Eldermoor

@@ -1,0 +1,45 @@
+# ruoli/fabbro
+eredita: cittadino
+descrizione: lavora il ferro alla forgia; ripara, affila, vende armi e attrezzi comuni
+livello:
+  villaggio: [30, 65]               # FONTE Zona_Alba_Chiara: Bram Ferraguto, Lv 61 (ex soldato: sta nella parte alta); il minimo è PROPOSTA
+  citta:     [40, 99]               # PROPOSTA: nessun fabbro di città è ancora scritto
+  metropoli: [100, 200]             # FONTE Supplemento.txt, botteghe di maestri di Mysteria (livello 100-200): fuori da Mysteria è PROPOSTA
+corporatura: robusta
+addestramento: improvvisato         # un martello è un'arma, ma lui non è un soldato
+profilo: {STR: alta, DEX: media, VIT: alta, INT: media}
+mestiere: {nome: Forgia, grado: [VI, IX]}    # Forgia: statistica artigianale (Progressione §1); il grado è PROPOSTA
+ricchezza: [modesto, agiato]
+dove:      {solo: [alla forgia dall'alba, al mercato per il ferro e il carbone]}
+giornata:  alla forgia dall'alba; con il ferro caldo non si ferma a parlare
+sa:        [metalli e tempra, chi in zona porta armi e quali, quanto vale davvero un oggetto di metallo]
+dicerie:   [da dove arriva il ferro quest'anno, che cosa si forgia in città]
+puo_dare:                           # prezzi: FONTE Zona_Alba_Chiara
+  solo:
+    - riparazioni (5-20 corone in un villaggio)
+    - armi e attrezzi comuni (una spada di ferro, 80 corone)
+    - affilatura
+    - una prima lezione di mestiere, a chi si guadagna il posto ai mantici
+rose:
+  vuole:   [ferro buono a un prezzo onesto, un garzone che resti, finire la commessa in tempo, un lavoro di cui andare fiero]
+  teme:    [la mano che comincia a tremare, il debito col fornitore, un concorrente in paese, il fuoco in bottega]
+  difetto: [burbero, orgoglioso fino all'offesa, lento a pagare, non ammette un lavoro venuto male]
+  prezzo:  {solo: [denaro, materiale, una consegna pesante, un turno ai mantici]}
+  vita:    {solo: [una commessa grossa in ritardo, il garzone se n'è andato, il carbone è rincarato, un lavoro tornato indietro]}
+  tratti:  [onesto, burbero, paziente col ferro, impaziente con la gente]
+  intercalare: {solo: ["«vediamo l'attrezzo»", "«il ferro non mente»", "«e chi paga?»", "«roba da mercato»"]}   # PROPOSTA
+atteggiamento: {indifferente: 5, ben_disposto: -2}    # PROPOSTA: ha da lavorare
+no_tipici: {solo: [vuole essere pagato, orgoglio, ha già promesso ad altri]}  # Taratura §5
+voce:      asciutto; parla del lavoro; giudica la gente dagli attrezzi che porta
+canone:    [Bram Ferraguto, Lv 61 (Zona_Alba_Chiara)]
+varianti_razza:
+  nano:                             # Ambientazione.txt, «Nani delle montagne»
+    mestiere: {grado: {sposta: 1}}  # PROPOSTA
+    rose:
+      vuole: [un pezzo degno del nome del clan]
+      teme:  [il disonore di un lavoro mediocre]
+      forestieri: [li misura dal valore in battaglia]           # FONTE Ambientazione.txt
+  elementale_minore:
+    compito: tiene vivo il fuoco; lavora alla fiamma, non alla tempra    # PROPOSTA, solo se è di fuoco
+  dragonide:
+    compito: se la stirpe è di fuoco, usa il soffio alla forgia           # PROPOSTA: i documenti dicono solo che ognuno soffia l'elemento della sua stirpe

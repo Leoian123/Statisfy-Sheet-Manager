@@ -1,0 +1,21 @@
+# razze/nano: Nani delle Montagne (Ambientazione.txt, «Le razze native»).
+descrizione: maestri artigiani dalla resistenza leggendaria, in clan patriarcali     # FONTE Ambientazione.txt
+dove_vive:
+  - Frostland, uno su quattro                                                        # FONTE Ambientazione.txt
+  - le montagne                                                                      # FONTE Ambientazione.txt
+longevita: null                     # i documenti non lo dicono: si usa quella umana e il controllo avvisa
+numeri:
+  profilo: {VIT: {sposta: 1}}       # «resistenza leggendaria»: FONTE Ambientazione.txt; il gradino è PROPOSTA
+conta_per_i_suoi: onore del clan e abilità nella forgia                              # FONTE Ambientazione.txt
+segni: [la storia della stirpe incisa negli ornamenti della barba, rune sugli strumenti]   # FONTE Ambientazione.txt
+rose:
+  forestieri: {aggiungi: [li misura dal valore in battaglia]}                        # FONTE Ambientazione.txt
+  tratti: [orgoglioso, leale al clan, tenace]                                        # PROPOSTA
+limiti: []
+legami_tipici: [il clan, il patriarca]                                               # FONTE Ambientazione.txt: clan patriarcali
+note: alleati tradizionali degli umani                                               # FONTE Ambientazione.txt
+nomi: null                          # nessun nano con un nome è ancora scritto
+tacciono:
+  - quanti anni vive un nano
+  - stile dei nomi
+  - come vivono i nani fuori da Frostland e dalle montagne

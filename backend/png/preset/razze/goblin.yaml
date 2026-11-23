@@ -1,0 +1,28 @@
+# razze/goblin. Un goblin è una creatura quando è un nemico in una tabella di zona (Combat.txt, Zona_Alba_Chiara);
+# è un PNG quando ha un nome e un patto da rispettare (Tek, la goblin con un occhio solo).
+descrizione: i goblin di Silverleaf; esploratori al margine del bosco                # FONTE Zona_Alba_Chiara
+dove_vive:
+  - il margine di Silverleaf, fuori dalle mura                                       # FONTE Zona_Alba_Chiara
+longevita: null
+corporatura: fragile                # Combat.txt: il goblin esploratore è Fragile; per tutti i goblin è PROPOSTA
+numeri:
+  profilo: {DEX: {sposta: 1}}       # PROPOSTA: arcieri, fionde (Zona_Alba_Chiara)
+conta_per_i_suoi: sopravvivere                                                       # FONTE Taratura §9
+segni: [tacche per i morti sulla pietra della frana]                                 # FONTE Zona_Alba_Chiara, «Usanze»
+limiti: [parla la lingua comune a pezzi]                                             # FONTE Zona_Alba_Chiara (Tek)
+usanze: [giura «su radice», rispetta i patti alla lettera e non oltre, si tratta senza ferro]   # FONTE Zona_Alba_Chiara e Taratura §9
+rose:
+  vuole:   [grano, ferro, non essere cacciato]                                       # FONTE Zona_Alba_Chiara, «Goblin di Silverleaf»
+  teme:    [chi entra nel bosco armato, essere cacciato dal margine del bosco]       # FONTE Zona_Alba_Chiara
+  forestieri: {solo: [chi entra nel bosco armato è un nemico, a reputazione neutra si scambiano mappe]}   # FONTE Zona_Alba_Chiara
+  tratti:  [curioso, furbo, diffidente, tiene i conti]                               # FONTE Zona_Alba_Chiara (Tek, la goblin con un occhio solo)
+atteggiamento: {diffidente: 15, ben_disposto: -5}    # PROPOSTA: «diffidente verso ogni umano» (Zona_Alba_Chiara)
+nomi:                               # PROPOSTA: nello stile di Tek
+  stile: una sillaba secca, o un soprannome descrittivo come «la goblin con un occhio solo»
+  m: [Rak, Nob, Skit, Grat, Pell, Zub, Mok]
+  f: [Ska, Vip, Nett, Grib, Lusk, Fipp]
+  usati: [Tek]
+tacciono:
+  - la vita di un goblin dentro una città
+  - quanti anni vive
+  - come sono organizzati fuori da Silverleaf

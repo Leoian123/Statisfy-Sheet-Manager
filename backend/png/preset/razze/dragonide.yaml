@@ -1,0 +1,21 @@
+# razze/dragonide: nei documenti «Dragonborn dei Vulcani» (Ambientazione.txt, «Le razze native»).
+nome_nei_documenti: Dragonborn
+descrizione: discendenti degli antichi draghi, con scaglie del colore del loro elemento     # FONTE Ambientazione.txt
+dove_vive:
+  - società tribali nelle regioni vulcaniche                                         # FONTE Ambientazione.txt
+longevita: null
+numeri:
+  profilo: {INT: {sposta: 1}}       # PROPOSTA: fra i suoi comanda chi ha più potere magico
+conta_per_i_suoi: il potere magico decide la gerarchia                               # FONTE Ambientazione.txt
+segni: [scaglie che riflettono l'elemento della stirpe]                              # FONTE Ambientazione.txt
+capacita: [respira l'elemento del suo lignaggio, saggezza degli antenati tramandata nei sogni]   # FONTE Ambientazione.txt
+rose:
+  tratti: [fiero, misurato, rispettoso della gerarchia]                              # PROPOSTA
+limiti: []
+nomi: null
+tacciono:
+  - dove si trovano le regioni vulcaniche e a quale regno appartengono
+  - come vive lontano dai vulcani
+  - quanti anni vive
+  - come guarda i forestieri
+  - stile dei nomi

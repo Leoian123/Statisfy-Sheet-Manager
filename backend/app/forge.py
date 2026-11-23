@@ -17,6 +17,7 @@ from typing import Any, Callable
 
 from . import mech as MECH
 from . import rules as R
+from .png.genera import blocco_forgia
 
 KIND_LABEL = {"skills": "Skill", "classes": "Classi", "races": "Razze", "titles": "Titoli", "npcs": "PNG",
               "encounters": "Incontri", "spells": "Incantesimi", "miracles": "Miracoli",
@@ -567,13 +568,13 @@ def npc_check(d: dict, ctx: dict) -> list[str]:
 
 def npc_compute(d: dict, ctx: dict) -> dict:
     lv = as_int(d.get("level"), 1, 999)
-    return {"rank": R.power_rank(lv) if lv else None, "creature": R.creature(lv or 0, "Comune", d.get("size") or "Normale")}
+    return {"rank": R.power_rank(lv) if lv else None, "creature": blocco_forgia(lv or 1, d.get("size"))}
 
 
 def npc_build(d: dict, ctx: dict) -> dict:
     t = lambda k: txt(d.get(k))
     lv = as_int(d.get("level"), 1, 999) or 1
-    k = R.creature(lv, "Comune", d.get("size") or "Normale")
+    k = blocco_forgia(lv, d.get("size"))
     npc = {
         "name": t("name"), "level": lv, "race": t("race"), "place": t("place"), "role": t("role"), "trust": d.get("trust") or "Neutrale",
         "knows": t("knows"), "debts": t("debts") or "—", "secret": t("secret") or "—", "kingdom": t("kingdom"), "age": t("age"),

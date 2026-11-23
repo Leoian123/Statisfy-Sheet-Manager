@@ -6,6 +6,7 @@ Gestionale di schede personaggio per il GDR STATISFY.
 |---|---|
 | `backend/` | API FastAPI + SQLite. Tutte le regole (formule, creazione, level up, combattimento, morte) sono in `backend/app/rules.py` |
 | `frontend/` | App React + Vite + TypeScript |
+| `backend/png/` | Preset dei PNG (YAML da ritoccare a mano): vedi `backend/png/LEGGIMI.md` |
 | `docs/API.md` | Contratto API fra frontend e backend |
 | `mockup/` | Prototipo di design approvato (riferimento visivo) |
 | `statisfy/` | Regolamento del gioco |
@@ -57,3 +58,4 @@ Sono solo per lo sviluppo locale.
 - Ricreare il database con i dati di esempio: `backend/.venv/Scripts/python -m app.seed --reset` (da `backend/`)
 - Frontend con backend finto in memoria: `npm --prefix frontend run dev:mock`
 - Mockup: `python mockup/serve.py`
+- Controllo dei preset dei PNG e prove sui PNG già scritti: `backend/.venv/Scripts/python -m app.png controlla` (da `backend/`)

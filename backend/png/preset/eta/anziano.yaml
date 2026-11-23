@@ -1,0 +1,13 @@
+# eta/anziano: gli anni ci sono tutti; il mestiere è ancora suo, o l'ha lasciato a un altro.
+descrizione: dai sessant'anni; ha visto arrivare tanti forestieri
+anni: [60, null]                    # PROPOSTA
+livello: ruolo                      # gli anni ci sono tutti
+corporatura: {sposta: -1}           # PROPOSTA: un gradino sotto il ruolo
+rose:
+  vuole:      [passare a qualcuno ciò che sa, un erede, compagnia, che le cose restino come sono]
+  teme:       [morire senza aver detto una cosa, diventare un peso, le novità]
+  forestieri: {aggiungi: [ne ha visti arrivare tanti e li confronta con quelli di una volta]}
+  tratti:     [brontolone, saggio a modo suo, sospettoso, sereno, svanito a tratti]   # «brontolone»: Duilio
+sa:        [com'era il posto trent'anni fa, chi era parente di chi, perché una cosa si fa così]
+voce: racconta per giri lunghi, confronta tutto con «una volta»
+canone: [Elena la Saggia, Lv 45 (Sistema_PNG §4 e Zona_Alba_Chiara), Duilio (Zona_Alba_Chiara), la Vedova Rossi (Zona_Alba_Chiara)]

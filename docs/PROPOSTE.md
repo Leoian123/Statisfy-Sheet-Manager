@@ -91,3 +91,21 @@ Anche Deniel (110 invece di 109) ed Eric (Saggezza 129) hanno punti in più. Il 
 - Archiviazione automatica: una richiesta chiusa va in archivio dopo **7 giorni** (configurabile); in archivio è solo leggibile.
 - Una domanda sul regolamento risolta può diventare una **questione delle regole decisa** (Area Master) con la risposta come decisione.
 - Al massimo 20 richieste in attesa per giocatore e 100 messaggi per richiesta.
+
+## PNG (`backend/png/`, 23/11/2026) — tutte PROPOSTE, da confermare
+L'elenco completo, riga per riga, lo stampa `python -m app.png controlla` (da `backend/`): ogni commento `PROPOSTA` dei
+preset è un avviso. Le più importanti:
+1. **Modello dei numeri** (`regole.yaml`, `modello_numeri_png: creatura`): Vita e danno dei PNG con le formule delle
+   creature di Combat.txt, rarità Comune. Corporatura = taglia. Addestramento: nessuno (non combatte), improvvisato
+   (danno ×0,5), addestrato (×1), veterano (×1 e 1-2 abilità). L'alternativa `personaggio` (statistiche da PG secondo
+   il profilo, Vita = 100 + VIT×15) è già scritta: basta cambiare l'interruttore.
+2. **Profilo a parole**: alta ×1,5, media ×1, bassa ×0,6 del valore automatico di un PG di pari livello (10 + livello − 1).
+3. **Livello**: di norma nei due terzi bassi della fascia, il terzo alto vuole un motivo; bambini e ragazzi fra metà
+   degli anni e gli anni; un adulto qualunque di rado sopra gli anni; per le razze longeve conta la fase della vita.
+4. **Età**: bambino 5-12, ragazzo 13-17, adulto 18-59, anziano 60+ (anni apparenti, al più 90). Longevità: umana ×1,
+   lunga ×2, lunghissima ×5 (l'elfo è «lunghissima»; nano, dragonide, goblin, halfling ed elementale non sono scritti).
+5. **Atteggiamento**: nessun ruolo oltre il 50%; i ruoli spostano le frequenze di Taratura §3 di qualche punto.
+6. **Ricchezza**: povero 0-10, modesto 10-50, agiato 50-500, ricco 500+ corone messe insieme in pochi giorni.
+7. **Fasce di città e metropoli** del cittadino (15-45, 20-90) e del fabbro (40-99, 100-200 fuori da Mysteria):
+   nessuna città è ancora scritta in una scheda di zona.
+8. **Nomi di Valeria** nello stile di Alba Chiara, e dei goblin nello stile di Tek: liste in `regni.yaml` e `razze/goblin.yaml`.

@@ -15,6 +15,7 @@ from .. import forge, mech, mech_templates, rules, status_catalog
 from ..auth import require_master
 from ..db import get_db
 from ..models import Campaign, Character, ForgeEntry, Npc
+from ..png.genera import da_forgia
 from ..serialize import maxes_of, npc_out, rules_input
 from .combat import _state, _store
 
@@ -187,7 +188,8 @@ def create_entry(data: DraftIn, db: Session = Depends(get_db)):
         n = entry["npc"]
         npc = Npc(name=n["name"][:100], level=n["level"], race=n["race"][:100], place=n["place"][:200], role=n["role"][:200],
                   trust=n["trust"], knows=n["knows"], debts=n["debts"], secret=n["secret"],
-                  last=f"Sessione {session} — creato nella Forgia del Master.", history=[])
+                  last=f"Sessione {session} — creato nella Forgia del Master.", history=[],
+                  dettaglio="completa", scheda={k: v for k, v in da_forgia(n).items() if k not in ("nome", "livello", "dettaglio")})
         db.add(npc)
         db.flush()
         e.npc_id = npc.id

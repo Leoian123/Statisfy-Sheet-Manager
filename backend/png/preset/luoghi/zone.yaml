@@ -1,0 +1,22 @@
+# luoghi/zone: ciò che una scheda di zona dice della sua gente. È canone locale: vince sui preset per tutto ciò che nomina.
+# Le fasce dei tipi di PNG di una zona stanno nei ruoli (che le citano come FONTE): qui solo ciò che è proprio del posto.
+
+alba-chiara:
+  nome: Alba Chiara
+  fonte: Zona_Alba_Chiara.txt
+  regno: valeria
+  insediamento: villaggio
+  forestieri: hanno visto comparire forestieri decine di volte                     # FONTE Zona_Alba_Chiara, «L'arrivo»
+  affinita_iniziale: normale                                                      # FONTE Zona_Alba_Chiara: un forestiero parte da -1
+  luoghi: [Piazza dell'Alba, Tempio di Luxor, Locanda del Grano Dorato, Fucina di Bram, Bottega di Nessa, Posto di guardia, Mulino sul ruscello, via del lavatoio, fattorie, Bosco dei Noccioli]   # FONTE Zona_Alba_Chiara
+  usanze:
+    - la notte si conta a orecchio: ora dei pipistrelli, ora dei gufi, ora del gallo   # FONTE Zona_Alba_Chiara
+    - si chiamano i posti come gli abitanti («alla Piazza», «da Bram», «su al mulino»)  # FONTE Zona_Alba_Chiara
+  prezzi:                                                                         # FONTE Zona_Alba_Chiara, «Economia locale»
+    pasto: 1
+    notte alla locanda: 2
+    pozione minore: 15
+    spada di ferro: 80
+    riparazione: [5, 20]
+    paga di un contadino al giorno: [3, 5]
+  nomi_usati: [Elena, Oreste, Tobia, Marta Orsini, Bram Ferraguto, Nessa, Hald, Alderico, Piero Orso, Lia Orso, Duilio, Berto Rossi, Nina Rossi, Anselmo, Tek, Barone]   # FONTE Zona_Alba_Chiara

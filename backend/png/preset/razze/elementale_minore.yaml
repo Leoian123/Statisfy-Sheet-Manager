@@ -1,0 +1,18 @@
+# razze/elementale_minore. Ambientazione.txt dice solo quanti sono a Qadesh.
+descrizione: null
+dove_vive:
+  - Qadesh, quindici su cento                                                        # FONTE Ambientazione.txt
+longevita: null
+fase_della_vita: true               # PROPOSTA: si sceglie la fase della vita, non gli anni
+numeri: {}
+conta_per_i_suoi: null
+segni: []
+limiti: []                          # PROPOSTA quando una zona lo scrive: non regge gli elementi contrari al suo
+nomi: null
+tacciono:
+  - di che cosa sono fatti, quali elementi esistono fra loro
+  - corpo, età, famiglia, quanto vivono
+  - se sono trattati come gente o come creature
+  - limiti e capacità
+  - se esistono fuori da Qadesh
+  - stile dei nomi

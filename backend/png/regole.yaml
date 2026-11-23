@@ -1,0 +1,111 @@
+# Regole comuni dei PNG.
+# Ogni voce dice da dove viene: FONTE (scritta nei documenti, va tenuta allineata) o PROPOSTA (aspetta conferma).
+# Le formule e le scale che esistono già nel progetto NON si copiano qui: si leggono da backend/app/rules.py
+# (Vita e danno delle creature, moltiplicatori di taglia, scala di potere, gradi di maestria, punti di level up).
+
+# --- Numeri ------------------------------------------------------------------------------------------------
+modello_numeri_png: creatura        # PROPOSTA: creatura | personaggio. È l'interruttore unico fra i due modelli
+rarita_png: Comune                  # PROPOSTA: i PNG si contano come incontri Comuni (Combat.txt, «Rarità dell'incontro»)
+
+corporatura:                        # FONTE Combat.txt, «Taglia»: tocca solo la Vita; i moltiplicatori stanno in rules.SIZES
+  fragile: Fragile
+  normale: Normale
+  robusta: Robusta
+
+addestramento:                      # PROPOSTA
+  nessuno:      {blocco: false}     # scappa, grida, si arrende: la morte è definitiva (Sistema_PNG §3)
+  improvvisato: {danno: 0.5}        # un forcone, un martello
+  addestrato:   {danno: 1}
+  veterano:     {danno: 1, abilita: [1, 2]}
+
+profilo: {bassa: 0.6, media: 1, alta: 1.5}       # PROPOSTA: moltiplica il valore automatico di un personaggio di pari livello
+arma_modello_personaggio: Comune                 # PROPOSTA: con il modello «personaggio» il danno parte dalla base media di un'arma di questa rarità
+
+longevita: {umana: 1, lunga: 2, lunghissima: 5}  # PROPOSTA: anni veri = anni apparenti × fattore
+anni_massimi: 90                                 # PROPOSTA: tetto degli anni apparenti di un anziano, per pescare l'età
+
+# --- Livello -----------------------------------------------------------------------------------------------
+gente_comune_max: 99                # FONTE Sistema_PNG_Completo §2: 1-99 Soldati Semplici, «Umani Semplici»
+livello:
+  terzo_alto_vuole_motivo: true     # PROPOSTA: di norma il livello sta nei due terzi bassi della fascia
+  adulto_sopra_gli_anni: avviso     # PROPOSTA: per un adulto qualunque il livello di rado supera gli anni
+
+# --- Primo contatto e affinità -----------------------------------------------------------------------------
+primo_contatto: {ostile: 10, diffidente: 30, indifferente: 35, interessato: 20, ben_disposto: 5}   # FONTE Taratura §3
+tetto_atteggiamento: 50             # PROPOSTA: nessun ruolo porta un atteggiamento oltre il 50%
+scena:
+  ben_disposti_max: 1               # FONTE Taratura §3: con tre o più PNG in scena, al massimo uno ben disposto
+  da_quanti_png: 3                  # FONTE Taratura §3
+
+affinita:
+  scala: [-10, 10]                  # FONTE Status Sociale §3, PNG individuale
+  iniziale: {normale: -1, forestieri_malvisti: -2}   # FONTE Taratura §4
+  max_per_interazione: 1            # FONTE Taratura §4
+  max_per_giorno: 1                 # FONTE Taratura §4: per PNG, per giorno di gioco
+  eccezione: [2, 3]                 # FONTE Taratura §4: vita salvata, debito enorme estinto; una volta sola
+  perdita: 2                        # FONTE Taratura §4: la perdita vale doppio ed è immediata
+  prima_impressione: 3              # FONTE Taratura §4 e Status Sociale §3: pesa il triplo
+
+conta:                              # FONTE Status Sociale §3, Livello 2 «Propagazione»: peso di un PNG nel suo gruppo
+  capo: 3
+  rispettato: 2
+  qualunque: 1
+  nuovo arrivato: 0.5
+  caduto in disgrazia: 0.25
+
+# --- Elenchi dei documenti a cui i preset rimandano --------------------------------------------------------
+difetti: [avaro, vanitoso, pettegolo, codardo, rancoroso, bugiardo]   # FONTE Taratura §2 (l'elenco finisce con «...»: se ne possono aggiungere)
+
+motivi_no:                          # FONTE Taratura §5, «Dodici motivi per dire no»
+  - non si fida
+  - ha paura di chi comanda
+  - la situazione gli conviene
+  - gli hai fatto perdere qualcosa
+  - teme che tu prenda il merito
+  - vuole essere pagato
+  - legato a un rivale
+  - orgoglio
+  - nasconde qualcosa
+  - giornata storta
+  - crede a una voce falsa
+  - ha già promesso ad altri
+
+malizia:                            # FONTE Taratura §6, «Malizia ordinaria»
+  - sovrapprezzo al forestiero
+  - mezza verità
+  - prendersi il merito
+  - pettegolezzo storto
+  - promessa non mantenuta
+  - usarlo contro un vicino
+  - riferire
+  - scaricare il lavoro
+  - rancore lungo
+  - ricatto piccolo
+  - furto d'occasione
+
+# --- Soldi -------------------------------------------------------------------------------------------------
+ricchezza:                          # PROPOSTA: corone che riesce a mettere insieme in pochi giorni
+  povero:  [0, 10]                  #   un contadino guadagna 3-5 corone al giorno (Zona_Alba_Chiara)
+  modesto: [10, 50]
+  agiato:  [50, 500]                #   una spada di ferro costa 80 corone (Zona_Alba_Chiara)
+  ricco:   [500, null]
+
+valute:                             # quante corone di Valeria vale una moneta
+  corona: 1                         # FONTE Ambientazione.txt: la valuta di riferimento
+  aurum: 1                          # FONTE Discrepanze_da_risolvere.txt: 1 aurum di Valheim = 1 corona (deciso)
+  corona_di_mysteria: 2.3           # FONTE Supplemento.txt, profilo di Mysteria
+  perla_di_corrente: null           # Discrepanze_da_risolvere.txt: parità con Abyssos da confermare
+  tael: null                        # Supplemento Impero Celeste: «valore variabile per regione»
+
+# --- Mestieri ----------------------------------------------------------------------------------------------
+ranghi_mestiere:                    # FONTE Crafting and Equip system.txt, «Mastery paths»: rango per livello
+  - {da: 1,   nome: Novice}
+  - {da: 100, nome: Journeyman}
+  - {da: 200, nome: Artisan}
+  - {da: 300, nome: Grandmaster}
+
+# --- Promozione --------------------------------------------------------------------------------------------
+dettaglio: [comparsa, scheda, completa]   # Comparsa → scheda semplificata → scheda completa (Sistema_PNG §4)
+promozione:
+  comparsa: il forestiero ci parla una seconda volta o le chiede qualcosa che conta
+  scheda: diventa un PNG Anchor o Gateway (Sistema_Narrativo_Completo §4)

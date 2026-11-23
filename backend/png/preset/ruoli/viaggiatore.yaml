@@ -1,0 +1,23 @@
+# ruoli/viaggiatore: dalla tabella «Tipi di PNG generici» di Zona_Alba_Chiara.
+eredita: cittadino
+descrizione: di passaggio; pellegrino, disertore, apprendista mago
+livello:
+  villaggio: [10, 60]               # FONTE Zona_Alba_Chiara, «Tipi di PNG generici»
+  citta:     null
+  metropoli: null
+mestiere: {nome: quello che faceva prima di partire, grado: [II, VII]}   # PROPOSTA
+ricchezza: [povero, modesto, agiato]
+dove:      {solo: [la locanda, la Strada Reale]}                          # FONTE Zona_Alba_Chiara
+giornata:  "di passaggio: domani non c'è più"
+sa:        {solo: [la strada che ha fatto, perché è partito, quello che ha visto altrove]}
+dicerie:   {solo: [i posti da cui viene, raccontati meglio o peggio di com'erano]}
+puo_dare:  {solo: [notizie da lontano, compagnia sulla strada, un oggetto da vendere]}
+rose:
+  vuole:   [arrivare dove va, un passaggio, che nessuno faccia domande]
+  teme:    [chi lo cerca, restare senza soldi a metà strada]
+  difetto: [bugiardo, millantatore, sospettoso]
+  forestieri: {solo: [un altro forestiero possibile, compagni di strada, concorrenti]}   # FONTE Zona_Alba_Chiara: «un altro forestiero possibile»
+  vita:    {solo: [un pellegrinaggio, una diserzione, un apprendistato lontano, un debito da cui scappa]}   # pellegrino, disertore, apprendista mago: FONTE Zona_Alba_Chiara
+  intercalare: {solo: ["«da dove vengo io»", "«ne ho viste»", "«non sono di qui»"]}   # PROPOSTA
+no_tipici: {solo: [non si fida, nasconde qualcosa, ha già promesso ad altri]}
+voce:      cambia accento a seconda di chi ha davanti

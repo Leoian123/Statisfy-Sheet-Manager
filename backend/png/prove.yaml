@@ -1,0 +1,69 @@
+# Prove sui PNG già scritti: ognuno deve poter uscire dalla composizione indicata, al più con un motivo dichiarato.
+# Se una prova fallisce si corregge il preset, non il PNG. Girano con «controlla» (python -m app.png controlla).
+# atteso: passa | avviso (esce, ma il controllo avvisa) | motivo (la composizione chiede un motivo e senza non esce)
+
+- nome: Bram Ferraguto
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: fabbro, eta: adulto, razza: umano, zona: alba-chiara}
+  ritocchi: [ex soldato della Corona]
+  livello: 61
+  atteso: passa
+  prova: terzo alto della fascia di villaggio, con un motivo
+
+- nome: Lia Orso
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: cittadino, eta: bambino, razza: umano, zona: alba-chiara}
+  livello: 11
+  atteso: passa
+  prova: figlia del mugnaio; il livello segue l'età (gli anni non sono scritti); niente mestiere, niente combattimento
+
+- nome: Berto Rossi
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: contadino, eta: adulto, razza: umano, zona: alba-chiara}
+  anni: 20
+  livello: 9
+  atteso: passa
+  prova: fascia 3-12 del contadino
+
+- nome: Marta Orsini
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: cittadino, eta: adulto, razza: umano, zona: alba-chiara}
+  livello: 22
+  atteso: passa
+  prova: la locandiera sta nei due terzi bassi della fascia di villaggio
+
+- nome: Nessa
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: cittadino, eta: adulto, razza: umano, zona: alba-chiara}
+  livello: 29
+  atteso: avviso
+  prova: terzo alto senza un motivo scritto nella zona
+
+- nome: Piero Orso
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: cittadino, eta: adulto, razza: umano, zona: alba-chiara}
+  livello: 34
+  atteso: avviso
+  prova: terzo alto senza un motivo scritto nella zona
+
+- nome: Sergente Hald
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: guardia, eta: adulto, razza: umano, zona: alba-chiara}
+  ritocchi: [livello 72, capo delle guardie]
+  livello: 72
+  atteso: avviso
+  prova: un ritocco che sfonda la fascia della guardia (20-45) avvisa e obbedisce
+
+- nome: Elena la Saggia
+  fonte: Sistema_PNG_Completo §4 e Zona_Alba_Chiara
+  componi: {ruolo: cittadino, eta: anziano, razza: umano, zona: alba-chiara}
+  ritocchi: [livello 45, ex cortigiana]
+  livello: 45
+  atteso: avviso
+  prova: anziana sopra la fascia del cittadino di villaggio, con il motivo scritto
+
+- nome: un goblin dentro le mura
+  fonte: Zona_Alba_Chiara
+  componi: {ruolo: cittadino, eta: adulto, razza: goblin, zona: alba-chiara}
+  atteso: motivo
+  prova: la variante che dice di no deve chiedere un motivo

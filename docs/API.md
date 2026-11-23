@@ -214,8 +214,25 @@ CharacterSummary = { id; owner_id; owner_name; name; classe; level; exp_pct; reg
 - `POST /api/campaign/session` → campagna con `session`+1
 - `GET /api/npcs` → `Npc[]`; `POST /api/npcs`; `PATCH /api/npcs/{id}` (trust, campi testuali)
 - `POST /api/npcs/{id}/interactions` `{text}` → `Npc` (aggiunge a `history` `{session, text, at}` e aggiorna `last` = "Sessione N — text")
-  `Npc = {id, name, level, race, place, role, trust: "Scarso"|"Neutrale"|"Buono"|"Eccellente", knows, debts, last, secret, history: {session, text, at}[]}`
+  `Npc = {id, name, level, race, place, role, trust: "Scarso"|"Neutrale"|"Buono"|"Eccellente", knows, debts, last, secret, history: {session, text, at}[], dettaglio: "comparsa"|"scheda"|"completa", scheda: Scheda|null}`
+  `scheda` è `null` per i PNG scritti a mano prima della sezione PNG; vedi sotto.
 - `GET /api/issues` → `{id, title, text, sev: "bad"|"warn", resolved: bool, decision: str|null}[]`; `PATCH /api/issues/{id}` `{resolved?, decision?}`
+
+## Sezione PNG (`/api/png`, solo master)
+Preset YAML in `backend/png/` (vedi `backend/png/LEGGIMI.md`), codice in `backend/app/png/`. Le schede sono righe di
+`npcs`: nome e livello nelle colonne, il resto in `scheda`. Vita e danno non si salvano mai.
+- `GET /api/png/catalogo` → `{ruoli, eta, razze: {nome, descrizione, eredita}[], regni, insediamenti, zone, modello_numeri}`
+- `POST /api/png/componi` `{ruolo, eta?, razza?, regno?, insediamento?, zona?, ritocchi?: string[]}` → `{strati, campi: {campo: {valore, da, dove, nota}}, elenchi, atteggiamento: {frequenze, storia}, canone, motivo_richiesto, avvisi, errori}` (422 se uno strato non esiste)
+- `GET /api/png/confronta/{ruolo}?regno&insediamento` → varianti di razza: solo ciò che cambia rispetto all'umano
+- `POST /api/png/nuovo` `{…strati, seme?, salva?: bool, partita?}` → `{scheda, avvisi, errori, composizione, seme, npc?}`; 422 `{detail: {errori, avvisi}}` se la composizione chiede un motivo. Con `salva` crea il PNG come scheda (bozza) con lo stato della partita
+- `POST /api/png/comparse` `{regno?, insediamento?, zona?, quante: 1-30, ruoli?, seme?, salva?}` → `{comparse: {nome, ruolo, razza, eta, livello, tratto, difetto, atteggiamento, voce, provenienza}[], seme, avvisi, npc?}`
+- `GET /api/png/schede?luogo=valeria/alba-chiara` → `Npc[]` con scheda
+- `PATCH /api/png/schede/{id}` `{nome?, livello?, campi: {vuole|teme|difetto|forestieri|prezzo|vita|contraddizione|voce|tratti|sa|dicerie|puo_dare|conta|perche_qui|motivo|corporatura|addestramento|profilo|mestiere|ricchezza|genere|eta|ritratto: …}}` → `{npc, errori, avvisi}`; 422 per altri campi (Vita, danno…)
+- `GET /api/png/schede/{id}/combattimento` → `{combatte, vita?, danno?, formula_vita?, formula_danno?, modello, livello, taglia, rarita, addestramento, abilita, rango, nota?}` (calcolato, non salvato); 409 per i PNG senza scheda dai preset
+- `POST /api/png/schede/{id}/promuovi` → comparsa → scheda → completa (aggiunge campi, non riscrive)
+- `POST /api/png/schede/{id}/aggiorna` `{partita?, giorno?, affinita?, eccezione?, prima_impressione?, motivo?, memoria?: string[], legami?: string[], morto?: causa}` → `{npc, avvisi}` (Taratura §4: +1 per interazione e per giorno, perdite doppie; avvisa e obbedisce)
+- `GET /api/png/schede/{id}/riga` → `{celle, markdown}`: la riga per la tabella PNG di una scheda di zona
+- `GET /api/png/controlla` → `{errori, avvisi: {dove, testo, genere: "avviso"|"proposta"|"null"}[], prove, prove_ok}`
 
 ## Import schede Excel (solo master)
 - `POST /api/import/excel` — `multipart/form-data`:

@@ -1,0 +1,26 @@
+# ruoli/mercante_ambulante: dalla tabella «Tipi di PNG generici» di Zona_Alba_Chiara.
+eredita: cittadino
+descrizione: gira i mercati; compra basso, vende alto, porta notizie
+livello:
+  villaggio: [15, 30]               # FONTE Zona_Alba_Chiara, «Tipi di PNG generici»
+  citta:     null
+  metropoli: null
+mestiere: {nome: Commercio, grado: [IV, VII]}               # PROPOSTA
+profilo: {STR: media, DEX: media, VIT: media, INT: alta}    # PROPOSTA
+ricchezza: [modesto, agiato]
+atteggiamento: {interessato: 20, indifferente: -10, diffidente: -5}   # FONTE Zona_Alba_Chiara: «interessato: i forestieri pagano»; i numeri sono PROPOSTA
+dove:      {solo: [la Piazza il martedì e il sabato, la Strada Reale, la locanda]}   # FONTE Zona_Alba_Chiara
+giornata:  sempre in viaggio; arriva il giorno di mercato e riparte                 # FONTE Zona_Alba_Chiara
+sa:        {aggiungi: [i prezzi di tre paesi, chi compra cosa, le strade e chi le controlla]}
+dicerie:   {aggiungi: [le notizie della capitale, portate peggiorate]}             # «porta notizie da Lumengarde»: FONTE Zona_Alba_Chiara
+puo_dare:  {solo: [merci di passaggio, notizie da fuori, incarichi di trasporto, un prezzo migliore a chi ha buon nome]}   # FONTE Zona_Alba_Chiara, Gilda dei Mercanti
+rose:
+  vuole:   [comprare basso, un carico che renda, chi porta merci rischiose]     # FONTE Zona_Alba_Chiara, Gilda dei Mercanti
+  teme:    [i banditi sulla strada, le guardie che controllano il carro, un affare saltato]
+  difetto: [avaro, bugiardo, adulatore]
+  forestieri: {solo: [gente che paga, clienti che non conoscono i prezzi]}
+  prezzo:  {solo: [denaro, una scorta, una consegna, il silenzio su un carico]}
+  intercalare: {solo: ["«per voi, un prezzo speciale»", "«a Lumengarde costa il doppio»", "«affare fatto?»"]}   # PROPOSTA
+no_tipici: {solo: [vuole essere pagato, la situazione gli conviene, legato a un rivale]}
+malizia:   {aggiungi: [promessa non mantenuta]}
+voce:      lusinghiero, svelto con i numeri, cambia tono quando non conviene più

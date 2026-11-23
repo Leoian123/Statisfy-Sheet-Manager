@@ -1,0 +1,101 @@
+# luoghi/regni: una voce per regno, ricavata dai documenti di ambientazione. Dove un documento tace: null.
+# popoli: quota su cento abitanti (FONTE Ambientazione.txt). Una razza sotto il 10, o assente, è rara nel luogo.
+# conta: che cosa conta per la gente (Status Sociale §3, «Livello 4: nazionale»).
+
+valeria:
+  nome: Regno di Valeria
+  capitale: {nome: Lumengarde, abitanti: 500000}           # FONTE Ambientazione.txt
+  moneta: corona                                           # FONTE Ambientazione.txt e Zona_Alba_Chiara
+  culto: Luxor                                             # FONTE Zona_Alba_Chiara (tempio di Luxor); per tutto il regno i documenti tacciono
+  popoli: {umano: 85}                                      # FONTE Ambientazione.txt; il resto del 15 non è detto
+  conta: [onore, commercio]                                # FONTE Status Sociale §3
+  fascia_gente_comune: null
+  nomi:                                                    # PROPOSTA, nello stile dei PNG di Zona_Alba_Chiara
+    stile: nome di battesimo antico; cognome da mestiere, animale o colore (Ferraguto, Orsini, Orso, Rossi, dei Fabbri)
+    m: [Gualtiero, Ottone, Lapo, Cecco, Brunello, Folco, Rinaldo, Ugo, Martino, Corrado, Ilario, Tancredi, Guido, Bernardo]
+    f: [Agnese, Bice, Clelia, Dora, Fiora, Gemma, Ida, Mira, Ornella, Tilde, Vanna, Zita, Teodora, Sabina]
+    cognomi: [Lupacchi, Mulinari, Carradori, Pecorari, Dal Pozzo, Spigatti, Fornari, Bottai, Tessitori, Vacchetti, Grigi, Volpini, Cardoni, Bianchi]
+    # i nomi già usati stanno nelle zone (luoghi/zone.yaml) e nelle schede salvate: il generatore non li ripete
+
+frostland:
+  nome: Frostland, confederazione di clan guerrieri
+  capitale: {nome: Ironhold, abitanti: 200000}             # FONTE Ambientazione.txt
+  moneta: null
+  culto: null
+  popoli: {umano: 70, nano: 25}                            # FONTE Ambientazione.txt: umani nordici 70, nani 25, altre razze 5
+  conta: [forza, clan]                                     # FONTE Status Sociale §3
+  fascia_gente_comune: null
+  nomi: null
+
+qadesh:
+  nome: Impero delle Sabbie Dorate, Qadesh
+  capitale: {nome: Solaris Magna, abitanti: 800000}        # FONTE Ambientazione.txt
+  moneta: null
+  culto: Luxor attraverso Solaria; il sovrano è il Sole Divino   # FONTE Ambientazione.txt
+  popoli: {umano: 80, elementale_minore: 15}               # FONTE Ambientazione.txt
+  conta: [potere magico, sole]                             # FONTE Status Sociale §3
+  fascia_gente_comune: null
+  nomi: null
+
+eldermoor:
+  nome: Confederazione Silvana, Eldermoor
+  capitale: {nome: Heartwood, abitanti: 150000}            # FONTE Ambientazione.txt
+  moneta: null
+  culto: null                                              # governa il Consiglio degli Alberi Antichi, guidato dai druidi
+  popoli: {elfo: 60, umano: 30, halfling: 10}              # FONTE Ambientazione.txt
+  conta: [natura, saggezza]                                # FONTE Status Sociale §3
+  fascia_gente_comune: null
+  nomi: null
+
+mysteria:
+  nome: Libera Città-Stato di Mysteria
+  capitale: {nome: Mysteria, abitanti: 147000}             # FONTE Supplemento.txt (più circa 30.000 non registrati)
+  moneta: corona_di_mysteria                               # FONTE Supplemento.txt
+  culto: null
+  popoli: null                                             # le dodici casate sono Metadrakon, la gente comune non è descritta per razza
+  conta: [potere, segreti]                                 # FONTE Supplemento.txt, «Caratterizzazione»
+  fascia_gente_comune: [25, 150]                           # FONTE Supplemento.txt: Lower Mysteria 25-120, Middle 50-150
+  fasce_ruoli:                                             # canone locale: vince sulla fascia del ruolo
+    fabbro: {metropoli: [100, 200]}                        # FONTE Supplemento.txt, Quartiere Artigiano
+    cittadino: {metropoli: [25, 120]}                      # FONTE Supplemento.txt, Lower Mysteria
+  nomi: null
+
+valheim:
+  nome: Libera Città-Stato di Valheim
+  capitale: {nome: Valheim, abitanti: 284000}              # FONTE Supplemento Ambientazione - La moneta a tre facce
+  moneta: aurum                                            # FONTE Supplemento Ambientazione - La moneta a tre facce
+  culto: Ferrum, e rispetto per tutti i Progenitori        # FONTE Supplemento Ambientazione - La moneta a tre facce
+  popoli: null
+  conta: null
+  fascia_gente_comune: null
+  nomi: null
+
+abyssos:
+  nome: Regno Profondo di Abyssos
+  capitale: {nome: Pelagios, abitanti: 400000}             # FONTE Supplemento Ambientazione - La moneta a tre facce
+  moneta: perla_di_corrente                                # FONTE Supplemento Ambientazione - La moneta a tre facce
+  culto: Verdania e Vahextrasza                            # FONTE Supplemento Ambientazione - La moneta a tre facce
+  popoli: null                                             # lamie, tritoni e kraken: fuori dal catalogo iniziale
+  conta: null
+  fascia_gente_comune: null
+  nomi: null
+
+impero_celeste:
+  nome: Impero Celeste, Tianlong Diguo
+  capitale: null                                           # il Trono di Giada è vuoto; dieci seggi con capitali proprie
+  moneta: tael                                             # FONTE Supplemento Impero Celeste
+  culto: le Tre Vie                                        # FONTE Supplemento Impero Celeste
+  popoli: null
+  conta: null
+  fascia_gente_comune: [1, 50]                             # FONTE Supplemento Impero Celeste: «Popolazione comune: livello 1-50»
+  nomi: null
+
+raijin:
+  nome: Impero di Raijin, l'Arcipelago delle Tempeste
+  capitale: {nome: Fujigakure, abitanti: 300000}           # FONTE Supplemento.txt
+  moneta: null
+  culto: null
+  popoli: null
+  conta: null
+  fascia_gente_comune: null
+  nomi: null

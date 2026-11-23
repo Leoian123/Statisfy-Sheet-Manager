@@ -1,0 +1,31 @@
+# ruoli/cittadino: abitante qualunque di un centro abitato, con un lavoro ordinario.
+# È il ruolo di ripiego quando non serve un mestiere preciso.
+descrizione: abitante qualunque, con un lavoro ordinario
+livello:
+  villaggio: [3, 35]                # FONTE Zona_Alba_Chiara: contadino 3-12, Marta 22, Nessa 29, Piero Orso 34
+  citta:     [15, 45]               # PROPOSTA: nessuna città è ancora scritta
+  metropoli: [20, 90]               # PROPOSTA; Mysteria ha fasce sue (luoghi/regni)
+corporatura: normale
+addestramento: nessuno
+profilo: {STR: media, DEX: media, VIT: media, INT: media}
+mestiere: {nome: uno dei lavori del luogo, grado: [III, VII]}   # PROPOSTA
+ricchezza: [povero, modesto]
+conta: qualunque
+dove:      [mercato, bottega, lavatoio, taverna la sera, tempio nei giorni di festa]
+giornata:  lavora dall'alba; la sera è stanco e parla più volentieri
+sa:        [il suo lavoro, il suo vicinato, chi deve soldi a chi]
+dicerie:   [la politica, la magia, i posti dove non è mai stato]
+puo_dare:  [indicazioni, voci, un lavoro a giornata, un letto in cambio di braccia]
+rose:
+  prezzo:       [denaro, un favore, una commissione, una parola buona con qualcuno]
+  vita:         [un parente malato, una lite col vicino, un matrimonio da pagare, un lavoro perso o appena trovato]
+  intercalare:  ["«e che ne so io»", "«sentite a me»", "«roba da matti»", "«Luxor ci scampi»", "«come dicevo»"]   # PROPOSTA
+no_tipici: [non si fida, ha paura di chi comanda, giornata storta]            # Taratura §5
+malizia:   [sovrapprezzo al forestiero, mezza verità, pettegolezzo storto]    # Taratura §6
+voce:      parlato di tutti i giorni; chiama posti e persone per nome, come chi non si è mai mosso da lì
+canone:    [Marta Orsini, Lv 22; Nessa, Lv 29; Piero Orso, Lv 34 (Zona_Alba_Chiara)]
+varianti_razza:
+  elementale_minore:
+    mestiere: {nome: legato al suo elemento}                    # PROPOSTA: i documenti dicono solo che vivono a Qadesh
+  goblin:
+    richiede_motivo: i goblin vivono fuori dalle mura, al margine di Silverleaf; dentro solo con un motivo   # FONTE Zona_Alba_Chiara

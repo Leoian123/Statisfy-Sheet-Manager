@@ -1,0 +1,26 @@
+# ruoli/guardia: dalla tabella «Tipi di PNG generici» di Zona_Alba_Chiara.
+eredita: cittadino
+descrizione: guardia del posto; ronde, registro dei forestieri, risse
+livello:
+  villaggio: [20, 45]               # FONTE Zona_Alba_Chiara, «Tipi di PNG generici» e «Legge in vigore»
+  citta:     null
+  metropoli: null
+addestramento: addestrato           # FONTE Zona_Alba_Chiara: colpiscono per uccidere un aggressore
+profilo: {STR: alta, DEX: media, VIT: alta, INT: media}     # PROPOSTA
+mestiere: {nome: Armi, grado: [III, VI]}                    # PROPOSTA
+ricchezza: modesto
+atteggiamento: {diffidente: 10, indifferente: 5, interessato: -10}   # FONTE Zona_Alba_Chiara: «formale»; i numeri sono PROPOSTA
+dove:      {solo: [posto di guardia, ronda serale, la porta del paese]}   # FONTE Zona_Alba_Chiara
+giornata:  turni di giorno e di notte; ferma i forestieri la prima volta, chiede il nome, lo registra   # FONTE Zona_Alba_Chiara
+sa:        {aggiungi: [la legge del posto, chi è stato fermato e perché, i forestieri registrati]}
+puo_dare:  {solo: [la registrazione, una ronda da affiancare, la legge, un occhio chiuso ma non gratis]}
+rose:
+  vuole:   [un turno tranquillo, la paga puntuale, il rispetto del sergente]
+  teme:    [il sergente, una rissa che finisce male, un forestiero più forte di lui]
+  difetto: [prepotente, corruttibile, pigro, zelante fino all'ottusità]
+  forestieri: {solo: [un problema di ordine pubblico, gente da registrare, gente che paga]}    # FONTE Zona_Alba_Chiara
+  intercalare: {solo: ["«nome?»", "«circolare»", "«qui non si fa»", "«parlane col sergente»"]}  # PROPOSTA
+no_tipici: {solo: [ha paura di chi comanda, non si fida, crede a una voce falsa]}
+malizia:   {aggiungi: [riferire, ricatto piccolo]}
+voce:      formale col forestiero, sporca fra colleghi                         # Taratura §6, «Registro»
+canone:    [Sergente Hald, Lv 72, capo delle guardie (Zona_Alba_Chiara)]

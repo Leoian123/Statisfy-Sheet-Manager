@@ -1,0 +1,26 @@
+# eta/bambino. Un bambino non è un adulto piccolo: niente mestiere, niente blocco di combattimento,
+# non è un bersaglio (Lia Orso è «mai in pericolo reale», Zona_Alba_Chiara). Vede tutto e lo racconta a casa.
+descrizione: dai cinque ai dodici anni; aiuta in famiglia, gioca, osserva
+anni: [5, 12]                       # PROPOSTA: anni umani; le altre razze scalano con `longevita` (regole)
+livello: {da_anni: [0.5, 1]}        # PROPOSTA: fra metà degli anni e gli anni che ha (Lia Orso, Lv 11)
+corporatura: fragile                # PROPOSTA
+addestramento: nessuno              # non è un bersaglio
+mestiere: nessuno                   # al più aiuta in famiglia: eredita `sa` dal ruolo, non `puo_dare`
+profilo: {STR: bassa, DEX: media, VIT: bassa, INT: media}      # PROPOSTA
+ricchezza: povero
+conta: nuovo arrivato               # PROPOSTA: nel gruppo pesa poco (Status Sociale §3)
+rose:                               # PROPOSTA tutte: spunti, si riscrivono sulla persona
+  vuole:      {solo: [essere preso sul serio, vedere una cosa da grandi, non tornare a casa, un dolce]}
+  teme:       {solo: [il buio, un adulto preciso, essere scoperto a fare la spia]}
+  difetto:    {solo: [spaccone, bugiardo per gioco, curioso fino al danno, piagnone]}
+  forestieri: {solo: [eroi delle fiabe, mostri, gente che fa regali]}     # «eroi delle fiabe»: Lia Orso
+  prezzo:     {solo: [una storia, un dolce, essere portato con sé, un segreto in cambio]}
+  vita:       {solo: [un fratellino appena nato, una punizione da scontare, l'amico del cuore partito, un animale da nascondere]}
+  tratti:     {solo: [sveglio, testardo, timido, chiacchierone, impiccione]}
+sa:        [chi abita dove, dove non si deve andare, quello che ha visto e non doveva]
+dicerie:   {solo: [i discorsi dei grandi capiti a metà]}
+puo_dare:  {solo: [indizi, commissioni, la voce che gira fra i bambini]}
+no_tipici: {solo: [ha paura di chi comanda, nasconde qualcosa]}         # Taratura §5
+malizia:   {solo: [riferire, pettegolezzo storto]}                      # Taratura §6: lo racconta a casa
+voce: parla a raffica, mescola quello che ha visto con quello che ha sentito
+canone: [Lia Orso (Zona_Alba_Chiara)]

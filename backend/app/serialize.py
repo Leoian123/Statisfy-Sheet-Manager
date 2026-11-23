@@ -80,7 +80,15 @@ def summary_out(c: Character) -> dict:
 
 def npc_out(n: Npc) -> dict:
     return {k: getattr(n, k) for k in ("id", "name", "level", "race", "place", "role", "trust",
-                                        "knows", "debts", "last", "secret")} | {"history": n.history or []}
+                                        "knows", "debts", "last", "secret")} | {
+        "history": n.history or [], "dettaglio": n.dettaglio or "completa", "scheda": scheda_di(n)}
+
+
+def scheda_di(n: Npc) -> dict | None:
+    """La scheda della sezione PNG con nome e livello presi dalle colonne (stanno in un posto solo)."""
+    if not n.scheda:
+        return None
+    return {**n.scheda, "nome": n.name, "livello": n.level, "dettaglio": n.dettaglio, "db_id": n.id}
 
 
 def issue_out(i: Issue) -> dict:

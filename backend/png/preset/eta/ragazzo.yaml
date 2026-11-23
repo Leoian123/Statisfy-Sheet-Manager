@@ -1,0 +1,17 @@
+# eta/ragazzo: apprendista, garzone, figlio che lavora con i genitori.
+descrizione: dai tredici ai diciassette anni; impara un mestiere sotto qualcuno
+anni: [13, 17]                      # PROPOSTA
+livello: {da_anni: [0.5, 1]}        # PROPOSTA: come per i bambini, segue gli anni
+corporatura: normale
+addestramento: {sposta: -1}         # PROPOSTA: un gradino sotto il ruolo
+mestiere: {grado: [I, III]}         # apprendista; il Grado I arriva dopo un lavoro completo sotto una guida (Progressione §3)
+ricchezza: povero                   # PROPOSTA
+conta: nuovo arrivato               # PROPOSTA
+rose:
+  vuole:      {solo: [farsi notare dal mastro, andarsene dal paese, un'arma vera, qualcuno che non lo tratti da bambino]}
+  teme:       {solo: [il padre, la figuraccia davanti a tutti, restare garzone a vita]}
+  difetto:    {solo: [permaloso, spaccone, rancoroso, avventato]}
+  forestieri: {solo: [quello che vorrebbe essere, uno che gli ruba la scena]}
+  tratti:     {solo: [impaziente, sfrontato, generoso, scontroso, sognatore]}   # PROPOSTA
+voce: parla sporco come i grandi che ammira, sfotte, minaccia per scherzo        # Note_di_stile §3, regola 1
+canone: [il figlio dei Fabbri, quindici anni, già salito alle Rovine (Zona_Alba_Chiara)]

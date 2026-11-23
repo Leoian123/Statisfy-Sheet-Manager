@@ -1,0 +1,13 @@
+# luoghi/insediamenti: la taglia sceglie la fascia di livello del ruolo e dice quanto in fretta gira una voce.
+villaggio:
+  abitanti: 2000                    # FONTE Status Sociale §3 («Villaggio (2k)») e Zona_Alba_Chiara
+  voci: tutti sanno tutto entro sera                       # FONTE Zona_Alba_Chiara
+  esempio: Alba Chiara
+citta:
+  abitanti: 50000                   # FONTE Status Sociale §3 («Città (50k)»)
+  voci: null
+  esempio: null                     # nessuna città è ancora scritta in una scheda di zona
+metropoli:
+  abitanti: 500000                  # FONTE Status Sociale §3 («Metropoli (500k)») e Ambientazione.txt (Lumengarde)
+  voci: null
+  esempio: Lumengarde

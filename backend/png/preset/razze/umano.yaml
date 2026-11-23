@@ -1,0 +1,9 @@
+# razze/umano: il metro. Fra umani la differenza la fa il regno (strato `luogo`), non la razza.
+descrizione: la maggior parte della gente di Valeria, di Frostland e di Qadesh
+dove_vive:                          # le proporzioni stanno in luoghi/regni.yaml
+  - ovunque; quasi tutti a Valeria, gli umani nordici a Frostland, gli umani del deserto a Qadesh, un terzo di Eldermoor   # FONTE Ambientazione.txt
+longevita: umana
+numeri: {}                          # nessuno spostamento
+conta_per_i_suoi: lo dice il regno
+nomi: dal regno                     # gli stili dei nomi umani stanno in luoghi/regni.yaml
+tacciono: []

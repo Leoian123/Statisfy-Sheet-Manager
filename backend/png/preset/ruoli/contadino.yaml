@@ -1,0 +1,24 @@
+# ruoli/contadino: dalla tabella «Tipi di PNG generici» di Zona_Alba_Chiara.
+eredita: cittadino
+descrizione: lavora la terra; fattorie, campi, la Piazza il giorno di mercato
+livello:
+  villaggio: [3, 12]                # FONTE Zona_Alba_Chiara, «Tipi di PNG generici»
+  citta:     null
+  metropoli: null
+profilo: {STR: alta, DEX: media, VIT: media, INT: bassa}     # PROPOSTA
+mestiere: {nome: Agricoltura, grado: [II, VI]}              # PROPOSTA
+ricchezza: povero                                            # un contadino guadagna 3-5 corone al giorno (Zona_Alba_Chiara)
+atteggiamento: {diffidente: 10, interessato: -5}             # FONTE Zona_Alba_Chiara: «cauto, poi cordiale se aiutato»; i numeri sono PROPOSTA
+dove:      {solo: [fattorie, campi, la Piazza il giorno di mercato]}            # FONTE Zona_Alba_Chiara
+giornata:  lavora dall'alba; parla del tempo e del grano                       # FONTE Zona_Alba_Chiara
+sa:        {aggiungi: [dove sono le bestie, il tempo che farà, chi ha il campo migliore]}   # «sa dove sono le bestie»: FONTE Zona_Alba_Chiara
+puo_dare:  {solo: [cibo, lavoro nei campi, voci, un posto a tavola]}           # FONTE Zona_Alba_Chiara, «Famiglie contadine»
+rose:
+  vuole:  [il raccolto al sicuro, le bestie lontane dal campo, un buon nome in paese]         # FONTE Zona_Alba_Chiara, «Famiglie contadine»
+  teme:   [la grandine, i lupi, l'esattore, che si scopra il contrabbando]
+  difetto: [testardo, superstizioso]
+  vita:   {solo: [il raccolto in ritardo, un lupo ha preso una pecora, il figlio beve, il carro rotto]}
+  intercalare: {solo: ["«porca miseria»", "«se il tempo tiene»", "«e il grano?»", "«santi numi»"]}   # PROPOSTA; Taratura §6: i contadini parlano sporco
+no_tipici: {aggiungi: [orgoglio]}
+voce:      parla sporco e impreca; misura tutto in raccolti e stagioni         # Taratura §6, «Registro»
+canone:    [Berto Rossi, Lv 9, vent'anni (Zona_Alba_Chiara); famiglia Rossi; famiglia Orso]

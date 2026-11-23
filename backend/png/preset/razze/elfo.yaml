@@ -1,0 +1,19 @@
+# razze/elfo: Elfi di Eldermoor (Ambientazione.txt, «Le razze native»).
+descrizione: esseri longevi dalla bellezza eterea, custodi della magia naturale     # FONTE Ambientazione.txt
+dove_vive:
+  - Eldermoor, sei su dieci                                                          # FONTE Ambientazione.txt
+longevita: lunghissima              # «esseri longevi»: FONTE Ambientazione.txt; quanto, è PROPOSTA (fattore in regole.yaml)
+fase_della_vita: true               # PROPOSTA: il livello segue la fase della vita, non gli anni di calendario
+numeri:
+  profilo: {INT: {sposta: 1}}       # PROPOSTA
+conta_per_i_suoi: saggezza e natura                                                  # FONTE Ambientazione.txt e Status Sociale §3 (Eldermoor)
+segni: [occhi che brillano di una luce verde-dorata]                                 # FONTE Ambientazione.txt
+rose:
+  forestieri: {aggiungi: [mortali di passaggio, distratti dalle loro faccende]}      # «distacco dalle preoccupazioni degli esseri mortali»: FONTE Ambientazione.txt
+  tratti: [distaccato, paziente, altero]                                             # PROPOSTA, dal testo di Ambientazione.txt
+limiti: []
+nomi: null                          # nessun elfo con un nome è ancora scritto
+tacciono:
+  - quanti anni vive un elfo
+  - come vive un elfo fuori da Eldermoor
+  - stile dei nomi

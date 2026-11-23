@@ -101,6 +101,11 @@ class Npc(Base):
     last: Mapped[str] = mapped_column(Text, default="")
     secret: Mapped[str] = mapped_column(Text, default="")
     history: Mapped[list] = mapped_column(JSON, default=list)
+    # Sezione PNG (app/png): comparsa → scheda semplificata → scheda completa. Nome e livello stanno solo nelle
+    # colonne qui sopra; `scheda` tiene il resto (provenienza con seme, sette campi, ingressi dei numeri, stato per
+    # partita, immagini). NULL = PNG scritto a mano prima della sezione PNG.
+    dettaglio: Mapped[str] = mapped_column(String(20), default="completa", server_default="completa")
+    scheda: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
 
 
 class Issue(Base):

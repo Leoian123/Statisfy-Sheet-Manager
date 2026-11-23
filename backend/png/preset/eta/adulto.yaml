@@ -1,0 +1,10 @@
+# eta/adulto: il caso base. Porta le preoccupazioni comuni a tutti; il ruolo aggiunge quelle del mestiere.
+descrizione: dai diciotto ai cinquantanove anni; il mestiere pieno
+anni: [18, 59]                      # PROPOSTA
+livello: ruolo                      # la fascia la dà il ruolo
+mestiere: {}                        # pieno: come lo dà il ruolo
+rose:
+  vuole:      [arrivare a fine mese, sistemare un figlio, saldare un debito, fare bella figura coi vicini]
+  teme:       [perdere il lavoro, una malattia in casa, chi comanda, le chiacchiere sul suo conto]
+  forestieri: [inviati degli dèi, non-morti, creature della magia antica, spiriti incarnati, viaggiatori, un problema di ordine pubblico, gente che paga]   # FONTE Sistema_PNG §3 e Zona_Alba_Chiara
+  tratti:     [pratico, diffidente, gentile, stanco, onesto, ansioso, rigido, mite]   # FONTE i «tratti chiave» dei PNG di Zona_Alba_Chiara

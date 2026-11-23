@@ -41,6 +41,9 @@ _ADDED_COLUMNS = [
     ("tickets", "recipient_id", "ALTER TABLE tickets ADD COLUMN recipient_id INTEGER"),
     ("tickets", "seen_by_recipient", "ALTER TABLE tickets ADD COLUMN seen_by_recipient BOOLEAN NOT NULL DEFAULT 1"),
     ("tickets", "meta", "ALTER TABLE tickets ADD COLUMN meta JSON"),
+    # sezione PNG: livello di dettaglio e scheda nata dai preset (righe vecchie: completa, NULL)
+    ("npcs", "dettaglio", "ALTER TABLE npcs ADD COLUMN dettaglio VARCHAR(20) NOT NULL DEFAULT 'completa'"),
+    ("npcs", "scheda", "ALTER TABLE npcs ADD COLUMN scheda JSON"),
 ]
 
 
