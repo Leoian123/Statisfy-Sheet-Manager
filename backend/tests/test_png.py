@@ -157,10 +157,49 @@ def test_riga_di_zona():
     assert r["markdown"].startswith(f"| {s['nome']} | {s['livello']} | fabbro |")
 
 
-def test_forgia_usa_lo_stesso_calcolo():
-    from app import forge
-    k = forge.npc_compute({"level": 45, "size": "Robusta"}, {})["creature"]
-    assert k["hp"] == (40 + 45 * 20) * 1.5 and k["dmg"] == 10 + 45 * 6
+def test_da_bozza_scritto_a_mano_vince():
+    d = {"ruolo": "fabbro", "zona": "alba-chiara", "ritocchi": ["ex soldato"], "seme": 8, "nome": "Gilda Fornari",
+         "livello": 50, "campi": {"vuole": "finire la grata del mulino", "contraddizione": "burbera, ma canta"}}
+    out = G.da_bozza(d)
+    s = out["scheda"]
+    assert s["nome"] == "Gilda Fornari" and s["livello"] == 50 and s["id"] == "alba-chiara/gilda-fornari"
+    assert s["vuole"] == "finire la grata del mulino" and s["origine"]["vuole"] == "scritto a mano"
+    assert "vuole" not in s["da_ritoccare"] and "contraddizione" not in s["da_ritoccare"]
+    assert out["combattimento"]["vita"] == (40 + 50 * 20) * 1.5
+    # stesso seme, stessa pescata per ciò che non è scritto a mano
+    assert G.da_bozza({**d, "campi": {}})["scheda"]["teme"] == s["teme"]
+    c = G.da_bozza({**d, "completa": True, "storia": {"origine": "nata a Lumengarde"}})["scheda"]
+    assert c["dettaglio"] == "completa" and c["completa"]["background"]["origine"] == "nata a Lumengarde"
+
+
+def test_wizard_forgia_usa_il_motore_dei_preset(client, master):
+    bozza = {"ruolo": "fabbro", "eta": "adulto", "razza": "umano", "zona": "alba-chiara", "ritocchi": ["ex soldato"],
+             "seme": 8, "nome": "", "livello": "", "campi": {}, "storia": {}, "knows": "Niente", "debts": ""}
+    pv = client.post("/api/forge/preview", headers=master, json={"kind": "npcs", "draft": bozza}).json()
+    assert pv["first_bad"] == 2 and "contraddizione" in pv["steps"][2]
+    assert pv["computed"]["scheda"]["ruolo"] == "fabbro" and pv["computed"]["combattimento"]["combatte"]
+    bozza["campi"] = {"contraddizione": "burbero, ma piange ai funerali"}
+    r = client.post("/api/forge/entries", headers=master, json={"kind": "npcs", "draft": bozza})
+    assert r.status_code == 201, r.text
+    nid = r.json()["entry"]["npc_id"]
+    n = next(x for x in client.get("/api/npcs", headers=master).json() if x["id"] == nid)
+    assert n["dettaglio"] == "completa" and n["scheda"]["provenienza"]["seme"] == 8 and n["knows"] == "Niente"
+    assert client.get(f"/api/png/schede/{nid}/combattimento", headers=master).json()["combatte"]
+    goblin = {**bozza, "razza": "goblin", "ritocchi": []}   # senza motivo la variante dice di no
+    pv = client.post("/api/forge/preview", headers=master, json={"kind": "npcs", "draft": goblin}).json()
+    assert pv["first_bad"] == 0 and "motivo" in pv["steps"][0]
+
+
+def test_ritratto(client, master):
+    r = client.post("/api/png/nuovo", headers=master, json={"ruolo": "cittadino", "zona": "alba-chiara", "seme": 3, "salva": True,
+                                                           "ritratto": {"immagini": [{"id": "a", "src": "data:image/jpeg;base64,AAAA"}]}}).json()
+    nid = r["npc"]["id"]
+    rit = r["npc"]["scheda"]["ritratto"]
+    assert rit["immagini"][0]["principale"] and rit["descrizione"]
+    bad = {"campi": {"ritratto": {"immagini": [{"src": "javascript:alert(1)"}]}}}
+    assert client.patch(f"/api/png/schede/{nid}", headers=master, json=bad).status_code == 422
+    troppe = {"campi": {"ritratto": {"immagini": [{"src": "data:image/png;base64,AA=="}] * 7}}}
+    assert client.patch(f"/api/png/schede/{nid}", headers=master, json=troppe).status_code == 422
 
 
 # ---------- API ----------

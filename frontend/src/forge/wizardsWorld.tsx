@@ -1,106 +1,117 @@
-/* Forgia · gruppo "Mondo": PNG e Incontro (porting di mockup/screens/wizards-master.js). */
+/* Forgia · gruppo "Mondo": PNG (sul motore dei preset, come Mondo → PNG) e Incontro. */
 import { useState } from "react";
 import { errorText } from "../api/client";
 import { forgeApi, type DropProfile, type Draft } from "../api/forge";
+import type { Combattimento, Composizione, Scheda, Strati } from "../api/png";
+import { Avvisi, ComposizioneView, StratiForm, useCatalogo } from "../components/png/PngParts";
+import { SETTE, SETTE_HELP, SETTE_LABEL, bozzaNuova, maiuscola, nuovoSeme, parola } from "../lib/png";
 import {
-  CheckF, DASH, Decided, filled, Lines, NameOr, NumF, Picks, Proposal, PvRow, PvSec, PvText, PvWin, RarityChip, Ref,
+  DASH, Decided, filled, Lines, NameOr, NumF, Picks, Proposal, PvRow, PvSec, PvText, PvWin, RarityChip, Ref,
   SelF, TextF, nf, ni, useW, type WizardDef, GroupF } from "./engine";
 
-const TRUST_TONE: Record<string, string> = { Scarso: "bad", Neutrale: "muted", Buono: "good", Eccellente: "gold" };
-
 /* =====================================================================
-   5. PNG
+   5. PNG — stesso motore e stessi pezzi della pagina Mondo → PNG (app/png, components/png).
+   La bozza è strati + seme + campi scritti a mano; il server pesca e compone a ogni modifica.
+   Il wizard produce sempre una scheda completa (Sistema_PNG §4); comparse e schede veloci stanno in Mondo → PNG.
    ===================================================================== */
+function PngStrati() {
+  const x = useW();
+  const { cat, err } = useCatalogo();
+  if (err) return <p className="hint bad">{err}</p>;
+  if (!cat) return <p className="small muted">Leggo i preset…</p>;
+  const comp = x.c.composizione as Composizione | undefined;
+  return <>
+    <StratiForm cat={cat} idp="wz-png" value={x.d as Strati} onChange={(v) => x.upd((d) => { Object.assign(d, v); })} />
+    {comp && <ComposizioneView c={comp} />}
+    <Ref>Ogni valore porta lo strato che l'ha deciso: passaci sopra per il file, la riga e FONTE o PROPOSTA. I preset si ritoccano in <span className="mono">backend/png/</span>.</Ref>
+  </>;
+}
+
+function PngPersona() {
+  const x = useW();
+  const s = x.c.scheda as Scheda | undefined;
+  return <>
+    <TextF path="nome" label="Nome" max={100} ph={s?.nome ?? ""} hint={s?.nome.startsWith("[") ? "Per questa razza e questo regno i documenti non danno uno stile di nomi: scrivilo tu." : "Vuoto = il nome pescato."} />
+    <div className="wz-grid2">
+      <NumF path="livello" label="Livello" min={1} max={999} ph={s ? String(s.livello) : ""} hint={x.c.rank ? `Rango di potere: ${x.c.rank}` : undefined} />
+      <SelF path="genere" label="Genere" opts={[{ v: "", l: `pescato${s ? ` (${s.genere === "f" ? "donna" : "uomo"})` : ""}` }, { v: "f", l: "donna" }, { v: "m", l: "uomo" }]} />
+    </div>
+    <div className="png-wz-pesca">
+      <span className="label">Seme</span><span className="mono small">{x.d.seme}</span>
+      <button type="button" className="btn" onClick={() => x.upd((d) => { d.seme = nuovoSeme(); d.campi = {}; })}>Rigenera la pescata</button>
+    </div>
+    <Ref>Lo stesso seme ridà la stessa persona: è salvato nella scheda, così si sa sempre da dove viene.</Ref>
+  </>;
+}
+
+function PngSette() {
+  const x = useW();
+  const s = x.c.scheda as Scheda | undefined;
+  if (!s) return <p className="small muted">Scegli prima gli strati.</p>;
+  const campi = ["vuole", "teme", "difetto", "forestieri", "prezzo", "vita", "contraddizione", ...("perche_qui" in s ? ["perche_qui"] : []), "voce"];
+  return <>
+    <Ref>Gli spunti pescati sono un punto di partenza: riscrivili sul luogo e sulla persona (non «teme il debito col fornitore» ma un nome, una cifra, una scadenza). La contraddizione non si pesca.</Ref>
+    {campi.map((k) => (
+      <TextF key={k} path={`campi.${k}`} label={SETTE_LABEL[k]} area rows={k === "voce" || k === "contraddizione" ? 2 : 1} max={300}
+        req={k === "contraddizione" || k === "perche_qui"}
+        ph={String((s as unknown as Record<string, unknown>)[k] ?? (k === "contraddizione" ? s.contraddizione_spunto ?? "" : ""))}
+        hint={[SETTE_HELP[k], s.origine?.[k]].filter(Boolean).join(" · ")} />
+    ))}
+  </>;
+}
+
 const png: WizardDef = {
   id: "png", kind: "npcs", group: "Mondo", title: "PNG",
-  desc: "Personaggio non giocante completo: entra anche nell'archivio PNG dell'Area Master.",
+  desc: "Persona completa dai preset (ruolo, età, razza, luogo): entra nell'archivio di Mondo → PNG.",
   heading: "Nuovo PNG",
-  intro: "I PNG non sanno che gli Immortali sono giocatori: li vedono come forestieri insoliti. La morte di un PNG è definitiva (Sistema PNG, Regola aurea).",
-  fresh: () => ({ name: "", level: "", race: "Umano", place: "", role: "", kingdom: "", age: "",
-    traits: "", speech: "", motives: "", fears: "", habits: "", origin: "", events: "", relations: "", goalShort: "", goalLong: "",
-    conflict: "", skills: "", influence: "", wealth: "", connections: "", trust: "Neutrale", knows: "", debts: "", secret: "", fight: false, size: "Normale" }),
+  intro: "I PNG non sanno che gli Immortali sono giocatori: li vedono come forestieri. La morte di un PNG è definitiva (Sistema PNG, Regola aurea). Il ritratto si aggiunge dall'archivio in Mondo → PNG.",
+  fresh: () => ({ ...bozzaNuova(), storia: {}, knows: "", debts: "" }),
   steps: [
-    { render: (x) => <>
-      <TextF path="name" label="Nome completo" req max={60} ph="es. Elena la Saggia" />
-      <div className="wz-grid2">
-        <NumF path="level" label="Livello" req min={1} max={999} ph="45" />
-        <TextF path="race" label="Razza" req list="wz-races" />
-      </div>
-      <datalist id="wz-races">{[...new Set([...x.meta.races_known, ...x.meta.races])].map((r) => <option key={r} value={r} />)}</datalist>
-      <span className="hint">{x.c.rank ? <>Rango di potere: <b>{x.c.rank}</b></> : "Il livello dà il rango di potere (1–99 Soldati Semplici … 600+ Divinità)."}</span>
-      <div className="wz-grid2">
-        <TextF path="place" label="Luogo" req ph="es. Alba Chiara — Il Gallo Storto" />
-        <TextF path="role" label="Ruolo" req ph="es. Locandiera, informatrice" />
-        <SelF path="kingdom" label="Regno" opts={[{ v: "", l: "—" }, ...x.meta.kingdoms]} />
-        <TextF path="age" label="Età (apparente / reale)" ph="es. 40 / 212" />
-      </div>
-      <Ref>Nei villaggi le cariche stanno molto più in basso: un sergente o un sindaco di paese possono essere sotto il livello 100.</Ref>
+    { render: () => <PngStrati /> },
+    { render: () => <PngPersona /> },
+    { render: () => <PngSette /> },
+    { render: () => <>
+      <div className="wz-grid2"><TextF path="storia.origine" label="Origine" area rows={2} /><TextF path="storia.eventi" label="Eventi formativi" area rows={2} /></div>
+      <TextF path="storia.relazioni" label="Relazioni importanti" ph="es. cognato del sergente Hald" />
+      <TextF path="storia.obiettivo_lungo" label="Obiettivo a lungo termine" />
+      <TextF path="storia.ganci" label="Ganci per le quest" area rows={2} />
+      <div className="wz-secret"><TextF path="storia.segreto" label="Segreto (solo Master)" area rows={2} /></div>
+      <Ref>Facoltativo: la scheda completa di Sistema_PNG §4. Personalità, paure e obiettivo a breve vengono dai sette campi.</Ref>
     </> },
     { render: () => <>
-      <TextF path="traits" label="Tratti dominanti (3–4)" req ph="es. Curiosa, diffidente, generosa con chi paga" />
-      <TextF path="speech" label="Modo di parlare" req area rows={2} ph="es. Frasi brevi, chiama tutti «ragazzo», ride delle proprie battute" />
-      <div className="wz-grid2"><TextF path="motives" label="Motivazioni profonde" area rows={2} /><TextF path="fears" label="Paure e debolezze" area rows={2} /></div>
-      <TextF path="habits" label="Manie e abitudini" ph="es. Conta le monete due volte" />
-    </> },
-    { render: () => <>
-      <div className="wz-grid2"><TextF path="origin" label="Origine" area rows={2} /><TextF path="events" label="Eventi formativi" area rows={2} /></div>
-      <TextF path="relations" label="Relazioni importanti" ph="es. Sorella del capitano Orsino" />
-      <div className="wz-grid2"><TextF path="goalShort" label="Obiettivo a breve termine" /><TextF path="goalLong" label="Obiettivo a lungo termine" /></div>
-      <TextF path="conflict" label="Conflitto interno" />
-      <div className="wz-grid2">
-        <TextF path="skills" label="Competenze" /><TextF path="influence" label="Influenza" />
-        <TextF path="wealth" label="Ricchezze" /><TextF path="connections" label="Connessioni" />
-      </div>
-    </> },
-    { render: (x) => <>
-      <Picks path="trust" label="Fiducia iniziale verso il gruppo" opts={x.meta.trust} />
-      <TextF path="knows" label="Cosa sa dei PG" req area rows={2} hint="Ricorda: per i PNG gli Immortali sono forestieri, non giocatori." />
+      <TextF path="knows" label="Che cosa sa dei forestieri del gruppo" area rows={2} hint="Per i PNG gli Immortali sono forestieri, non giocatori." />
       <TextF path="debts" label="Debiti e favori" ph="es. Kelvin le deve due notti non pagate" />
-      <div className="wz-secret"><TextF path="secret" label="Segreto (solo Master)" area rows={2} /></div>
-    </> },
-    { render: (x) => <>
-      <CheckF path="fight" label="Ha statistiche di combattimento" />
-      {x.d.fight ? <>
-        <Picks path="size" label="Taglia" opts={x.meta.sizes.map((s) => ({ v: s.v, l: s.v, sub: `Vita ×${nf(s.m)}` }))} />
-        {x.c.creature && <div className="sysmsg"><span className="tag">[COMBAT]</span><span>Creatura Comune, livello {x.d.level || "—"}: Vita {ni(x.c.creature.hp)} · Danno base {ni(x.c.creature.dmg)}</span></div>}
-        <Ref>Formule delle creature (Combat): Danno base = (10 + livello×6) × rarità; Vita = (40 + livello×20) × rarità × taglia. Un PNG è calcolato come creatura Comune (×1); le creature nominate possono avere di più, a giudizio del narratore.</Ref>
-      </> : <Ref>Facoltativo: spunta per calcolare Vita e danno come creatura di rarità Comune.</Ref>}
+      <Ref>L'affinità parte dal valore del luogo (−1 in un villaggio, Taratura §4) e si aggiorna dopo ogni sessione dall'archivio.</Ref>
     </> },
   ],
-  preview: ({ d, c }) => (
-    <PvWin tag="PNG" head={<NameOr s={d.name} ph="PNG senza nome" />}>
-      <PvRow label="Livello" tip={c.rank ? `Rango di potere: ${c.rank}` : undefined}>{c.rank ? <span className="num">{d.level}</span> : DASH}</PvRow>
-      <PvText label="Razza" text={d.race} />
-      <PvText label="Luogo" text={d.place} />
-      <PvText label="Ruolo" text={d.role} />
-      {d.kingdom && <PvRow label="Regno">{d.kingdom}</PvRow>}
-      {filled(d.age) && <PvText label="Età" text={d.age} />}
-      <PvSec label="Personalità" />
-      <PvText label="Tratti" text={d.traits} />
-      <PvText label="Parla" text={d.speech} />
-      {filled(d.motives) && <PvText label="Motivazioni" text={d.motives} />}
-      {filled(d.fears) && <PvText label="Paure" text={d.fears} />}
-      <PvSec label="Background e obiettivi" />
-      <PvText label="Origine" text={d.origin || d.events} />
-      {filled(d.goalShort) && <PvText label="Breve termine" text={d.goalShort} />}
-      {filled(d.goalLong) && <PvText label="Lungo termine" text={d.goalLong} />}
-      {(() => {
-        const res = [["Competenze", d.skills], ["Influenza", d.influence], ["Ricchezze", d.wealth], ["Connessioni", d.connections]].filter(([, v]) => filled(v));
-        return <PvRow label="Risorse" tip={res.map(([l, v]) => `${l}: ${String(v).trim()}`)}>{res.length ? "vedi dettaglio" : DASH}</PvRow>;
-      })()}
-      <PvSec label="Rapporto con i PG" />
-      <PvRow label="Fiducia"><span className={`chip ${TRUST_TONE[d.trust] ?? "muted"}`}>{d.trust}</span></PvRow>
-      <PvText label="Sa" text={d.knows} />
-      <PvText label="Debiti e favori" text={d.debts} />
-      <PvRow label="Segreto" tip={filled(d.secret) ? d.secret.trim() : undefined}>{filled(d.secret) ? <span className="chip gold">solo Master</span> : DASH}</PvRow>
-      {d.fight && c.creature && <>
-        <PvSec label="Combattimento" />
-        <PvRow label="Vita" tip={["(40 + livello×20) × rarità × taglia", `= ${c.creature.hp_formula}`]}><span className="num">{ni(c.creature.hp)}</span></PvRow>
-        <PvRow label="Danno base" tip={["(10 + livello×6) × rarità", `= ${c.creature.dmg_formula}`]}><span className="num">{ni(c.creature.dmg)}</span></PvRow>
-        <PvRow label="Rarità · taglia">Comune · {d.size}</PvRow>
-      </>}
-    </PvWin>
-  ),
+  preview: ({ c }) => {
+    const s = c.scheda as Scheda | undefined;
+    const b = c.combattimento as Combattimento | undefined;
+    return (
+      <PvWin tag="PNG" head={s ? s.nome : <span className="muted">PNG senza strati validi</span>}>
+        {!s ? <Avvisi errori={(c.errori as string[]) ?? []} /> : <>
+          <PvRow label="Livello" tip={c.rank ? `Rango di potere: ${c.rank} · ${s.origine?.livello ?? ""}` : undefined}><span className="num">{s.livello}</span></PvRow>
+          <PvRow label="Ruolo">{maiuscola(parola(s.ruolo))}{s.mestiere?.nome ? ` · ${s.mestiere.nome}${s.mestiere.grado ? ` ${s.mestiere.grado}` : ""}` : ""}</PvRow>
+          <PvRow label="Razza · età">{parola(s.razza)} · {s.eta.apparente} anni{s.eta.vera && s.eta.vera !== s.eta.apparente ? ` (veri ${s.eta.vera})` : ""}</PvRow>
+          <PvRow label="Luogo">{s.luogo}</PvRow>
+          <PvRow label="Tratti">{s.tratti.join(", ")}</PvRow>
+          <PvSec label="I sette campi" />
+          {SETTE.map((k) => <PvText key={k} label={SETTE_LABEL[k]} text={(s as unknown as Record<string, unknown>)[k]} />)}
+          {"perche_qui" in s && <PvText label="Perché è qui" text={s.perche_qui} />}
+          <PvSec label="Voce e agganci" />
+          <PvText label="Voce" text={s.voce} />
+          <PvText label="Può dare" text={s.puo_dare.join("; ")} />
+          <PvText label="Dice di no se" text={s.no_tipici.join("; ")} />
+          <PvSec label="Combattimento" />
+          {b?.combatte
+            ? <><PvRow label="Vita" tip={b.formula_vita}><span className="num">{ni(b.vita)}</span></PvRow>
+                <PvRow label="Danno base" tip={b.formula_danno}><span className="num">{ni(b.danno)}</span></PvRow></>
+            : <PvRow label="Non combatte" tip={b?.nota}>{s.addestramento}</PvRow>}
+          {(c.avvisi as string[])?.length > 0 && <><PvSec label="Avvisi" /><Avvisi avvisi={c.avvisi as string[]} /></>}
+        </>}
+      </PvWin>
+    );
+  },
 };
 
 /* =====================================================================

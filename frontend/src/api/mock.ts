@@ -961,9 +961,11 @@ export async function handle(method: string, path: string, body: unknown, token:
     }
   }
 
-  if (!isMaster && (path.startsWith("/campaign") || path.startsWith("/npcs") || path.startsWith("/issues"))) {
+  if (!isMaster && (path.startsWith("/campaign") || path.startsWith("/npcs") || path.startsWith("/issues") || path.startsWith("/png"))) {
     return err(403, "Area riservata al Master.");
   }
+  // La sezione PNG compone i preset YAML con il motore del server (app/png): qui non c'è una copia del motore.
+  if (path.startsWith("/png")) return err(503, "La sezione PNG usa i preset e il motore del server: in modalità finta non è disponibile. Avvia il backend.");
   if (path === "/campaign" && method === "GET") return ok(db.campaign);
   if (path === "/campaign/session" && method === "POST") { db.campaign.session += 1; return ok(db.campaign); }
   if (path === "/npcs" && method === "GET") return ok(db.npcs);

@@ -15,7 +15,7 @@ from .. import forge, mech, mech_templates, rules, status_catalog
 from ..auth import require_master
 from ..db import get_db
 from ..models import Campaign, Character, ForgeEntry, Npc
-from ..png.genera import da_forgia
+from ..png import archivio
 from ..serialize import maxes_of, npc_out, rules_input
 from .combat import _state, _store
 
@@ -99,7 +99,7 @@ def _ctx(db: Session) -> dict:
     lib: dict[str, list] = {k: [] for k in forge.KINDS}
     for e in _entries(db):
         lib.setdefault(e.kind, []).append(e.data or {})
-    return {"chars": [_char_ctx(c) for c in _chars(db)], "library": lib}
+    return {"chars": [_char_ctx(c) for c in _chars(db)], "library": lib, "npc_names": sorted(archivio.nomi_usati(db))}
 
 
 def entry_out(e: ForgeEntry, names: dict[int, str] | None = None) -> dict:
@@ -186,15 +186,13 @@ def create_entry(data: DraftIn, db: Session = Depends(get_db)):
         entry["assignments"] = [{"char_id": c.id, "name": c.name, "at": _now(), "session": session}]
     if data.kind == "npcs":
         n = entry["npc"]
-        npc = Npc(name=n["name"][:100], level=n["level"], race=n["race"][:100], place=n["place"][:200], role=n["role"][:200],
-                  trust=n["trust"], knows=n["knows"], debts=n["debts"], secret=n["secret"],
-                  last=f"Sessione {session} — creato nella Forgia del Master.", history=[],
-                  dettaglio="completa", scheda={k: v for k, v in da_forgia(n).items() if k not in ("nome", "livello", "dettaglio")})
-        db.add(npc)
+        npc = archivio.salva(db, {k: v for k, v in n.items() if k not in ("knows", "debts", "secret")})
+        npc.knows, npc.debts, npc.secret = n["knows"], n["debts"], n["secret"]
+        npc.last = f"Sessione {session} — creato nella Forgia del Master."
         db.flush()
         e.npc_id = npc.id
         entry["npc"]["id"] = npc.id
-        messages.append(f"«{n['name']}» aggiunto all'archivio PNG.")
+        messages.append(f"«{n['nome']}» aggiunto all'archivio PNG (Mondo → PNG).")
     e.summary = entry.get("summary", "")
     entry["events"] = [{"at": _now(), "session": session, "text": m} for m in messages]
     e.data = entry

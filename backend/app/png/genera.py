@@ -468,44 +468,63 @@ def aggiorna(s: dict, partita: str, evento: dict, cat: D.Catalogo | None = None)
     return {"scheda": n, "avvisi": avvisi}
 
 
-def blocco_forgia(livello: int, taglia: str | None, combatte: bool = True) -> dict:
-    """Il blocco di combattimento del wizard PNG della Forgia, con lo stesso calcolo delle schede dai preset
-    (un solo posto: se cambia il modello dei numeri, cambia anche lì). Restituisce la forma che il wizard usa."""
-    s = {"livello": max(1, int(livello or 1)), "eta": {"fase": "adulto"},
-         "addestramento": "addestrato" if combatte else "nessuno", "corporatura": (taglia or "Normale").lower()}
-    b = combattimento(s)
-    return {"hp": b.get("vita"), "dmg": b.get("danno"), "hp_formula": b.get("formula_vita"),
-            "dmg_formula": b.get("formula_danno"), "modello": b.get("modello")}
+CAMPI_BOZZA = ["vuole", "teme", "difetto", "forestieri", "prezzo", "vita", "contraddizione", "voce", "perche_qui"]
+STORIA = ["origine", "eventi", "relazioni", "obiettivo_lungo", "ganci", "segreto"]
 
 
-def da_forgia(npc: dict) -> dict:
-    """Scheda completa (Sistema_PNG §4) dal PNG creato con il wizard della Forgia: stessa forma di `promuovi`."""
-    p = npc.get("personality") or {}
-    b = npc.get("background") or {}
-    g = npc.get("goals") or {}
-    r = npc.get("resources") or {}
-    return {
-        "dettaglio": "completa", "nome": npc.get("name"), "livello": npc.get("level"),
-        "ruolo": npc.get("role"), "razza": npc.get("race"), "luogo": npc.get("place"),
-        "eta": {"fase": None, "apparente": npc.get("age") or None, "vera": None},
-        "provenienza": {"forgia": True},
-        "addestramento": "addestrato" if npc.get("combat") else "nessuno",
-        "corporatura": str((npc.get("combat") or {}).get("size") or "Normale").lower(),
-        "voce": p.get("speech") or "", "tratti": [t.strip() for t in str(p.get("traits") or "").split(",") if t.strip()],
-        "vuole": g.get("short") or "", "teme": p.get("fears") or "",
-        "completa": {
-            "posizione": npc.get("role"), "regno": npc.get("kingdom"),
-            "personalita": {"tratti": p.get("traits"), "motivazioni": p.get("motives"), "paure": p.get("fears"),
-                            "manie": p.get("habits")},
-            "background": {"origine": b.get("origin"), "eventi_formativi": b.get("events"), "relazioni": b.get("relations"),
-                           "segreti": npc.get("secret")},
-            "obiettivi": {"breve": g.get("short"), "lungo": g.get("long"), "conflitti": g.get("conflict")},
-            "risorse": {"competenze": r.get("skills"), "influenza": r.get("influence"), "ricchezze": r.get("wealth"),
-                        "connessioni": r.get("connections")},
-            "quest": {"principale": "", "secondarie": "", "ganci": ""},
-        },
-        "stato": {}, "ritratto": {"descrizione": "", "immagini": []},
-    }
+def da_bozza(d: dict, usati: set[str] | None = None, cat: D.Catalogo | None = None) -> dict:
+    """Scheda da una bozza: strati + seme + ciò che il Master ha riscritto. È lo stesso percorso per il wizard PNG
+    della Forgia e per la pagina Mondo → PNG: pesca con il seme, poi i campi scritti a mano vincono su quelli pescati.
+    Bozza: {ruolo, eta, razza, regno?, insediamento?, zona?, ritocchi[], seme, nome?, livello?, genere?,
+            campi: {vuole…perche_qui}, completa?: bool, storia: {origine, eventi, relazioni, obiettivo_lungo, ganci, segreto}}"""
+    cat = cat or D.catalogo()
+    luogo = {k: d.get(k) for k in ("regno", "insediamento", "zona") if d.get(k)}
+    rit = [str(r) for r in (d.get("ritocchi") or []) if str(r).strip()]
+    if d.get("genere") in ("m", "f"):
+        rit.append(f"genere {d['genere']}")
+    try:
+        seme = int(d.get("seme")) if d.get("seme") not in (None, "") else None
+    except (TypeError, ValueError):
+        seme = None
+    out = nuovo(str(d.get("ruolo") or ""), str(d.get("eta") or "adulto"), str(d.get("razza") or "umano"), luogo, rit,
+                seme, usati, None, cat)
+    s = out["scheda"]
+    if s is None:
+        return out
+    nome = str(d.get("nome") or "").strip()
+    if nome:
+        s["nome"] = nome[:100]
+        s["origine"]["nome"] = "scritto a mano"
+        s["id"] = s["id"].rsplit("/", 1)[0] + "/" + D.slug(nome)
+    try:
+        lv = int(d.get("livello")) if str(d.get("livello") or "").strip() else None
+    except (TypeError, ValueError):
+        lv = None
+    if lv:
+        s["livello"] = max(1, min(999, lv))
+        s["origine"]["livello"] = "scritto a mano"
+    for k, v in (d.get("campi") or {}).items():
+        if k in CAMPI_BOZZA and str(v or "").strip():
+            s[k] = str(v).strip()
+            s["origine"][k] = "scritto a mano"
+            if k in s["da_ritoccare"]:
+                s["da_ritoccare"].remove(k)
+    if s.get("difetto") and s.get("tratti"):
+        s["tratti"] = [s["difetto"], *s["tratti"][1:]]
+    s["ritratto"]["descrizione"] = descrizione_ritratto(s)
+    if d.get("completa"):
+        s = promuovi(s, cat=cat)["scheda"]
+        st = {k: str((d.get("storia") or {}).get(k) or "").strip() for k in STORIA}
+        c = s["completa"]
+        c["background"].update({"origine": st["origine"], "eventi_formativi": st["eventi"],
+                                "relazioni": st["relazioni"], "segreti": st["segreto"]})
+        c["obiettivi"]["lungo"] = st["obiettivo_lungo"]
+        c["quest"]["ganci"] = st["ganci"]
+    if lv:
+        out["avvisi"] = list(out["avvisi"]) + controlla_livello(s, None, cat)
+    out["scheda"] = s
+    out["combattimento"] = combattimento(s, cat)
+    return out
 
 
 def riga_zona(s: dict) -> dict:

@@ -16,6 +16,7 @@ import { Plancia } from "./pages/Plancia";
 import { PlanciaGiocatore } from "./pages/PlanciaGiocatore";
 import { Scontro } from "./pages/Scontro";
 import { Simulatore } from "./pages/Simulatore";
+import { Png } from "./pages/Png";
 import { Diario } from "./pages/Diario";
 import { Richieste } from "./pages/Richieste";
 import { Incanto } from "./pages/Incanto";
@@ -63,6 +64,7 @@ function Gate() {
           <Route path="/master" element={<MasterOnly><Master /></MasterOnly>} />
           <Route path="/master/forgia" element={<MasterOnly><Forgia /></MasterOnly>} />
           <Route path="/master/simulatore" element={<MasterOnly><Simulatore /></MasterOnly>} />
+          <Route path="/master/png" element={<MasterOnly><Png /></MasterOnly>} />
           <Route path="/master/plancia" element={<MasterOnly><Plancia /></MasterOnly>} />
           <Route path="/master/amministrazione" element={<MasterOnly><Amministrazione /></MasterOnly>} />
           <Route path="*" element={<NotFound />} />

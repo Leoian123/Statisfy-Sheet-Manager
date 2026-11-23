@@ -188,7 +188,7 @@ function NpcsWin({ npcs, setNpcs, session }: { npcs: Npc[]; setNpcs: (n: Npc[]) 
   }
 
   return (
-    <Win title="Archivio PNG" right={<span className="chip muted">{npcs.length} PNG</span>}>
+    <Win title="Archivio PNG" right={<><Link className="xs" to="/master/png">Mondo → PNG</Link> <span className="chip muted">{npcs.length} PNG</span></>}>
       <div className="ms-npc-wrap">
         <div className="ms-npc">
           <div className="ms-npc-list" role="group" aria-label="PNG">
@@ -208,6 +208,7 @@ function NpcsWin({ npcs, setNpcs, session }: { npcs: Npc[]; setNpcs: (n: Npc[]) 
                 <span className="ms-pc-name">{sel.name}</span>
                 <span className={`chip ${TRUST[sel.trust] || "muted"}`}>Fiducia: {sel.trust}</span>
               </div>
+              {sel.scheda && <p className="xs muted">Nato dai preset ({sel.dettaglio}): sette campi, affinità per partita, combattimento e ritratto sono in <Link to="/master/png">Mondo → PNG</Link>.</p>}
               <div className="ms-facts">
                 <div className="kv"><span className="label">Livello</span><span className="v num">{sel.level}</span></div>
                 <div className="kv"><span className="label">Razza</span><span className="v">{sel.race}</span></div>

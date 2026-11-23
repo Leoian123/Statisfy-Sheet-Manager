@@ -17,7 +17,7 @@ from typing import Any, Callable
 
 from . import mech as MECH
 from . import rules as R
-from .png.genera import blocco_forgia
+from .png import genera as PNG
 
 KIND_LABEL = {"skills": "Skill", "classes": "Classi", "races": "Razze", "titles": "Titoli", "npcs": "PNG",
               "encounters": "Incontri", "spells": "Incantesimi", "miracles": "Miracoli",
@@ -550,42 +550,49 @@ def title_apply(e: dict, pg: dict) -> list[str]:
 # ======================================================================
 # 5. PNG
 # ======================================================================
+def _npc(d: dict, ctx: dict) -> dict:
+    """La bozza passa dallo stesso motore della sezione PNG (app/png): strati, seme, campi riscritti a mano.
+    Il wizard della Forgia produce sempre una scheda completa (Sistema_PNG §4)."""
+    key = repr(sorted((k, repr(v)) for k, v in d.items()))
+    cache = ctx.setdefault("_png", {})
+    if key not in cache:
+        try:
+            cache[key] = PNG.da_bozza({**d, "completa": True}, set(ctx.get("npc_names") or []))
+        except ValueError as e:   # strato sconosciuto
+            cache[key] = {"scheda": None, "errori": [str(e)], "avvisi": []}
+    return cache[key]
+
+
 def npc_check(d: dict, ctx: dict) -> list[str]:
-    s0 = ("dai un nome al PNG." if not filled(d.get("name"), 2)
-          else "il livello va da 1 a 999." if as_int(d.get("level"), 1, 999) is None
-          else "indica la razza." if not filled(d.get("race"), 2)
-          else "indica dove si trova." if not filled(d.get("place"), 2)
-          else "" if filled(d.get("role"), 2) else "indica il ruolo.")
-    s1 = ("scrivi i tratti dominanti." if not filled(d.get("traits"), 3)
-          else "" if filled(d.get("speech"), 3) else "descrivi come parla.")
-    s2 = ("scrivi almeno l'origine o un evento formativo." if not filled(d.get("origin"), 3) and not filled(d.get("events"), 3)
-          else "indica almeno un obiettivo (breve o lungo termine)." if not filled(d.get("goalShort"), 3) and not filled(d.get("goalLong"), 3)
+    out = _npc(d, ctx)
+    s = out["scheda"]
+    s0 = ("scegli ruolo, età, razza e luogo." if not filled(d.get("ruolo"), 2)
+          else "; ".join(out["errori"]) if s is None else "")
+    if s is None:
+        return [s0, "", "", "", ""]
+    s1 = ("scegli un nome: per questa razza e questo regno i documenti non danno uno stile di nomi."
+          if s["nome"] == "[nome da scegliere]" else
+          "il livello va da 1 a 999." if filled(d.get("livello")) and as_int(d.get("livello"), 1, 999) is None else "")
+    s2 = ("scrivi la contraddizione: in che cosa questa persona smentisce il suo difetto o i suoi tratti?"
+          if not filled(s.get("contraddizione"), 3)
+          else "scrivi perché è qui: la sua razza è rara nel luogo." if "perche_qui" in s and not filled(s.get("perche_qui"), 3)
           else "")
-    s3 = ("scegli la fiducia iniziale." if d.get("trust") not in R.TRUST_LEVELS
-          else "" if filled(d.get("knows"), 3) else "scrivi cosa sa dei PG (anche «Niente»).")
-    return [s0, s1, s2, s3, ""]
+    return [s0, s1, s2, "", ""]
 
 
 def npc_compute(d: dict, ctx: dict) -> dict:
-    lv = as_int(d.get("level"), 1, 999)
-    return {"rank": R.power_rank(lv) if lv else None, "creature": blocco_forgia(lv or 1, d.get("size"))}
+    out = _npc(d, ctx)
+    s = out["scheda"]
+    return {"scheda": s, "avvisi": out.get("avvisi") or [], "errori": out.get("errori") or [],
+            "combattimento": out.get("combattimento"), "composizione": out.get("composizione"),
+            "rank": R.power_rank(s["livello"]) if s else None}
 
 
 def npc_build(d: dict, ctx: dict) -> dict:
-    t = lambda k: txt(d.get(k))
-    lv = as_int(d.get("level"), 1, 999) or 1
-    k = blocco_forgia(lv, d.get("size"))
-    npc = {
-        "name": t("name"), "level": lv, "race": t("race"), "place": t("place"), "role": t("role"), "trust": d.get("trust") or "Neutrale",
-        "knows": t("knows"), "debts": t("debts") or "—", "secret": t("secret") or "—", "kingdom": t("kingdom"), "age": t("age"),
-        "personality": {"traits": t("traits"), "speech": t("speech"), "motives": t("motives"), "fears": t("fears"), "habits": t("habits")},
-        "background": {"origin": t("origin"), "events": t("events"), "relations": t("relations")},
-        "goals": {"short": t("goalShort"), "long": t("goalLong"), "conflict": t("conflict")},
-        "resources": {"skills": t("skills"), "influence": t("influence"), "wealth": t("wealth"), "connections": t("connections")},
-        "combat": {"rarity": "Comune", "size": d.get("size") or "Normale", "hp": k["hp"], "dmg": k["dmg"]} if d.get("fight") else None,
-    }
-    return {"name": npc["name"], "npc": npc,
-            "summary": f"Lv {lv} · {npc['race']} · {npc['role']} · {npc['place']} · fiducia {npc['trust']}"}
+    s = _npc(d, ctx)["scheda"]
+    return {"name": s["nome"], "npc": {**s, "knows": txt(d.get("knows")), "debts": txt(d.get("debts")) or "—",
+                                       "secret": txt((d.get("storia") or {}).get("segreto")) or "—"},
+            "summary": f"Lv {s['livello']} · {s['ruolo'].replace('_', ' ')} · {s['razza'].replace('_', ' ')} · {s['luogo']}"}
 
 
 # ======================================================================
@@ -1093,7 +1100,7 @@ WIZARDS: dict[str, dict[str, Any]] = {
               "compute": race_compute, "build": race_build, "apply": None},
     "titles": {"steps": ["Identità", "Effetti", "Requisiti", "Evoluzione", "Assegna"], "check": title_check,
                "compute": title_compute, "build": title_build, "apply": title_apply},
-    "npcs": {"steps": ["Anagrafica", "Personalità", "Background", "Rapporto con i PG", "Combattimento"], "check": npc_check,
+    "npcs": {"steps": ["Strati", "Persona", "Sette campi", "Storia", "Rapporto con i PG"], "check": npc_check,
              "compute": npc_compute, "build": npc_build, "apply": None},
     "encounters": {"steps": ["Scena", "Gruppo", "Creature", "Bottino e ganci"], "check": encounter_check,
                    "compute": encounter_compute, "build": encounter_build, "apply": None},

@@ -64,8 +64,8 @@ export function sections({ role, charId, tickets, battle }: NavCtx): NavSection[
       },
       {
         key: "mondo", label: "Mondo", icon: "world", to: "/master/forgia",
-        match: (p) => p.startsWith("/master/forgia") || p.startsWith("/master/simulatore"),
-        tabs: [{ label: "Forgia", to: "/master/forgia" }, { label: "Simulatore", to: "/master/simulatore" }],
+        match: (p) => p.startsWith("/master/forgia") || p.startsWith("/master/simulatore") || p.startsWith("/master/png"),
+        tabs: [{ label: "Forgia", to: "/master/forgia" }, { label: "PNG", to: "/master/png" }, { label: "Simulatore", to: "/master/simulatore" }],
       },
       {
         key: "campagna", label: "Campagna", icon: "flag", to: "/master",

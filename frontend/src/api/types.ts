@@ -302,6 +302,9 @@ export interface Npc {
   last: string;
   secret: string;
   history: { session: number; text: string; at: string }[];
+  /** Sezione PNG: comparsa → scheda → completa. I PNG scritti a mano prima della sezione sono «completa» senza scheda. */
+  dettaglio?: "comparsa" | "scheda" | "completa";
+  scheda?: import("./png").Scheda | null;
 }
 
 export interface Issue {

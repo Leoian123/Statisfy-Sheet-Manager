@@ -84,8 +84,10 @@ Dalla cartella `backend/` (stampano YAML, non scrivono niente):
 .venv/Scripts/python -m app.png confronta fabbro
 ```
 
-Dall'app (solo Master) le stesse operazioni sono in `/api/png` (vedi `docs/API.md`): lì `nuovo` può salvare la scheda
-come bozza, e ci sono anche `combattimento`, `promuovi`, `aggiorna` (affinità, memoria, legami, morte) e `riga`.
+Nell'app (solo Master) la sezione è **Mondo → PNG**: Nuovo PNG (strati, pescata con il seme, sette campi da riscrivere,
+ritratto e immagini), Comparse, Archivio (promuovi, combattimento, affinità dopo la sessione, morte, riga di zona),
+Preset (varianti di razza di un ruolo) e Controlla. Il wizard PNG della **Forgia** usa lo stesso motore e salva una
+scheda completa. Le API sono in `/api/png` (vedi `docs/API.md`).
 
 ## Che cosa controlla «controlla»
 

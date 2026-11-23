@@ -6,17 +6,19 @@ livello nelle colonne e il resto in `scheda`. Vita e danno non si salvano: «com
 """
 from __future__ import annotations
 
+import re
+
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.attributes import flag_modified
 
 from ..auth import require_master
 from ..db import get_db
 from ..models import Campaign, Npc
+from ..png import archivio
 from ..png import controlla as K
 from ..png import dati as D
 from ..png import genera as G
@@ -44,6 +46,11 @@ class NuovoIn(Strati):
     seme: int | None = Field(None, ge=1, le=2**31)
     salva: bool = False
     partita: str | None = Field(None, max_length=40)
+    nome: str | None = Field(None, max_length=100)
+    livello: int | None = Field(None, ge=1, le=999)
+    genere: Literal["m", "f"] | None = None
+    campi: dict[str, str] = Field(default_factory=dict)
+    ritratto: dict | None = None
 
 
 class ComparseIn(BaseModel):
@@ -95,7 +102,7 @@ def _partita(db: Session, partita: str | None) -> str:
 
 
 def _usati(db: Session) -> set[str]:
-    return {n for n in db.scalars(select(Npc.name))}
+    return archivio.nomi_usati(db)
 
 
 def _npc(db: Session, npc_id: int) -> Npc:
@@ -108,20 +115,26 @@ def _npc(db: Session, npc_id: int) -> Npc:
 
 
 def _salva(db: Session, s: dict, n: Npc | None = None) -> Npc:
-    """Nome e livello nelle colonne, il resto in `scheda`."""
-    resto = {k: v for k, v in s.items() if k not in ("nome", "livello", "dettaglio", "db_id")}
-    if n is None:
-        n = Npc(name=s["nome"][:100], level=int(s.get("livello") or 1), history=[])
-        db.add(n)
-    else:
-        n.name, n.level = s["nome"][:100], int(s.get("livello") or 1)
-    n.race = str(s.get("razza") or "")[:100]
-    n.role = str(s.get("ruolo") or "")[:200]
-    n.place = str(s.get("luogo") or "")[:200]
-    n.dettaglio = s.get("dettaglio") or "scheda"
-    n.scheda = resto
-    flag_modified(n, "scheda")
-    return n
+    return archivio.salva(db, s, n)
+
+
+def _immagini(r: Any) -> dict:
+    """Ritratto: descrizione e al più 6 immagini, ognuna già ridotta dal browser (data URL, al più 300 kB)."""
+    if not isinstance(r, dict):
+        raise HTTPException(422, "Ritratto non valido.")
+    imm = r.get("immagini") or []
+    if not isinstance(imm, list) or len(imm) > 6:
+        raise HTTPException(422, "Al più 6 immagini per PNG.")
+    out = []
+    for i in imm:
+        src = str((i or {}).get("src") or "")
+        if not re.fullmatch(r"data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+", src) or len(src) > 300_000:
+            raise HTTPException(422, "Immagine non valida o troppo grande (massimo 300 kB dopo la riduzione).")
+        out.append({"id": str(i.get("id") or "")[:40], "src": src, "principale": bool(i.get("principale")),
+                    "nota": str(i.get("nota") or "")[:200]})
+    if out and not any(x["principale"] for x in out):
+        out[0]["principale"] = True
+    return {"descrizione": str(r.get("descrizione") or "")[:2000], "immagini": out}
 
 
 @router.get("/catalogo")
@@ -157,12 +170,16 @@ def confronta(ruolo: str, regno: str = "valeria", insediamento: str = "villaggio
 @router.post("/nuovo")
 def nuovo(data: NuovoIn, db: Session = Depends(get_db)):
     """Compone, pesca e propone una scheda. Con `salva` (in partita) la salva subito come bozza."""
+    bozza = data.model_dump(exclude={"salva", "partita", "ritratto"}) | data.luogo()
     try:
-        out = G.nuovo(data.ruolo, data.eta, data.razza, data.luogo(), data.ritocchi, data.seme, _usati(db))
+        out = G.da_bozza(bozza, _usati(db))
     except ErroreStrato as x:
         raise _errore(x)
     if out["scheda"] is None:
-        raise HTTPException(422, {"errori": out["errori"], "avvisi": out["avvisi"]})
+        raise HTTPException(422, "; ".join(out["errori"]))
+    if data.ritratto is not None:
+        out["scheda"]["ritratto"] = _immagini({**data.ritratto, "descrizione": data.ritratto.get("descrizione")
+                                               or out["scheda"]["ritratto"]["descrizione"]})
     if data.salva:
         s = out["scheda"]
         s["stato"] = {_partita(db, data.partita): dict(s["stato_iniziale"])}
@@ -208,16 +225,18 @@ def ritocca(npc_id: int, data: SchedaPatch, db: Session = Depends(get_db)):
         raise HTTPException(422, f"Campi non modificabili qui: {', '.join(fuori)}. "
                                  "Vita e danno non si scrivono: si calcolano con «combattimento».")
     s = scheda_di(n)
+    if "ritratto" in data.campi:
+        data.campi["ritratto"] = _immagini(data.campi["ritratto"])
     s.update(data.campi)
-    for k in data.campi:
+    for k in [k for k in data.campi if k != "ritratto"]:
         if k in (s.get("da_ritoccare") or []):
             s["da_ritoccare"].remove(k)
-        s.setdefault("origine", {})[k] = "ritocco a mano"
+        s.setdefault("origine", {})[k] = "scritto a mano"
     if data.nome:
         s["nome"] = data.nome
     if data.livello:
         s["livello"] = data.livello
-        s["origine"]["livello"] = "ritocco a mano"
+        s["origine"]["livello"] = "scritto a mano"
     _salva(db, s, n)
     db.commit()
     avvisi = K.controlla_schede([scheda_di(n)]).vista()
@@ -235,7 +254,7 @@ def promuovi(npc_id: int, db: Session = Depends(get_db)):
     n = _npc(db, npc_id)
     out = G.promuovi(scheda_di(n), _usati(db) - {n.name})
     if out["errori"]:
-        raise HTTPException(422, {"errori": out["errori"], "avvisi": out["avvisi"]})
+        raise HTTPException(422, "; ".join(out["errori"]))
     _salva(db, out["scheda"], n)
     db.commit()
     return {"npc": npc_out(n), "avvisi": out["avvisi"]}

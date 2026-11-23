@@ -164,12 +164,13 @@ def test_race_npc_class_entries(client, master):
     hp = next(x for x in pv["computed"]["level1"] if x["key"] == "hp")
     assert hp["value"] == 100 + 40 * 15 and hp["human"] == 100 + 10 * 15
     assert save(client, master, "races", race).status_code == 201
-    npc = {"name": "Elena la Saggia", "level": 45, "race": "Umana", "place": "Alba Chiara", "role": "Locandiera",
-           "traits": "Curiosa, diffidente", "speech": "Frasi brevi", "origin": "Nata ad Alba Chiara", "goalShort": "Pagare i debiti",
-           "trust": "Buono", "knows": "Niente", "fight": True, "size": "Robusta"}
+    npc = {"ruolo": "cittadino", "eta": "anziano", "razza": "umano", "zona": "alba-chiara", "seme": 4,
+           "ritocchi": ["livello 45", "ex cortigiana"], "nome": "Elena la Saggia",
+           "campi": {"contraddizione": "aiuta i forestieri, ma non si fida di nessuno"},
+           "storia": {"origine": "Nata ad Alba Chiara"}, "knows": "Niente"}
     r = save(client, master, "npcs", npc)
     assert r.status_code == 201, r.text
-    assert r.json()["entry"]["npc_id"] and r.json()["entry"]["data"]["npc"]["combat"]["hp"] == (40 + 45 * 20) * 1.5
+    assert r.json()["entry"]["npc_id"] and r.json()["entry"]["data"]["npc"]["livello"] == 45
     assert any(n["name"] == "Elena la Saggia" for n in client.get("/api/npcs", headers=master).json())
     cls = {"name": "Paladino", "ctype": "avanzata", "focus": "Combattente sacro", "unlock": "Addestramento al Tempio di Luxor",
            "keyStats": ["STR", "VIT"], "abMode": "new", "ab": {"name": "Giuramento", "res": "SP", "cost": 20, "cd": 3, "effect": "+30% difesa"},

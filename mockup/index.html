@@ -41,7 +41,6 @@
     <a href="#combattimento" data-route="combattimento">Combattimento</a>
     <div class="nav-sep"></div>
     <a href="#master" data-route="master">Area Master <span class="lock master-lock">MASTER</span></a>
-    <a href="#png" data-route="png">PNG <span class="lock master-lock">MASTER</span></a>
     <a href="#forgia" data-route="forgia">Forgia del Master <span class="lock master-lock">MASTER</span></a>
     <div class="nav-sep"></div>
     <p class="nav-note footnote">Prototipo di design. Dati di esempio dalla scheda Excel di Kelvin; PNG, pesi e stati di combattimento sono inventati. Le modifiche non vengono salvate.</p>
@@ -60,13 +59,11 @@
 <script src="screens/plancia.js" charset="utf-8"></script>
 <script src="screens/wizards-magia.js" charset="utf-8"></script>
 <script src="screens/wizards-master.js" charset="utf-8"></script>
-<script src="png-data.js" charset="utf-8"></script>
-<script src="screens/png.js" charset="utf-8"></script>
 <script>
 (function () {
   const S = window.STATISFY;
-  const ROUTES = ["plancia", "scheda", "inventario", "crea", "levelup", "combattimento", "master", "png", "forgia"];
-  const MASTER_ONLY = ["master", "png", "forgia"];
+  const ROUTES = ["plancia", "scheda", "inventario", "crea", "levelup", "combattimento", "master", "forgia"];
+  const MASTER_ONLY = ["master", "forgia"];
 
   // Menu account in alto a sinistra (creazione personaggio: funzione dell'utente, non della scheda)
   const brandBtn = document.getElementById("brand-btn");
