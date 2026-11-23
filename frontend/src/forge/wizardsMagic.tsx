@@ -1,7 +1,10 @@
 /* Forgia · gruppo "Magia": Incantesimo e Miracolo (porting di mockup/screens/wizards-magia.js).
-   Tutti i numeri (livelli, costo, backlash, danno, Fede, favore) li calcola il server: decisioni 6–22 di docs/PROPOSTE.md. */
+   Che cosa fa l'abilità lo dice la meccanica (passo obbligatorio subito dopo il concetto: danno, cura, status… con le
+   loro formule). Gli altri passi danno ciò che la meccanica non copre: sfere, livello ed efficacia, costo Mana,
+   ricarica, backlash (incantesimo); Fede, favore, voti (miracolo). Tutti i numeri li calcola il server: decisioni 6–22
+   di docs/PROPOSTE.md; costo e ricarica entrano nella meccanica salvata. */
 import type { Draft } from "../api/forge";
-import { MechStep } from "./MechStep";
+import { MechStep, PvMech } from "./MechStep";
 import { CheckF, DASH, Decided, NameOr, Picks, PvRow, PvWin, Ref, SelF, TextF, ni, nf, readNum, useW, type WCtx, type WizardDef } from "./engine";
 
 const D = {
@@ -14,13 +17,12 @@ const D = {
   metaSfera: "Metamagie di sfera: +2 livelli ciascuna.",
   gradoConsigliato: "Grado consigliato in ogni sfera ≥ livello di lancio, altrimenti il lancio conta come overcast (+2 al backlash).",
   sintonia: "Con più sfere la sintonia della zona si somma sfera per sfera, limite ±2.",
-  efficacia: "Efficacia = livello base + linea di potere + sintonia. La metamagia aumenta costo e rischio, non la potenza.",
-  danno: "Danno o cura = 15–30 × efficacia × molt. danno magico, poi ×1 con 1 sfera, ×0,85 con 2, ×0,75 con 3.",
+  efficacia: "Efficacia = livello base + linea di potere + sintonia. La metamagia aumenta costo e rischio, non la potenza. Le formule «Incantesimo» della meccanica la usano: 15–30 × efficacia × molt. magico.",
   miracoli: "I miracoli sono skill come gli incantesimi: entrano tra le skill attive del PG (Grado I · 1%) e salgono di Grado. Livelli 1–10.",
   fede: "Fede richiesta = 5 × L × (L+1).",
   costoMiracolo: "Costo = 12,5 × L × (L+1) Mana (livello 1 = 25, come Cura Minore).",
   favore: "Scala del favore: −3 Maledizione divina … 0 Neutrale … +4 Benedizione divina. Richiesto: livello 1–2 Notato, 3–5 Favorito, 6–8 Prescelto, 9–10 Benedizione; un grado in più fuori dal dominio del dio.",
-  potenza: "Potenza = base × livello × (1 + Fede/100) × molt. favore: al favore richiesto ×1, +25% per ogni grado in più; un grado sotto ×0,5, due o più gradi sotto 0.",
+  potenza: "Molt. favore: al favore richiesto ×1, +25% per ogni grado in più; un grado sotto ×0,5, due o più gradi sotto 0 (il miracolo non funziona).",
   profilo: "Profilo di ogni dio: nature affini, tono, voti e tabù.",
   abuso: "Conseguenze dell'abuso: −1 o −2 favore, oppure Maledizione divina.",
 };
@@ -80,8 +82,8 @@ const incantesimo: WizardDef = {
   id: "incantesimo", kind: "spells", group: "Magia", title: "Incantesimo",
   desc: "Il mago compone le sfere: livello, metamagia, costo Mana, backlash e grimorio.",
   heading: "Nuovo incantesimo",
-  intro: "Il giocatore descrive l'effetto, il narratore ne valuta costo, livello e rischi in base alle sfere (Magia_Creazione_Incantesimi.txt, Magic.txt).",
-  fresh: (meta) => ({ name: "", effect: "", category: "attacco", origin: "grimorio", spheres: [], combo: false, level: 1, meta: [],
+  intro: "Il giocatore descrive l'effetto, il Master lo traduce in meccanica e ne valuta sfere, livello, costo e rischi (Magia_Creazione_Incantesimi.txt, Magic.txt).",
+  fresh: (meta) => ({ name: "", effect: "", origin: "grimorio", spheres: [], combo: false, level: 1, meta: [],
     env: { zone: "", ley: 0, anti: false }, risk: { fatigue: false, emotion: false, interrupt: false, overcast: "auto", protections: 0 },
     cost: null, cd: null, mech: null, charId: meta.characters[0] ? String(meta.characters[0].id) : "", assign: true, force: false }),
   saveLabel: (x) => (x.d.assign && x.c.can_skill && x.c.char ? `Salva e aggiungi a ${x.c.char.name}` : "Salva nella libreria"),
@@ -90,10 +92,10 @@ const incantesimo: WizardDef = {
       <TextF path="name" label="Nome dell'incantesimo" req max={40} ph="Es. Palla di Fuoco"
         hint={x.c.name_taken ? <span className="wz-warn">Esiste già un incantesimo con questo nome nella libreria.</span> : "Da 2 a 40 caratteri."} />
       <TextF path="effect" label="Effetto dichiarato dal giocatore" req area rows={4} max={600} ph="Es. Una sfera di fuoco che esplode al contatto e incendia l'area."
-        hint="È il giocatore a descrivere l'effetto; il narratore ne valuta costo, livello e rischi in base alle sfere." />
-      <Picks path="category" label="Categoria" opts={x.meta.spell_categories.map((c) => ({ v: c.key, l: c.name }))} />
+        hint="È il giocatore a descrivere l'effetto; al passo successivo diventa una meccanica, poi il narratore ne valuta sfere, costo e rischi." />
       <Picks path="origin" label="Origine" cls="wz-cards" opts={x.meta.spell_origins.map((o) => ({ v: o.key, l: <b>{o.name}</b>, sub: o.text }))} />
     </> },
+    { render: () => <MechStep kind={() => "incantesimo"} required /> },
     { render: (x) => {
       const sel = x.d.spheres as Draft[];
       const reqs = (x.c.reqs ?? []) as Draft[];
@@ -167,7 +169,6 @@ const incantesimo: WizardDef = {
     } },
     { render: (x) => {
       const B = x.c.backlash as Draft | undefined;
-      const E = x.c.effect as Draft | null | undefined;
       const L = x.c.levels as Draft | undefined;
       const mp = x.c.char?.mp;
       const cost = Number(x.d.cost ?? x.c.sugg?.cost);
@@ -196,16 +197,8 @@ const incantesimo: WizardDef = {
           <span className="small">{B.text}</span>
           <span className="xs muted">Fasce: Minore ≤8 · Moderato 9–15 · Maggiore 16–20 · Grave 21–25 · Catastrofico 26+ (Magic.txt, Backlash table)</span>
         </div>}
-        <div className="wz-box">
-          {E ? <>
-            <div className="row wz-between"><span className="label">{E.kind} stimat{E.kind === "Cura" ? "a" : "o"} per {x.c.char?.name ?? "—"}</span><span className="wz-big">{ni(E.min)}–{ni(E.max)}</span></div>
-            <span className="wz-calc">{(E.steps as string[]).join(" ")}</span>
-            <span className="xs muted"><Decided why={D.danno} /> Il danno magico puro non sottrae la Difesa.</span>
-          </> : <><span className="label">Danno o cura stimati</span><span className="small muted">Questa categoria non ha un numero: l'effetto lo descrive il narratore.</span></>}
-        </div>
       </>;
     } },
-    { render: () => <MechStep kind={() => "incantesimo"} launch={(x) => (Number(x.c.cost) > 0 ? { risorsa: "MP", valore: Number(x.c.cost) } : null)} /> },
     { render: (x) => {
       const reqs = (x.c.reqs ?? []) as Draft[];
       const ch = x.c.char as Draft | null;
@@ -232,17 +225,15 @@ const incantesimo: WizardDef = {
     const { d, c } = x;
     const L = c.levels as Draft | undefined;
     const B = c.backlash as Draft | undefined;
-    const E = c.effect as Draft | null | undefined;
     const pairs = (c.pairs ?? []) as Draft[];
     const w = c.worst as Draft | null | undefined;
     const reqs = (c.reqs ?? []) as Draft[];
     const miss = reqs.filter((r) => r.status === "missing").length;
     const over = reqs.filter((r) => r.status === "overcast").length;
-    const cat = x.meta.spell_categories.find((k) => k.key === d.category)?.name ?? "—";
     const ori = x.meta.spell_origins.find((o) => o.key === d.origin);
     return (
       <PvWin tag="INCANTESIMO" head={<NameOr s={d.name} ph="Incantesimo senza nome" />}>
-        <PvRow label="Categoria">{cat}</PvRow>
+        <PvMech />
         <PvRow label="Origine" tip={ori?.text}>{ori?.name ?? "—"}</PvRow>
         <PvRow label="Sfere" tip={(d.spheres as Draft[]).map((s, i) => `${i + 1}. ${s.s}: ${String(s.role).trim() || "ruolo da indicare"}${s.trav ? " · uso traverso (+1 lv)" : ""}`)}>
           {(d.spheres as Draft[]).map((s) => s.s).join(" + ") || DASH}</PvRow>
@@ -257,7 +248,6 @@ const incantesimo: WizardDef = {
         <PvRow label="Ricarica" tip={c.sugg ? `Suggerito: ${c.sugg.cd}` : undefined}>{c.cd ?? "—"} t</PvRow>
         <PvRow label="Backlash" tip={B ? [...(B.factors as Draft[]).map((f) => `${f.v >= 0 ? "+" : "−"}${Math.abs(f.v)} ${f.label}`), B.text] : undefined}>
           {B ? <span className={toneCls(B.tone)}>{B.band} · {B.score}</span> : "—"}</PvRow>
-        <PvRow label={E ? `${E.kind} (${c.char?.name ?? "PG"})` : "Danno/cura"} tip={E ? E.steps : "Categoria senza numero: lo descrive il narratore"}>{E ? `${ni(E.min)}–${ni(E.max)}` : DASH}</PvRow>
         <PvRow label="Requisiti PG" tip={reqs.map((r) => `${r.s}: PG ${roman(x, r.has)} · richiesto ${roman(x, r.need)} · consigliato ${roman(x, r.rec)}`)}>
           <span className={miss ? "wz-bad" : over ? "wz-warn" : "wz-ok"}>{!c.char ? "—" : miss ? `${miss} sfer${miss === 1 ? "a" : "e"} mancant${miss === 1 ? "e" : "i"}` : over ? "overcast" : "ok"}</span></PvRow>
       </PvWin>
@@ -267,18 +257,18 @@ const incantesimo: WizardDef = {
 
 function SpellCard() {
   const { d, c, meta } = useW();
-  const cat = meta.spell_categories.find((k) => k.key === d.category)?.name ?? "—";
   const ori = meta.spell_origins.find((o) => o.key === d.origin)?.name ?? "—";
   const L = c.levels as Draft | undefined;
   return (
     <div className="sysmsg gold wz-sys anim-in" role="group" aria-label="Scheda dell'incantesimo">
       <span className="tag">[INCANTESIMO] {String(d.name).trim() || "Senza nome"}</span>
-      <span><span className="muted">Livello</span> {L?.cast} (base {L?.base}{L?.meta ? ` + metamagia ${L.meta}` : ""}{L?.trav ? ` + traverso ${L.trav}` : ""}) · {cat}</span>
+      <span><span className="muted">Livello</span> {L?.cast} (base {L?.base}{L?.meta ? ` + metamagia ${L.meta}` : ""}{L?.trav ? ` + traverso ${L.trav}` : ""}) · <span className="muted">efficacia</span> {L?.eff}</span>
       <span><span className="muted">Sfere</span> {(d.spheres as Draft[]).map((s) => `${s.s} (${String(s.role).trim() || "?"}${s.trav ? ", traverso" : ""})`).join(" + ") || "—"}</span>
       {(c.meta_names ?? []).length > 0 && <span><span className="muted">Metamagia</span> {c.meta_names.join(", ")}</span>}
       <span><span className="muted">Costo</span> {ni(c.cost)} MP · <span className="muted">Lancio</span> {c.turns} t · <span className="muted">Ricarica</span> {c.cd} t</span>
       <span><span className="muted">Rischio</span> backlash {c.backlash?.band} ({c.backlash?.score})</span>
       <span><span className="muted">Effetto</span> {String(d.effect).trim() || "—"}</span>
+      {c.mech?.text && <span><span className="muted">Meccanica</span> {c.mech.text}</span>}
       <span><span className="muted">Origine</span> {ori}{d.combo ? " · combinazione" : ""}</span>
     </div>
   );
@@ -313,11 +303,12 @@ const miracolo: WizardDef = {
         {x.c.affine ? `Rientra nel dominio del dio.` : "Il dio lo concede a fatica: favore richiesto +1 grado."}</span>}
       <TextF path="effect" label="Effetto" req area rows={4} max={600} ph="Es. Una luce calda chiude le ferite di un alleato a portata di voce." />
     </> },
+    { render: () => <MechStep kind={() => "miracolo"} required /> },
     { render: (x) => {
       const P = x.c.power as Draft | undefined;
       return <>
         <LevelStepper label="Livello del miracolo (1–10)" why={D.miracoli} />
-        <p className="xs muted">Il miracolo costa Mana come ogni magia; potenza e accesso dipendono dalla Fede e dal favore del dio.</p>
+        <p className="xs muted">Il miracolo costa Mana come ogni magia; l'effetto è quello della meccanica, l'accesso dipende dalla Fede e dal favore del dio.</p>
         <div className="wz-grid2">
           <SuggNum path="fede" label="Fede richiesta" sugg={x.c.sugg?.fede} why={D.fede} hint={`Suggerito: ${ni(x.c.sugg?.fede)} (5 × ${x.c.level} × ${(x.c.level ?? 0) + 1}).`} />
           <div className="field">
@@ -335,14 +326,9 @@ const miracolo: WizardDef = {
           <SuggNum path="cd" label="Ricarica" sugg={x.c.sugg?.cd} unit="turni" why={D.ricarica} />
         </div>
         {P && <div className="wz-box">
-          {P.value ? <>
-            <div className="row wz-between"><span className="label">{P.value.kind} stimat{P.value.kind === "Cura" ? "a" : "o"} per {x.c.char?.name ?? "—"}</span>
-              <span className="wz-big">{P.fm.mult ? `${ni(P.value.min)}–${ni(P.value.max)}` : "nessun effetto"}</span></div>
-            <span className="wz-calc">{P.value.base[0]}–{P.value.base[1]} × livello {x.c.level} × (1 + Fede {ni(x.c.char_fede)}/100) × favore {nf(P.fm.mult)}</span>
-          </> : <><span className="label">Potenza per {x.c.char?.name ?? "—"}</span>
-            <span className="xs muted">Questa natura non ha un numero: l'effetto lo descrive il narratore, più forte con più Fede e favore.</span></>}
+          <div className="row wz-between"><span className="label">Favore di {x.c.char?.name ?? "—"} <Decided why={D.potenza} /></span>
+            <span className={`wz-big ${P.fm.mult ? "" : "wz-bad"}`}>×{nf(P.fm.mult)}</span></div>
           <span className="small">Fede {ni(x.c.char_fede)} · favore {x.c.char_favor_name}{x.c.char_favor?.recorded ? "" : " (non registrato)"} su {x.c.favor_name} richiesto → {P.fm.state}</span>
-          <span className="xs muted"><Decided why={D.potenza} /></span>
         </div>}
       </>;
     } },
@@ -356,7 +342,6 @@ const miracolo: WizardDef = {
         <TextF path="againstNote" label="Nota del Master (facoltativa)" max={200} ph="Es. Morteus manda un corvo a reclamare il debito" />
       </>;
     } },
-    { render: () => <MechStep kind={() => "miracolo"} launch={(x) => (Number(x.c.cost) > 0 ? { risorsa: "MP", valore: Number(x.c.cost) } : null)} /> },
     { render: (x) => {
       const ch = x.c.char as Draft | null;
       const issues = (x.c.issues ?? []) as string[];
@@ -369,6 +354,7 @@ const miracolo: WizardDef = {
           <span><span className="muted">Livello</span> {x.c.level} · <span className="muted">Fede</span> {ni(x.c.fede)} · <span className="muted">Favore</span> {x.c.favor_name}</span>
           <span><span className="muted">Costo</span> {ni(x.c.cost)} MP · <span className="muted">Ricarica</span> {x.c.cd} t</span>
           <span><span className="muted">Voti</span> {(x.c.vows ?? []).join(" · ") || "—"}</span>
+          {x.c.mech?.text && <span><span className="muted">Meccanica</span> {x.c.mech.text}</span>}
         </div>
         {charSel(x)}
         <div className="wz-box"><span className="label">Requisiti su {ch?.name ?? "—"}</span>
@@ -398,6 +384,7 @@ const miracolo: WizardDef = {
     const issues = (c.issues ?? []) as string[];
     return (
       <PvWin tag="MIRACOLO" head={<NameOr s={d.name} ph="Miracolo senza nome" />}>
+        <PvMech />
         <PvRow label="Divinità" tip={god ? [god.epithet, god.sphere, `Tono: ${god.tone}`] : undefined}>{god?.name ?? DASH}</PvRow>
         <PvRow label="Dominio" tip={god ? `Opposto: ${god.domain === "Luce" ? "Ombra" : "Luce"}` : undefined}>{god?.domain ?? DASH}</PvRow>
         <PvRow label="Natura" tip={nat?.text}><span className={god && !c.affine ? "wz-warn" : ""}>{nat ? `${nat.name}${god && !c.affine ? " · fuori dominio" : ""}` : "—"}</span></PvRow>
@@ -406,8 +393,8 @@ const miracolo: WizardDef = {
         <PvRow label="Favore richiesto" tip={c.sugg ? [`Suggerito: ${c.sugg_favor_name}`, d.favor != null ? "Valore modificato a mano" : ""] : undefined}>{c.favor_name ?? "—"}</PvRow>
         <PvRow label="Costo Mana" tip={c.sugg ? [`Suggerito: 12,5 × ${c.level} × ${c.level + 1} = ${ni(c.sugg.cost)} MP`, "Cura Minore: 25 MP a livello 1"] : undefined}>{c.cost != null ? `${ni(c.cost)} MP` : "—"}</PvRow>
         <PvRow label="Ricarica" tip={c.sugg ? `Suggerito: ${c.sugg.cd}` : undefined}>{c.cd ?? "—"} t</PvRow>
-        {P && <PvRow label={P.value ? `${P.value.kind} (${c.char?.name ?? "PG"})` : "Potenza"} tip={[`Fede del PG ${ni(c.char_fede)} · favore ${c.char_favor_name}${c.char_favor?.recorded ? "" : " (non registrato)"}`, `Molt. favore ×${nf(P.fm.mult)} (${P.fm.state})`]}>
-          {P.value ? (P.fm.mult ? `${ni(P.value.min)}–${ni(P.value.max)}` : "nessun effetto") : P.fm.state}</PvRow>}
+        {P && <PvRow label={`Favore (${c.char?.name ?? "PG"})`} tip={[`Fede del PG ${ni(c.char_fede)} · favore ${c.char_favor_name}${c.char_favor?.recorded ? "" : " (non registrato)"}`, `Molt. favore ×${nf(P.fm.mult)}`, D.potenza]}>
+          <span className={P.fm.mult ? "" : "wz-bad"}>{P.fm.state}</span></PvRow>}
         <PvRow label="Voti e tabù" tip={c.vows}>{(c.vows ?? []).length || DASH}</PvRow>
         <PvRow label="Contro la volontà" tip={ag ? [ag.text, String(d.againstNote ?? "").trim()] : undefined}>{ag?.name ?? DASH}</PvRow>
         <PvRow label="Assegnazione" tip={issues}><span className={d.assign && issues.length ? "wz-warn" : ""}>{!d.assign ? "solo libreria" : issues.length ? (d.force ? "forzata" : "da verificare") : `a ${c.char?.name ?? "—"}`}</span></PvRow>

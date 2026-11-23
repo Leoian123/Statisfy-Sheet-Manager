@@ -56,9 +56,6 @@ def test_spell_rules():
     b = rules.backlash([{"s": "Tempus"}, {"s": "Ignis"}], 4, {"fatigue": True, "protections": 1}, False, True)
     # 8 + fatica 1 + overcast 2 − protezioni 1 + sfera pura 2 + coppia pericolosa 2 = 14
     assert b["score"] == 14 and b["band"] == "Moderato"
-    e = rules.spell_effect("attacco", 2, 2, 1.5, [])
-    assert (e["min"], e["max"]) == (rules.js_round(15 * 2 * 0.85 * 1.5), rules.js_round(30 * 2 * 0.85 * 1.5))
-    assert rules.spell_effect("utilita", 2, 1, 1, []) is None
 
 
 def test_miracle_rules():
@@ -66,8 +63,6 @@ def test_miracle_rules():
     assert [rules.miracle_fede(l) for l in (1, 3, 10)] == [10, 60, 550]
     assert rules.favor_required(1, True) == 1 and rules.favor_required(9, True) == 4 and rules.favor_required(4, False) == 3
     assert rules.favor_mult(3, 1)["mult"] == 1.5 and rules.favor_mult(0, 1)["mult"] == 0.5 and rules.favor_mult(-1, 1)["mult"] == 0
-    p = rules.miracle_power("guarigione", 2, 50, 1, 1)
-    assert p["value"]["min"] == 40 * 2 * 1.5 and p["value"]["kind"] == "Cura"
 
 
 def test_title_evolution_replaces_previous():
@@ -228,24 +223,37 @@ def test_drop_profile_endpoints(client, master):
 
 def test_spell_and_miracle_assignment(client, master):
     kid = kelvin_id(client, master)
-    spell = {"name": "Dardo di Forza", "effect": "Un proiettile di energia pura", "category": "attacco", "origin": "grimorio",
+    spell = {"name": "Dardo di Forza", "effect": "Un proiettile di energia pura", "origin": "grimorio", "mech": {"v": 1, "effetti": [{"azione": {"op": "danno"}, "formula": {"base": "incantesimo", "tipo": "Vis"}}]},
              "spheres": [{"s": "Vis", "role": "forma", "trav": False}], "combo": False, "level": 1, "meta": [],
              "env": {"zone": "", "ley": 0, "anti": False}, "risk": {"overcast": "auto", "protections": 0},
              "cost": None, "cd": None, "charId": kid, "assign": True, "force": False}
     pv = preview(client, master, "spells", spell)
     c = pv["computed"]
     assert pv["first_bad"] == -1 and c["cost"] == 20 and c["turns"] == 1 and c["reqs"][0]["status"] == "ok"
-    assert c["backlash"]["score"] == 2 and c["effect"]["kind"] == "Danno"
+    assert c["backlash"]["score"] == 2 and "effect" not in c
+    # la meccanica è obbligatoria (passo 2) e l'anteprima la mostra con il costo e la ricarica del wizard
+    assert "20 MP" in c["mech"]["text"] and "15–30" in c["mech"]["text"]
+    nomech = preview(client, master, "spells", {**spell, "mech": None})
+    assert nomech["first_bad"] == 1 and "meccanica" in nomech["steps"][1]
+    empty = preview(client, master, "spells", {**spell, "mech": {"v": 1, "effetti": []}})
+    assert empty["first_bad"] == 1
     # Ignis non è posseduta da Kelvin: serve forzare
     two = {**spell, "name": "Fiamma di Forza", "spheres": [*spell["spheres"], {"s": "Ignis", "role": "sostanza", "trav": False}]}
     assert "non possiede Ignis" in preview(client, master, "spells", two)["steps"][-1]
     assert save(client, master, "spells", spell).status_code == 201
-    assert char(client, master, kid)["active_skills"][-1]["cost"] == "20 MP"
+    sk = char(client, master, kid)["active_skills"][-1]
+    assert sk["cost"] == "20 MP" and "category" not in sk and {k: sk["mech"]["costi"][0][k] for k in ("risorsa", "valore", "per")} == {"risorsa": "MP", "valore": 20, "per": "lancio"}
+    lib = next(e for e in client.get("/api/forge/library", headers=master).json() if e["name"] == "Dardo di Forza")
+    assert "Danno" in lib["summary"] and "category" not in lib["data"]
 
     miracle = {"god": "luxor", "name": "Luce che Risana", "nature": "guarigione", "effect": "Chiude le ferite di un alleato",
                "level": 1, "fede": None, "favor": None, "cost": None, "cd": None, "vows": ["Non mentire sotto giuramento"],
-               "customVows": "", "against": "indebolito", "againstNote": "", "charId": kid, "assign": True, "force": False}
+               "customVows": "", "against": "indebolito", "againstNote": "", "charId": kid, "assign": True, "force": False,
+               "mech": {"v": 1, "effetti": [{"bersaglio": {"lato": "alleato", "forma": "singolo"}, "azione": {"op": "cura"},
+                                             "formula": {"base": "incantesimo", "tipo": "magico"}}]}}
+    assert preview(client, master, "miracles", {**miracle, "mech": None})["first_bad"] == 2
     pv = preview(client, master, "miracles", miracle)
+    assert "value" not in pv["computed"]["power"] and "25 MP" in pv["computed"]["mech"]["text"]
     assert pv["computed"]["cost"] == 25 and pv["computed"]["fede"] == 10
     # guarigione fuori dal dominio di Luxor: favore richiesto +1 grado (Favorito)
     assert pv["computed"]["sugg_favor_name"] == "Favorito"
@@ -310,7 +318,7 @@ def test_assign_from_library_later(client, master):
     again = client.post(f"/api/forge/entries/{eid}/assign", json={"char_id": kid}, headers=master)
     assert again.status_code == 422 and "ha già il titolo" in again.json()["detail"]
     # incantesimo con sfere che il PG non ha: serve force
-    spell = {"name": "Fiamma", "effect": "Una fiammata improvvisa", "category": "attacco", "origin": "grimorio",
+    spell = {"name": "Fiamma", "effect": "Una fiammata improvvisa", "origin": "grimorio", "mech": {"v": 1, "effetti": [{"azione": {"op": "danno"}, "formula": {"base": "incantesimo", "tipo": "Vis"}}]},
              "spheres": [{"s": "Ignis", "role": "forma"}], "level": 1, "meta": [], "env": {}, "risk": {}, "assign": False}
     sid = save(client, master, "spells", spell).json()["entry"]["id"]
     r = client.post(f"/api/forge/entries/{sid}/assign", json={"char_id": kid}, headers=master)

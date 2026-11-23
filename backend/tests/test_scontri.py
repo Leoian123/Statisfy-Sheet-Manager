@@ -141,7 +141,7 @@ def test_candidates_list(client, master):
 
 
 def test_forge_spell_with_mech_reaches_sheet(client, master):
-    spell = {"name": "Dardo di prova", "effect": "Un dardo di energia.", "category": "attacco", "origin": "grimorio",
+    spell = {"name": "Dardo di prova", "effect": "Un dardo di energia.", "origin": "grimorio",
              "spheres": [{"s": "Vis", "role": "forma", "trav": False}], "combo": False, "level": 1, "meta": [],
              "env": {"zone": "", "ley": 0, "anti": False}, "risk": {}, "cost": None, "cd": None, "charId": 1,
              "assign": True, "force": True, "mech": {"v": 1, "effetti": [
@@ -151,7 +151,7 @@ def test_forge_spell_with_mech_reaches_sheet(client, master):
     assert "15–30" in pv["computed"]["mech"]["text"]
     bad = {**spell, "mech": {"v": 1, "effetti": [{"azione": {"op": "danno"}}]}}
     pv = client.post("/api/forge/preview", json={"kind": "spells", "draft": bad}, headers=master).json()
-    assert pv["first_bad"] == 4 and "formula" in pv["steps"][4]
+    assert pv["first_bad"] == 1 and "formula" in pv["steps"][1]
     r = client.post("/api/forge/entries", json={"kind": "spells", "draft": spell}, headers=master)
     assert r.status_code == 201, r.text
     sk = next(x for x in client.get("/api/characters/1", headers=master).json()["active_skills"]

@@ -38,7 +38,6 @@ export interface ForgeMeta {
   exp_modes: ExpMode[];
   spheres: Sphere[];
   spell_roles: string[];
-  spell_categories: { key: string; name: string }[];
   spell_origins: { key: string; name: string; text: string; skill: boolean }[];
   compat_notes: Record<string, string>;
   metamagic: { key: string; name: string; en: string; lv: number; text: string }[];

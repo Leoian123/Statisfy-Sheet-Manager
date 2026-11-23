@@ -424,8 +424,9 @@ Solo Master (`/api/admin`, 403 altrimenti):
   (schema in `backend/app/mech.py`, versione `v: 1`). Ogni effetto ha Trigger, Bersaglio, Azione, Formula,
   Condizioni/Scaling; l'abilità ha costi, cooldown, timing, durata, etichette, interazioni, rider, fusione.
   Il PATCH la valida (422 con messaggio leggibile) e la salva normalizzata. Il testo `effect` resta la descrizione.
-- **Forgia:** passo «Meccanica» (penultimo) per `spells`, `miracles`, `skills`; `draft.mech` facoltativo,
-  `computed.mech = {text, errors}`; `GET /forge/meta` → `mech` (vocabolario, catalogo status, 74 modelli).
+- **Forgia:** passo «Meccanica» per `spells` (2° passo, obbligatorio), `miracles` (3°, obbligatorio) e `skills`
+  (penultimo, facoltativo); `computed.mech = {text, errors}`, con costo e ricarica del wizard già inclusi. Gli incantesimi
+  non hanno più `category` né la stima `computed.effect`: che cosa fanno lo dice la meccanica; `GET /forge/meta` → `mech` (vocabolario, catalogo status, 74 modelli).
 - **Scontro** (uno attivo alla volta; stato del motore `backend/app/engine.py`):
   - `GET /api/scontri/attivo` → `{scontro: {id, name, version, state, mine, master, can_undo} | null}` (abilità dei
     nemici nascoste ai giocatori).

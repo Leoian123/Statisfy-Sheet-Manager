@@ -29,6 +29,8 @@ Nel mockup i punti decisi hanno il chip verde **deciso**; quelli ancora aperti i
 10. **Sintonia** con più sfere: si somma sfera per sfera, limite ±2.
 11. **Efficacia** = livello base + linea di potere + sintonia. La metamagia aumenta costo e rischio, non la potenza.
 12. **Danno o cura** = 15–30 × efficacia × molt. danno magico, poi ×1 con 1 sfera, ×0,85 con 2, ×0,75 con 3.
+    *Dal 23/11/2026 il numero lo dà la meccanica dell'incantesimo (formula «Incantesimo» = 15–30 × efficacia × molt. magico);
+    il motore del combattimento non applica la riduzione per numero di sfere.*
 
 ## Miracoli (`mockup/screens/wizards-magia.js`) — tutti DECISI
 13. **I miracoli sono skill**, esattamente come gli incantesimi: entrano tra le skill attive del PG e salgono di Grado.
@@ -38,6 +40,8 @@ Nel mockup i punti decisi hanno il chip verde **deciso**; quelli ancora aperti i
 17. **Scala del favore divino:** −3 Maledizione divina, −2 Rinnegato, −1 In disgrazia, 0 Neutrale, +1 Notato, +2 Favorito, +3 Prescelto, +4 Benedizione divina.
 18. **Favore richiesto:** livello 1–2 Notato, 3–5 Favorito, 6–8 Prescelto, 9–10 Benedizione; un grado in più se la natura del miracolo è fuori dal dominio del dio.
 19. **Potenza** = base × livello × (1 + Fede/100) × molt. favore: al favore richiesto ×1, +25% per ogni grado in più; un grado sotto ×0,5, due o più gradi sotto 0.
+    *Dal 23/11/2026 il numero lo dà la meccanica del miracolo (efficacia = livello); la Forgia mostra ancora il molt. favore,
+    ma il motore del combattimento non applica né la Fede né il favore.*
 20. **Profilo di ogni dio:** nature affini, tono, voti e tabù.
 21. **Conseguenze dell'abuso:** −1 o −2 favore, oppure Maledizione divina.
 22. **Fede:** statistica avanzata che il PG sblocca appena crede in un dio.

@@ -1080,9 +1080,6 @@ SPHERES = [
 ]
 SPHERE_KEYS = [s["key"] for s in SPHERES]
 SPELL_ROLES = ["forma", "innesco", "sostanza", "direzione", "potenza", "durata", "bersaglio", "protezione"]
-SPELL_CATEGORIES = [{"key": "attacco", "name": "Attacco"}, {"key": "difesa", "name": "Difesa"}, {"key": "cura", "name": "Cura"},
-                    {"key": "controllo", "name": "Controllo"}, {"key": "utilita", "name": "Utilità"},
-                    {"key": "movimento", "name": "Movimento"}, {"key": "percezione", "name": "Percezione"}]
 SPELL_ORIGINS = [
     {"key": "grimorio", "name": "Grimorio", "text": "Scritto in uno slot del Grimorio Basilare: si consolida subito, senza pratica.", "skill": True},
     {"key": "pratica", "name": "Pratica", "text": "Usato con continuità: entra «in pratica» come incantesimo di Grado I all'1%.", "skill": True},
@@ -1284,29 +1281,6 @@ def backlash(spheres: list[dict], cast: int, risk: dict, anti: bool, overcast: b
     return {"score": score, "band": b["name"], "tone": b["tone"], "text": b["text"], "factors": f, "overcast": overcast}
 
 
-SPELL_COMPOSITION = [1, 0.85, 0.75]  # ×1 con una sfera, ×0,85 con due, ×0,75 con tre (deciso)
-
-
-def spell_effect(category: str, eff: int, n_spheres: int, molt_mag: float, meta: list[str]) -> dict | None:
-    """Danno o cura = 15–30 × efficacia × molt. danno magico × composizione (deciso). None se la categoria non ha numeri."""
-    if category not in ("attacco", "cura"):
-        return None
-    n = max(1, min(3, n_spheres))
-    comp = SPELL_COMPOSITION[n - 1]
-    lo, hi = 15 * eff * comp * molt_mag, 30 * eff * comp * molt_mag
-    steps = [f"base 15–30 × efficacia {eff}"]
-    if comp != 1:
-        steps.append(f"× {fmt_it(comp)} ({n} sfere)")
-    steps.append(f"× molt. magico {fmt_it(molt_mag)}")
-    if "empower" in meta:
-        lo, hi = lo * 1.5, hi * 1.5
-        steps.append("× 1,5 Potenziata")
-    if "maximize" in meta:
-        lo = hi
-        steps.append("Massimizzata: sempre il massimo")
-    return {"min": js_round(lo), "max": js_round(hi), "steps": steps, "kind": "Cura" if category == "cura" else "Danno"}
-
-
 def spell_meta_names(meta: list[str]) -> list[str]:
     out = []
     for k in meta:
@@ -1350,9 +1324,9 @@ GODS = [
 ]
 MIRACLE_NATURES = [
     {"key": "benedizione", "name": "Benedizione", "text": "Potenzia un alleato, un oggetto o un luogo"},
-    {"key": "guarigione", "name": "Guarigione", "text": "Ripristina Vita, chiude ferite, cura malattie", "base": [40, 60]},
+    {"key": "guarigione", "name": "Guarigione", "text": "Ripristina Vita, chiude ferite, cura malattie"},
     {"key": "protezione", "name": "Protezione", "text": "Scudi, santuari, difesa da influenze ostili"},
-    {"key": "castigo", "name": "Castigo", "text": "Danno o punizione inflitta in nome del dio", "base": [15, 30]},
+    {"key": "castigo", "name": "Castigo", "text": "Danno o punizione inflitta in nome del dio"},
     {"key": "rivelazione", "name": "Rivelazione", "text": "Visioni, verità nascoste, presagi"},
     {"key": "purificazione", "name": "Purificazione", "text": "Scaccia maledizioni, veleni e corruzione"},
     {"key": "intercessione", "name": "Intercessione", "text": "Chiede al dio di intervenire di persona"},
@@ -1421,17 +1395,6 @@ def is_cleric(classe: str | None) -> bool:
     return "chieric" in str(classe or "").lower()
 
 
-def miracle_power(nature: str, level: int, fede: float, have_favor: int, need_favor: int) -> dict:
-    """Potenza = base × livello × (1 + Fede/100) × molt. favore (deciso). value None se la natura non ha numeri."""
-    nat = next((n for n in MIRACLE_NATURES if n["key"] == nature), None)
-    fm = favor_mult(have_favor, need_favor)
-    if not nat or "base" not in nat or not level:
-        return {"fm": fm, "value": None}
-    k = level * (1 + fede / 100) * fm["mult"]
-    return {"fm": fm, "value": {"min": js_round(nat["base"][0] * k), "max": js_round(nat["base"][1] * k),
-                                "base": list(nat["base"]), "kind": "Cura" if nature == "guarigione" else "Danno"}}
-
-
 def forge_config() -> dict:
     """Costanti della Forgia per il frontend (opzioni dei wizard)."""
     return {
@@ -1445,7 +1408,7 @@ def forge_config() -> dict:
         "trust": list(TRUST_LEVELS), "sizes": copy.deepcopy(SIZES), "environments": list(ENVIRONMENTS),
         "difficulty": [{"max": None if b[0] == math.inf else b[0], "label": b[1], "tone": b[2]} for b in DIFFICULTY_BANDS],
         "drop_kinds": copy.deepcopy(DROP_KINDS), "exp_modes": list(EXP_MODES),
-        "spheres": copy.deepcopy(SPHERES), "spell_roles": list(SPELL_ROLES), "spell_categories": copy.deepcopy(SPELL_CATEGORIES),
+        "spheres": copy.deepcopy(SPHERES), "spell_roles": list(SPELL_ROLES),
         "spell_origins": copy.deepcopy(SPELL_ORIGINS), "compat_notes": {k: v.get("note") for k, v in COMPAT_RAW.items() if v.get("note")},
         "metamagic": copy.deepcopy(METAMAGIC), "sphere_meta": copy.deepcopy(SPHERE_META), "sphere_meta_lv": SPHERE_META_LV,
         "zones": copy.deepcopy(MAGIC_ZONES), "ley_lines": copy.deepcopy(LEY_LINES),

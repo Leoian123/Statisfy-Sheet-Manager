@@ -24,6 +24,8 @@ export interface MechEditorProps {
   errors?: string[];
   /** Codici delle statistiche, suggeriti per «Modifica statistica». */
   statKeys?: string[];
+  /** Incantesimi e miracoli: la meccanica è obbligatoria (niente «Togli la meccanica»). */
+  required?: boolean;
 }
 
 const FORMULA_OPS: MechOp[] = ["danno", "cura", "danno_e_cura", "scudo", "risorsa"];
@@ -498,7 +500,7 @@ function Gallery({ templates, onPick, onClose }: { templates: MechTemplate[]; on
 }
 
 /* ---------------- Editor ---------------- */
-export function MechEditor({ value, onChange, vocab, kindHint, lockKind, stripTemplateCosts, text, errors, statKeys }: MechEditorProps) {
+export function MechEditor({ value, onChange, vocab, kindHint, lockKind, stripTemplateCosts, text, errors, statKeys, required }: MechEditorProps) {
   const uid = useId().replace(/[^A-Za-z0-9_-]/g, "");
   const [gallery, setGallery] = useState(false);
   const m = value;
@@ -537,12 +539,14 @@ export function MechEditor({ value, onChange, vocab, kindHint, lockKind, stripTe
         {Array.from(new Set(statOpts)).map((s) => <option key={s} value={s}>{vocab.status.modifiers[s] ?? s}</option>)}
       </datalist>
 
-      {!m && <p className="small muted mc-intro">Facoltativa: descrive l'abilità in effetti che il motore del combattimento sa applicare
+      {!m && required && <p className="small muted mc-intro">Descrive che cosa fa davvero: quando scatta, su chi, cosa fa, quanto e a quali
+        condizioni. È ciò che il motore del combattimento applica; costo Mana e ricarica li aggiungono i passi successivi.</p>}
+      {!m && !required && <p className="small muted mc-intro">Facoltativa: descrive l'abilità in effetti che il motore del combattimento sa applicare
         (quando scatta, su chi, cosa fa, quanto, a quali condizioni). Senza meccanica l'abilità resta solo testo.</p>}
       <div className="mc-bar">
         <button type="button" className="btn" aria-expanded={gallery} onClick={() => setGallery(!gallery)}>Parti da un modello</button>
         <button type="button" className="btn" onClick={scratch}>{m ? "Ricomincia da zero" : "Da zero"}</button>
-        {m && <button type="button" className="btn ghost" onClick={() => {
+        {m && !required && <button type="button" className="btn ghost" onClick={() => {
           if (window.confirm("Togliere la meccanica? L'abilità resta solo testo.")) onChange(null);
         }}>Togli la meccanica</button>}
       </div>

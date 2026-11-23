@@ -29,13 +29,15 @@ KINDS = list(KIND_LABEL)
 
 
 # ---------- Meccanica strutturata (passo «Meccanica» di incantesimi, miracoli e skill) ----------
-def mech_msg(d: dict) -> str:
-    """Il passo Meccanica è facoltativo: senza `mech` l'abilità resta descrittiva."""
+def mech_msg(d: dict, required: bool = False) -> str:
+    """Passo Meccanica: facoltativo per le skill (senza `mech` resta descrittiva), obbligatorio per incantesimi e miracoli."""
     raw = d.get("mech")
     if not raw:
-        return ""
-    _, errs = MECH.parse(raw)
-    return errs[0] if errs else ""
+        return "Definisci la meccanica: parti da un modello o da zero." if required else ""
+    m, errs = MECH.parse(raw)
+    if errs:
+        return errs[0]
+    return "Aggiungi almeno un effetto alla meccanica." if required and m and not m.effetti else ""
 
 
 def mech_final(d: dict, tipo: str, cost: Any = None, res: str = "MP", cd: Any = None, tags: Any = ()) -> dict | None:
@@ -61,17 +63,33 @@ def mech_final(d: dict, tipo: str, cost: Any = None, res: str = "MP", cd: Any = 
     return MECH.dump(parsed) if parsed else None
 
 
-def with_mech(check: Callable, compute: Callable) -> tuple[Callable, Callable]:
-    """Aggiunge il passo Meccanica (penultimo) a un wizard e la sua descrizione all'anteprima."""
+def mech_ops(m: dict | None) -> str:
+    """Azioni della meccanica senza ripetizioni, es. «Danno · Applica status»: per il riepilogo della libreria."""
+    out: list[str] = []
+    for e in (m or {}).get("effetti") or []:
+        op = MECH.OPS.get(str((e.get("azione") or {}).get("op")), "").split(" (")[0]
+        if op and op not in out:
+            out.append(op)
+    return " · ".join(out[:3])
+
+
+def with_mech(check: Callable, compute: Callable, at: int = -1, required: bool = False,
+              final: Callable | None = None) -> tuple[Callable, Callable]:
+    """Aggiunge il passo Meccanica a un wizard (in posizione `at`, default penultimo) e la sua descrizione
+    all'anteprima. `final(d, ctx)` dà la meccanica come verrà salvata (costo e ricarica del wizard compresi)."""
     def c(d: dict, ctx: dict) -> list[str]:
         msgs = check(d, ctx)
-        return msgs[:-1] + [mech_msg(d)] + msgs[-1:]
+        i = at if at >= 0 else len(msgs) - 1
+        return msgs[:i] + [mech_msg(d, required)] + msgs[i:]
 
     def k(d: dict, ctx: dict) -> dict:
         out = compute(d, ctx)
         raw = d.get("mech")
         if raw:
             m, errs = MECH.parse(raw)
+            if m and not errs and final:
+                done = final(d, ctx)
+                m = MECH.parse(done)[0] if done else m
             out["mech"] = {"text": MECH.describe(m) if m else "", "errors": errs}
         else:
             out["mech"] = None
@@ -701,10 +719,8 @@ def _spell_state(d: dict, ctx: dict) -> dict:
     over_auto = bool(c) and any(r["status"] != "ok" for r in reqs)
     over = over_auto if ov == "auto" else ov == "si"
     B = R.backlash(_spheres(d), V["L"]["cast"], risk, bool(dct(d.get("env")).get("anti")), over)
-    mm = c["derived"].get("moltMag", 1) if c else 1
-    E = R.spell_effect(d.get("category") or "", V["L"]["eff"], len(_spheres(d)), mm, [str(m) for m in lst(d.get("meta"))])
     return {"V": V, "char": c, "origin": origin, "reqs": reqs, "missing": [r for r in reqs if r["status"] == "missing"],
-            "can_skill": bool(origin and origin["skill"]), "overcast_auto": over_auto, "backlash": B, "effect": E}
+            "can_skill": bool(origin and origin["skill"]), "overcast_auto": over_auto, "backlash": B}
 
 
 def spell_check(d: dict, ctx: dict) -> list[str]:
@@ -712,7 +728,6 @@ def spell_check(d: dict, ctx: dict) -> list[str]:
     s0 = ("Dai un nome all'incantesimo (almeno 2 caratteri)." if len(name) < 2
           else "Nome troppo lungo: massimo 40 caratteri." if len(name) > 40
           else "Descrivi l'effetto dichiarato dal giocatore." if not filled(d.get("effect"), 5)
-          else "Scegli la categoria." if d.get("category") not in [c["key"] for c in R.SPELL_CATEGORIES]
           else "Scegli l'origine." if d.get("origin") not in [o["key"] for o in R.SPELL_ORIGINS] else "")
     sph = _spheres(d)
     keys = [x["s"] for x in sph]
@@ -749,7 +764,7 @@ def spell_compute(d: dict, ctx: dict) -> dict:
     pairs = R.compat_pairs([x["s"] for x in _spheres(d) if x["s"] in R.SPHERE_KEYS])
     return {
         "levels": A["V"]["L"], "sugg": A["V"]["sugg"], "cost": A["V"]["cost"], "cd": A["V"]["cd"], "turns": A["V"]["turns"],
-        "backlash": A["backlash"], "effect": A["effect"], "reqs": A["reqs"], "missing": len(A["missing"]),
+        "backlash": A["backlash"], "reqs": A["reqs"], "missing": len(A["missing"]),
         "overcast_auto": A["overcast_auto"], "can_skill": A["can_skill"], "pairs": pairs, "worst": R.worst_pair(pairs),
         "meta_names": R.spell_meta_names([str(m) for m in lst(d.get("meta"))]),
         "char": {**char_brief(c), "mp": c["derived"].get("mp", 0), "molt_mag": c["derived"].get("moltMag", 1),
@@ -764,25 +779,33 @@ def spell_build(d: dict, ctx: dict) -> dict:
     V, B = A["V"], A["backlash"]
     assign = bool(d.get("assign") and A["can_skill"] and A["char"])
     sph = _spheres(d)
-    cat = next((c["name"] for c in R.SPELL_CATEGORIES if c["key"] == d.get("category")), "")
+    mech = _spell_mech(d, ctx)
+    ops = mech_ops(mech)
     return {
         "name": txt(d.get("name")),
-        "summary": f"Lv {V['L']['cast']} · {'+'.join(x['s'] for x in sph)} · {R.fmt_n(V['cost'])} MP · {cat} · backlash {B['band']}",
-        "type": "Incantesimo", "effect": txt(d.get("effect")), "category": d.get("category"), "origin": d.get("origin"),
+        "summary": f"Lv {V['L']['cast']} · {'+'.join(x['s'] for x in sph)} · {R.fmt_n(V['cost'])} MP"
+                   + (f" · {ops}" if ops else "") + f" · backlash {B['band']}",
+        "type": "Incantesimo", "effect": txt(d.get("effect")), "origin": d.get("origin"),
         "spheres": [{"sphere": x["s"], "role": x["role"], "traverso": x["trav"]} for x in sph], "combo": bool(d.get("combo")),
         "level": V["L"]["base"], "castLevel": V["L"]["cast"], "efficacy": V["L"]["eff"],
         "metamagic": R.spell_meta_names([str(m) for m in lst(d.get("meta"))]), "env": dct(d.get("env")),
         "cost": int(V["cost"]), "castTurns": V["turns"], "cd": int(V["cd"]),
         "backlash": {"score": B["score"], "band": B["band"]}, "assignedTo": A["char"]["id"] if assign else None,
         "forced": bool(assign and A["missing"]),
-        "mech": mech_final(d, "incantesimo", int(V["cost"]), "MP", int(V["cd"]), [x["s"] for x in sph]),
+        "mech": mech,
     }
+
+
+def _spell_mech(d: dict, ctx: dict) -> dict | None:
+    """Meccanica dell'incantesimo con il costo Mana e la ricarica del wizard, le sfere come etichette."""
+    V = _spell_vals(d)
+    return mech_final(d, "incantesimo", as_int(V["cost"], 1, 10 ** 7), "MP", as_int(V["cd"], 0, 999), [x["s"] for x in _spheres(d)])
 
 
 def spell_apply(e: dict, pg: dict) -> list[str]:
     pg["active_skills"].append({"name": e["name"], "effect": e["effect"], "lvl": 1, "pct": 1, "cost": f"{e['cost']} MP",
                                 "cd": e["cd"], "kind": "Incantesimo", "spheres": [x["sphere"] for x in e["spheres"]],
-                                "category": e.get("category"), "efficacia": e.get("efficacy"),
+                                "efficacia": e.get("efficacy"),
                                 **({"mech": e["mech"]} if e.get("mech") else {})})
     return [f"Aggiunto al grimorio di {pg['name']}: Grado I · 1%."]
 
@@ -822,8 +845,8 @@ def _miracle_state(d: dict, ctx: dict) -> dict:
         issues.append(f"Fede {R.fmt_n(fede)} su {R.fmt_n(V['fede'])} richiesta")
     if c and V["god"] and fav["v"] < need:
         issues.append(f"favore di {V['god']['name']}: {R.favor_name(fav['v'])}, serve {R.favor_name(need)}")
-    P = R.miracle_power(d.get("nature") or "", V["L"], fede, fav["v"], need)
-    return {"V": V, "char": c, "fede": fede, "fav": fav, "need": need, "issues": issues, "power": P}
+    return {"V": V, "char": c, "fede": fede, "fav": fav, "need": need, "issues": issues,
+            "power": {"fm": R.favor_mult(fav["v"], need)}}
 
 
 def miracle_check(d: dict, ctx: dict) -> list[str]:
@@ -868,15 +891,24 @@ def miracle_build(d: dict, ctx: dict) -> dict:
     V = A["V"]
     nat = next(n for n in R.MIRACLE_NATURES if n["key"] == d.get("nature"))
     assign = bool(d.get("assign") and A["char"])
+    mech = _miracle_mech(d, ctx)
+    ops = mech_ops(mech)
     return {
         "name": txt(d.get("name")),
-        "summary": f"{V['god']['name']} · {nat['name']} · Lv {V['L']} · {R.fmt_n(V['cost'])} MP · Fede {R.fmt_n(V['fede'])} · {R.favor_name(V['favor'])}",
+        "summary": f"{V['god']['name']} · {nat['name']} · Lv {V['L']} · {R.fmt_n(V['cost'])} MP" + (f" · {ops}" if ops else "")
+                   + f" · Fede {R.fmt_n(V['fede'])} · {R.favor_name(V['favor'])}",
         "type": "Miracolo", "god": V["god"]["name"], "domain": V["god"]["domain"], "nature": d.get("nature"), "effect": txt(d.get("effect")),
         "level": V["L"], "fede": int(V["fede"]), "favor": int(V["favor"]), "favorName": R.favor_name(V["favor"]),
         "cost": int(V["cost"]), "cd": int(V["cd"]), "vows": _vows(d), "against": d.get("against"), "againstNote": txt(d.get("againstNote")),
         "assignedTo": A["char"]["id"] if assign else None, "forced": bool(assign and A["issues"]),
-        "mech": mech_final(d, "miracolo", int(V["cost"]), "MP", int(V["cd"]), [V["god"]["name"]]),
+        "mech": mech,
     }
+
+
+def _miracle_mech(d: dict, ctx: dict) -> dict | None:
+    """Meccanica del miracolo con il costo Mana e la ricarica del wizard, il dio come etichetta."""
+    V = _miracle_vals(d)
+    return mech_final(d, "miracolo", as_int(V["cost"], 1, 10 ** 7), "MP", as_int(V["cd"], 0, 999), [V["god"]["name"]] if V["god"] else [])
 
 
 def miracle_apply(e: dict, pg: dict) -> list[str]:
@@ -1047,8 +1079,8 @@ def assign_preview(kind: str, e: dict, c: dict) -> dict:
 # Registro dei wizard
 # ======================================================================
 _SK = with_mech(skill_check, skill_compute)
-_SP = with_mech(spell_check, spell_compute)
-_MI = with_mech(miracle_check, miracle_compute)
+_SP = with_mech(spell_check, spell_compute, at=1, required=True, final=_spell_mech)
+_MI = with_mech(miracle_check, miracle_compute, at=2, required=True, final=_miracle_mech)
 
 WIZARDS: dict[str, dict[str, Any]] = {
     "skills": {"steps": ["Identità", "Effetto", "Gradi", "Ottenimento", "Meccanica", "Assegna"],
@@ -1063,9 +1095,9 @@ WIZARDS: dict[str, dict[str, Any]] = {
              "compute": npc_compute, "build": npc_build, "apply": None},
     "encounters": {"steps": ["Scena", "Gruppo", "Creature", "Bottino e ganci"], "check": encounter_check,
                    "compute": encounter_compute, "build": encounter_build, "apply": None},
-    "spells": {"steps": ["Concetto", "Sfere", "Potenza", "Costo e rischi", "Meccanica", "Anteprima"],
+    "spells": {"steps": ["Concetto", "Meccanica", "Sfere", "Potenza", "Costo e rischi", "Anteprima"],
                "check": _SP[0], "compute": _SP[1], "build": spell_build, "apply": spell_apply},
-    "miracles": {"steps": ["Divinità", "Natura", "Requisiti e costo", "Voti e tabù", "Meccanica", "Anteprima"],
+    "miracles": {"steps": ["Divinità", "Natura", "Meccanica", "Requisiti e costo", "Voti e tabù", "Anteprima"],
                  "check": _MI[0], "compute": _MI[1], "build": miracle_build, "apply": miracle_apply},
     "items": {"steps": ["Identità", "Effetti", "Requisiti e peso", "Assegna"], "check": item_check,
               "compute": item_compute, "build": item_build, "apply": item_apply},
