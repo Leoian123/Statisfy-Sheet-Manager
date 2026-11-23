@@ -418,6 +418,28 @@ Solo Master (`/api/admin`, 403 altrimenti):
 - `GET /admin/log?limit=1..200` → `[{id, at, actor, action, target, detail}]`: registro delle operazioni (ultime 1.000,
   mai password).
 
+## Meccanica delle abilità e scontri (`/api/scontri`)
+
+- **`mech` (facoltativo)** su elementi di `active_skills`, `skills`, `talents`, `titles`: meccanica strutturata
+  (schema in `backend/app/mech.py`, versione `v: 1`). Ogni effetto ha Trigger, Bersaglio, Azione, Formula,
+  Condizioni/Scaling; l'abilità ha costi, cooldown, timing, durata, etichette, interazioni, rider, fusione.
+  Il PATCH la valida (422 con messaggio leggibile) e la salva normalizzata. Il testo `effect` resta la descrizione.
+- **Forgia:** passo «Meccanica» (penultimo) per `spells`, `miracles`, `skills`; `draft.mech` facoltativo,
+  `computed.mech = {text, errors}`; `GET /forge/meta` → `mech` (vocabolario, catalogo status, 74 modelli).
+- **Scontro** (uno attivo alla volta; stato del motore `backend/app/engine.py`):
+  - `GET /api/scontri/attivo` → `{scontro: {id, name, version, state, mine, master, can_undo} | null}` (abilità dei
+    nemici nascoste ai giocatori).
+  - `GET /api/scontri/candidati` (Master): incontri aperti e PG con il numero di abilità con meccanica.
+  - `POST /api/scontri` (Master) `{encounter_id?, pg_ids?, creature?: [{name, count, level, rarity, size}], tiri?}`.
+  - `POST /{id}/anteprima` `{attore, abilita, bersagli}` → `{passi, richieste, stima, reazioni}` (nessuna modifica).
+  - `POST /{id}/azione` `{version, attore, abilita, bersagli, tiri?, forza?}`: i tiri mancanti li fa il server;
+    se un nemico può reagire la risposta ha `result.esito = "reazione"` e una finestra in `state.in_attesa`.
+  - `POST /{id}/reazione` `{version, finestra, attore?, abilita?, bersagli?}` (senza attore = nessuna reazione).
+  - `POST /{id}/mantenuto/stop`, `POST /{id}/fine-turno`, `POST /{id}/combattenti/{cid}` (Master: hp/mp/sp,
+    remove_status, vivo), `POST /{id}/annulla` (Master, ultimi 10 stati), `POST /{id}/chiudi` (Master).
+  - Il giocatore agisce solo con i propri PG (e le loro evocazioni), nel proprio turno o in una finestra di
+    reazione; `forza` solo il Master. `version` diversa → 409. Le risorse dei PG si sincronizzano con la scheda.
+
 ## Servizio e produzione
 
 - `GET /api/health` → `{"status": "ok"}` senza login. Con `STATISFY_ENV=production` niente `/docs` e `/openapi.json`. Vedi `docs/DEPLOY.md`.

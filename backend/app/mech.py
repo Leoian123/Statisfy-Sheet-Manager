@@ -418,7 +418,8 @@ def describe(m: Mech) -> str:
         head.append(" + ".join(f"{_n(c.valore)} {c.status if c.risorsa == 'stack' else c.risorsa}"
                                + ("/turno" if c.per == "turno" else "") for c in m.costi))
     if m.cooldown.valore:
-        head.append(f"CD {m.cooldown.valore} {CD_UNITS[m.cooldown.unita]}")
+        u = CD_UNITS[m.cooldown.unita]
+        head.append(f"CD {m.cooldown.valore} {'turno' if u == 'turni' and m.cooldown.valore == 1 else u}")
     if m.usi:
         head.append(f"{m.usi.n}/{m.usi.per}")
     if m.timing != "mio_turno":
@@ -429,7 +430,7 @@ def describe(m: Mech) -> str:
                     f"{d} ({m.durata.turni} turni)" if m.durata.tipo == "canalizzato" else d)
     if head:
         parts.append(" · ".join(head) + ".")
-    parts += [describe_effect(e) + "." for e in m.effetti]
+    parts += [describe_effect(e).rstrip(".") + "." for e in m.effetti]
     for i in m.interazioni:
         parts.append(f"Se lanciato entro {i.entro_turni} turni da {i.dopo}: " + describe_effect(i.effetto).lower() + ".")
     for r in m.rider:

@@ -1,0 +1,3346 @@
+{
+ "Dardo Arcano": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 900.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 5,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis",
+   "Proiettile"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vis",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Allarme": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 200.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "azione_nemica",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "narrativo",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": "Allarme: Eric viene avvisato."
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Scudo": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 560.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 4,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "scudo",
+     "status": "",
+     "stack": 1,
+     "turni": 3,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vis",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Esplosione Arcana": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "area",
+     "n": 5,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vis",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": [
+   "Scudo",
+   "Dardo Arcano"
+  ]
+ },
+ "Disincanto": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "dispel",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "buoni",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Evoca Famiglio": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 300.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 3,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "evoca",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "Famiglio",
+     "hp": 500.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "intervallo",
+     "min": 50.0,
+     "max": 100.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "magico",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Frustata Arcana": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vis",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "sposta",
+       "status": "",
+       "stack": 1,
+       "turni": 0,
+       "stat": "",
+       "valore": 0.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "attira",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Sovraccarico Arcano": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 300.0,
+    "per": "lancio",
+    "status": ""
+   },
+   {
+    "risorsa": "MP",
+    "valore": 50.0,
+    "per": "turno",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 3,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "mantenuto",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "inizio_turno",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "status_applica",
+     "status": "Potenziato",
+     "stack": 1,
+     "turni": 1,
+     "stat": "",
+     "valore": 25.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Attenuazione": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "status_applica",
+     "status": "Resistente",
+     "stack": 1,
+     "turni": 2,
+     "stat": "magico",
+     "valore": 20.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Counterspell": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 300.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 3,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "reazione",
+  "azione": "reazione",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": false,
+  "rischio": 0.0,
+  "etichette": [
+   "Vis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "interrompi",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Vista Vitale": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 560.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 4,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": false,
+  "rischio": 0.0,
+  "etichette": [
+   "Anima"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "rivela",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Bisturi dell'Anima": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Anima"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Anima",
+     "penetrazione": 50.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Prosciuga Vita": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 120.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Anima"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno_e_cura",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 50.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Anima",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Rianimazione": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Anima"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "resuscita",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 20.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Prigione d'Acqua": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 200.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "status_applica",
+     "status": "Immobilizzato",
+     "stack": 1,
+     "turni": 2,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Lama di Ghiaccio": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Aqua",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "status_applica",
+       "status": "Gelo",
+       "stack": 1,
+       "turni": 3,
+       "stat": "",
+       "valore": 0.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Comunicazione dell'Acqua": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 200.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": false,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "narrativo",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": "Comunicazione a distanza attraverso l'acqua."
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Pioggia di Ghiaccio": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 120.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "area",
+     "n": 6,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Aqua",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "status_applica",
+       "status": "Gelo",
+       "stack": 1,
+       "turni": 3,
+       "stat": "",
+       "valore": 0.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Geyser d'Acqua": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 560.0,
+    "per": "lancio",
+    "status": ""
+   },
+   {
+    "risorsa": "MP",
+    "valore": 40.0,
+    "per": "turno",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 4,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "mantenuto",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "area",
+     "n": 5,
+     "raggio": 3.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Aqua",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   },
+   {
+    "trigger": {
+     "evento": "inizio_turno",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "area",
+     "n": 5,
+     "raggio": 3.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Aqua",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [
+     {
+      "da": "turni_mantenuto",
+      "status": "",
+      "evento": "",
+      "passo": 15.0,
+      "max": 60.0
+     }
+    ],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Pilastro di Ghiaccio": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 200.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "evoca",
+     "status": "",
+     "stack": 1,
+     "turni": 3,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "Pilastro di ghiaccio",
+     "hp": 800.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Bufera": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 120.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "area",
+     "n": 6,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Aqua",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "stat_mod",
+       "status": "",
+       "stack": 1,
+       "turni": 2,
+       "stat": "precisione",
+       "valore": -20.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Forma dell'Acqua": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 200.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "trasforma",
+     "status": "",
+     "stack": 1,
+     "turni": 3,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "Forma dell'acqua",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "se",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "stat_mod",
+       "status": "",
+       "stack": 1,
+       "turni": 3,
+       "stat": "evasione",
+       "valore": 30.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Freccia di Ghiaccio Nero": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Aqua",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "status_applica",
+       "status": "Gelo",
+       "stack": 2,
+       "turni": 3,
+       "stat": "",
+       "valore": 0.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Anti-Emorragia": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "status_rimuovi",
+     "status": "Sanguinamento",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Acqua Curatrice": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 120.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "cura",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vita",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Forma di Ghiaccio": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 200.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "trasforma",
+     "status": "",
+     "stack": 1,
+     "turni": 3,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "Forma di ghiaccio",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "se",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "status_applica",
+       "status": "Resistente",
+       "stack": 1,
+       "turni": 3,
+       "stat": "fisico",
+       "valore": 30.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Deflettore": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 720.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 4,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "reazione",
+  "azione": "reazione",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": false,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "se",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "reindirizza",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Movimento Cinetico": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Aqua"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "sposta",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "spingi",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Aura Benefica": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 120.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vita"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "tutti",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "cura",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vita",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Rinvigorire": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Vita"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "cura",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "fissa",
+     "min": 1000.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Vita",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Barriera Mentale": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Mens"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "alleato",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "status_applica",
+     "status": "Resistente",
+     "stack": 1,
+     "turni": 3,
+     "stat": "Mens",
+     "valore": 50.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Sovraccarico Mentale": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Mens"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Mens",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "status_applica",
+       "status": "Stordito",
+       "stack": 1,
+       "turni": 1,
+       "stat": "",
+       "valore": 0.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": null,
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 30.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Furto di Memorie": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Mens"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "narrativo",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": "Ruba ricordi al bersaglio."
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Scrittura delle Memorie": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Mens"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "narrativo",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": "Scrive ricordi nel bersaglio."
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Lettura della Mente": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 120.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 2,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": false,
+  "rischio": 0.0,
+  "etichette": [
+   "Mens"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "rivela",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": null,
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Pirocinesi": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 60.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Ignis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "singolo",
+     "n": 1,
+     "raggio": 0.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Ignis",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": [
+     {
+      "trigger": {
+       "evento": "al_lancio",
+       "chi": "se",
+       "abilita": "",
+       "soglia": 0.0
+      },
+      "bersaglio": {
+       "lato": "nemico",
+       "forma": "singolo",
+       "n": 1,
+       "raggio": 0.0,
+       "calo": 0.0,
+       "portata": "distanza"
+      },
+      "azione": {
+       "op": "status_applica",
+       "status": "Bruciatura",
+       "stack": 1,
+       "turni": 2,
+       "stat": "",
+       "valore": 0.0,
+       "pct": 0.0,
+       "risorsa": "",
+       "modo": "",
+       "nome": "",
+       "hp": 0.0,
+       "eccesso_scudo": false,
+       "polarita": "",
+       "testo": ""
+      },
+      "formula": {
+       "base": "fissa",
+       "min": 50.0,
+       "max": 0.0,
+       "dadi": "",
+       "pct": 0.0,
+       "di": "bersaglio",
+       "quale": "max",
+       "molt": "nessuno",
+       "tipo": "Ignis",
+       "penetrazione": 0.0
+      },
+      "condizioni": [],
+      "scaling": [],
+      "probabilita": 100.0,
+      "critico": 0.0,
+      "ritardo": 0,
+      "figli": []
+     }
+    ]
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ },
+ "Palla di Fuoco": {
+  "v": 1,
+  "tipo": "incantesimo",
+  "costi": [
+   {
+    "risorsa": "MP",
+    "valore": 20.0,
+    "per": "lancio",
+    "status": ""
+   }
+  ],
+  "cooldown": {
+   "valore": 1,
+   "unita": "turni"
+  },
+  "usi": null,
+  "timing": "mio_turno",
+  "azione": "principale",
+  "durata": {
+   "tipo": "istantaneo",
+   "turni": 0,
+   "interrompibile": true
+  },
+  "tiro_colpire": true,
+  "rischio": 0.0,
+  "etichette": [
+   "Ignis"
+  ],
+  "effetti": [
+   {
+    "trigger": {
+     "evento": "al_lancio",
+     "chi": "se",
+     "abilita": "",
+     "soglia": 0.0
+    },
+    "bersaglio": {
+     "lato": "nemico",
+     "forma": "area",
+     "n": 6,
+     "raggio": 5.0,
+     "calo": 0.0,
+     "portata": "distanza"
+    },
+    "azione": {
+     "op": "danno",
+     "status": "",
+     "stack": 1,
+     "turni": 0,
+     "stat": "",
+     "valore": 0.0,
+     "pct": 0.0,
+     "risorsa": "",
+     "modo": "",
+     "nome": "",
+     "hp": 0.0,
+     "eccesso_scudo": false,
+     "polarita": "",
+     "testo": ""
+    },
+    "formula": {
+     "base": "incantesimo",
+     "min": 0.0,
+     "max": 0.0,
+     "dadi": "",
+     "pct": 0.0,
+     "di": "bersaglio",
+     "quale": "max",
+     "molt": "nessuno",
+     "tipo": "Ignis",
+     "penetrazione": 0.0
+    },
+    "condizioni": [],
+    "scaling": [],
+    "probabilita": 100.0,
+    "critico": 0.0,
+    "ritardo": 0,
+    "figli": []
+   }
+  ],
+  "interazioni": [],
+  "rider": [],
+  "fusione": []
+ }
+}
