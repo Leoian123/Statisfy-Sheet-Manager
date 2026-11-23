@@ -316,9 +316,15 @@ def amount(ctx: Ctx, key: str, eff, src: dict, tgt: dict, ab: dict | None, label
     elif f.molt != "nessuno":
         mult = num(stat(src, f.molt)) or 1
     sc = scale_pct(ctx, eff.scaling, src, tgt, ab)
-    out = v * mult * (1 + sc / 100)
+    div = (ab or {}).get("divino") or {}
+    dm = num(div.get("mult")) if div else 1.0
+    out = v * mult * (1 + sc / 100) * dm
     ctx.step(f"{label}: {fmt(v)}" + (f" × {mult:.2f}".replace(".", ",") if mult != 1 else "")
-             + (f" × (1 + {fmt(sc)}%)" if sc else "") + f" = {fmt(out)}")
+             + (f" × (1 + {fmt(sc)}%)" if sc else "")
+             + (f" × {dm:.2f}".replace(".", ",") + f" (Fede {fmt(num(div.get('fede')))}, favore di {div.get('dio') or '—'} "
+                f"{div.get('stato')})" if div and dm != 1 else "") + f" = {fmt(out)}")
+    if div and dm == 0:
+        ctx.log(f"{div.get('dio') or 'Il dio'} nega il miracolo: favore troppo basso.", "avviso")
     return out
 
 

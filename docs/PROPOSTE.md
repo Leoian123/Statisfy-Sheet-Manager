@@ -40,8 +40,9 @@ Nel mockup i punti decisi hanno il chip verde **deciso**; quelli ancora aperti i
 17. **Scala del favore divino:** −3 Maledizione divina, −2 Rinnegato, −1 In disgrazia, 0 Neutrale, +1 Notato, +2 Favorito, +3 Prescelto, +4 Benedizione divina.
 18. **Favore richiesto:** livello 1–2 Notato, 3–5 Favorito, 6–8 Prescelto, 9–10 Benedizione; un grado in più se la natura del miracolo è fuori dal dominio del dio.
 19. **Potenza** = base × livello × (1 + Fede/100) × molt. favore: al favore richiesto ×1, +25% per ogni grado in più; un grado sotto ×0,5, due o più gradi sotto 0.
-    *Dal 23/11/2026 il numero lo dà la meccanica del miracolo (efficacia = livello); la Forgia mostra ancora il molt. favore,
-    ma il motore del combattimento non applica né la Fede né il favore.*
+    *Dal 23/11/2026 la base la dà la meccanica del miracolo (efficacia = livello); il motore del combattimento la moltiplica
+    per (1 + Fede/100) × molt. favore (favore richiesto dal wizard, o dal livello per i miracoli più vecchi). Se il PG non
+    ha il favore del dio nella reputazione cosmica il molt. favore non si applica (×1).*
 20. **Profilo di ogni dio:** nature affini, tono, voti e tabù.
 21. **Conseguenze dell'abuso:** −1 o −2 favore, oppure Maledizione divina.
 22. **Fede:** statistica avanzata che il PG sblocca appena crede in un dio.

@@ -22,7 +22,7 @@ const D = {
   fede: "Fede richiesta = 5 × L × (L+1).",
   costoMiracolo: "Costo = 12,5 × L × (L+1) Mana (livello 1 = 25, come Cura Minore).",
   favore: "Scala del favore: −3 Maledizione divina … 0 Neutrale … +4 Benedizione divina. Richiesto: livello 1–2 Notato, 3–5 Favorito, 6–8 Prescelto, 9–10 Benedizione; un grado in più fuori dal dominio del dio.",
-  potenza: "Molt. favore: al favore richiesto ×1, +25% per ogni grado in più; un grado sotto ×0,5, due o più gradi sotto 0 (il miracolo non funziona).",
+  potenza: "In combattimento ogni valore della meccanica × (1 + Fede/100) × molt. favore. Molt. favore: al favore richiesto ×1, +25% per ogni grado in più; un grado sotto ×0,5, due o più gradi sotto 0 (il miracolo non funziona). Senza favore registrato nella reputazione cosmica: ×1.",
   profilo: "Profilo di ogni dio: nature affini, tono, voti e tabù.",
   abuso: "Conseguenze dell'abuso: −1 o −2 favore, oppure Maledizione divina.",
 };

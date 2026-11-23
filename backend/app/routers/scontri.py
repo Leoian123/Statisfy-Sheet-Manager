@@ -125,6 +125,22 @@ def text_mech(x: dict) -> dict:
             "effetti": [{"bersaglio": {"lato": "se"}, "azione": {"op": "narrativo", "testo": text[:600]}}]}
 
 
+def divine_power(c: Character, x: dict, level: int) -> dict | None:
+    """Miracolo (decisione 19 di docs/PROPOSTE.md): potenza × (1 + Fede/100) × molt. favore del dio.
+    Il favore richiesto è quello del wizard (`favor`), altrimenti quello del livello; se il PG non ha il favore
+    registrato nella reputazione cosmica il moltiplicatore del favore non si applica (×1): lo decide il Master."""
+    if str(x.get("kind") or "") != "Miracolo":
+        return None
+    god = str(x.get("god") or "").strip()
+    fede = rules.char_fede(c.stats or [])
+    need = x.get("favor")
+    need = int(rules.num(need)) if need is not None else rules.favor_required(level, True)
+    fav = rules.char_favor(c.reputation or [], god) if god else {"v": 0, "recorded": False}
+    fm = rules.favor_mult(fav["v"], need) if fav["recorded"] else {"mult": 1.0, "state": "non registrato"}
+    return {"mult": round((1 + fede / 100) * fm["mult"], 4), "fede": fede, "favore": fm["mult"], "stato": fm["state"],
+            "dio": god}
+
+
 def abilities_of(c: Character) -> list[dict]:
     """Abilità di un PG per lo scontro. Con meccanica: skill attive, incantesimi, miracoli, skill passive, talenti,
     titoli. Senza meccanica: le skill di classe hanno quella di default (es. Dardo Magico), le altre abilità attive
@@ -150,9 +166,11 @@ def abilities_of(c: Character) -> list[dict]:
                 continue
             seen.add(name.lower())
             lvl = int(rules.num(x.get("lvl")) or 1)
-            out.append({"nome": name, "grado": lvl, "efficacia": int(rules.num(x.get("efficacia")) or lvl),
+            eff = int(rules.num(x.get("efficacia")) or lvl)
+            div = divine_power(c, x, eff) if field == "active_skills" else None
+            out.append({"nome": name, "grado": lvl, "efficacia": eff,
                         "mech": MECH.dump(m), "descrizione": str(x.get("effect") or "")[:300], "fonte": field,
-                        **({"testo": True} if testo else {})})
+                        **({"testo": True} if testo else {}), **({"divino": div} if div else {})})
     return out
 
 

@@ -846,7 +846,7 @@ def _miracle_state(d: dict, ctx: dict) -> dict:
     if c and V["god"] and fav["v"] < need:
         issues.append(f"favore di {V['god']['name']}: {R.favor_name(fav['v'])}, serve {R.favor_name(need)}")
     return {"V": V, "char": c, "fede": fede, "fav": fav, "need": need, "issues": issues,
-            "power": {"fm": R.favor_mult(fav["v"], need)}}
+            "power": {"fm": R.favor_mult(fav["v"], need) if fav["recorded"] else {"mult": 1.0, "state": "non registrato"}}}
 
 
 def miracle_check(d: dict, ctx: dict) -> list[str]:
@@ -914,6 +914,7 @@ def _miracle_mech(d: dict, ctx: dict) -> dict | None:
 def miracle_apply(e: dict, pg: dict) -> list[str]:
     pg["active_skills"].append({"name": e["name"], "effect": e["effect"], "lvl": 1, "pct": 1, "cost": f"{e['cost']} MP",
                                 "cd": e["cd"], "kind": "Miracolo", "god": e["god"], "efficacia": e.get("level"),
+                                "favor": e.get("favor"),
                                 **({"mech": e["mech"]} if e.get("mech") else {})})
     return [f"Assegnato a {pg['name']}: Grado I · 1%."]
 

@@ -89,3 +89,25 @@ def test_hostile_without_target_is_explained(client, master):
     give(client, master, 1, "Dardo", TPL[1])
     r = client.post("/api/characters/1/abilita", json={"abilita": "Dardo"}, headers=master)
     assert r.status_code == 422 and "bersaglio" in r.json()["detail"].lower()
+
+
+def test_miracle_scales_with_faith_and_favor(client, master):
+    """Decisione 19: la potenza del miracolo × (1 + Fede/100) × molt. favore (favore non registrato: ×1)."""
+    mech = {"v": 1, "tipo": "miracolo", "tiro_colpire": False, "effetti": [
+        {"bersaglio": {"lato": "alleato"}, "azione": {"op": "cura"}, "formula": {"base": "fissa", "min": 100}}]}
+    give(client, master, 1, "Luce Sacra", mech, kind="Miracolo", god="Solaria", efficacia=1, favor=1)
+    body = {"abilita": "Luce Sacra", "bersaglio": {"tipo": "pg", "id": 1}}
+    prev = lambda: client.post("/api/characters/1/abilita/anteprima", json=body, headers=master).json()
+    p = prev()
+    assert any("Cura: 100 =" in s or "= 100" in s for s in p["passi"]), p["passi"]  # nessuna Fede né favore registrato
+    c = client.get("/api/characters/1", headers=master).json()
+    stats = c["stats"] + [{"code": "FED", "name": "Fede", "kind": "avanzata", "iniziale": 50}]
+    rep = (c.get("reputation") or []) + [{"scope": "Cosmica", "target": "Solaria", "label": "Prescelto", "value": 3}]
+    r = client.patch("/api/characters/1", json={"stats": stats, "reputation": rep}, headers=master)
+    assert r.status_code == 200, r.text
+    p = prev()
+    assert any("= 225" in s and "Solaria" in s for s in p["passi"]), p["passi"]  # 100 × 1,5 Fede × 1,5 favore (+2 gradi)
+    rep[-1] = {**rep[-1], "label": "Rinnegato", "value": -2}
+    client.patch("/api/characters/1", json={"reputation": rep}, headers=master)
+    p = prev()
+    assert any("= 0" in s for s in p["passi"]), p["passi"]  # due o più gradi sotto: il miracolo non avviene
