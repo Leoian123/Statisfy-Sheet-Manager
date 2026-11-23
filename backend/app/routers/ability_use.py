@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import copy
 import random
+import re
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -141,7 +143,22 @@ def list_abilities(char_id: int, user: User = Depends(current_user), db: Session
     me = pg_combatant(c)
     pub = E.public(E.new_state([me]))["combattenti"][me["id"]]["abilita"]
     cds = {str(x.get("name")): int(rules.num(x.get("turns"))) for x in (c.combat or {}).get("cooldowns") or []}
-    return [{**a, "ricarica": cds.get(a["nome"], 0)} for a in pub if a["tipo"] != "passiva"]
+    # Bersagli possibili: i PG del gruppo e le creature dell'incontro in corso (Forgia, «Avvia»)
+    pcs = [{"id": x.id, "nome": x.name} for x in db.scalars(select(Character).order_by(Character.id))]
+    creature = []
+    for e in db.scalars(select(ForgeEntry).where(ForgeEntry.kind == "encounters")):
+        live = (e.data or {}).get("live") or {}
+        if not live.get("active") or e.closed:
+            continue
+        rows = (e.data or {}).get("creatures") or []
+        hp = list(live.get("hp") or [])
+        for i, row in enumerate(rows):
+            mx = rules.num(row.get("hp")) * (int(rules.num(row.get("count"))) or 1)
+            cur = rules.num(hp[i]) if i < len(hp) else mx
+            creature.append({"encounter_id": e.id, "index": i, "nome": str(row.get("name") or "Creatura"),
+                             "count": int(rules.num(row.get("count")) or 1), "hp": rules.clean(cur), "max": rules.clean(mx)})
+    return {"abilita": [{**a, "ricarica": cds.get(a["nome"], 0)} for a in pub if a["tipo"] != "passiva"],
+            "bersagli": {"pg": pcs, "creature": creature}}
 
 
 @router.post("/anteprima")
@@ -184,8 +201,11 @@ def use(char_id: int, data: UseIn, user: User = Depends(current_user), db: Sessi
     if cd and (m["mech"].get("cooldown") or {}).get("unita", "turni") == "turni":
         combat["cooldowns"] = [x for x in combat["cooldowns"] if x.get("name") != m["nome"]] + [{"name": m["nome"], "turns": cd}]
     combat["effects"] = list(combat.get("effects") or []) + _status_effects(after_me.get("status") or [])
-    for ev in res.get("eventi") or []:
-        rules.add_log(combat, str(ev.get("t"))[:200])
+    lines = [str(ev.get("t")) for ev in res.get("eventi") or []]
+    if data.bersaglio.tipo == "voce":  # la vita del bersaglio a voce è fittizia: non va nel registro
+        lines = [re.sub(r"\. HP [\d.]+\.$", ".", x) for x in lines]
+    for line in lines:
+        rules.add_log(combat, line[:200])
     set_json(c, "combat", tidy(combat))
     set_json(c, "resources", tidy(r))
     c.death = None
@@ -213,5 +233,5 @@ def use(char_id: int, data: UseIn, user: User = Depends(current_user), db: Sessi
         e.data = data_
         flag_modified(e, "data")
     out = save(db, c)
-    return {"character": out, "eventi": [x.get("t") for x in res.get("eventi") or []], "passi": res.get("passi") or [],
+    return {"character": out, "eventi": lines, "passi": res.get("passi") or [],
             "tiri": res.get("tiri_usati") or {}}

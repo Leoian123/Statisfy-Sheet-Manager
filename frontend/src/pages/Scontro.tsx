@@ -144,33 +144,10 @@ function NoBattle({ onStarted }: { onStarted: (b: Battle) => void }) {
   }
   return (
     <div className="stack">
-      <QuickStart onStarted={onStarted} />
-      <details className="cb-more">
-        <summary className="small">Altri modi: da un incontro della Forgia o scegliendo PG e creature</summary>
-        <StartBattle onStarted={onStarted} />
-      </details>
+      <Win title="Scontro a turni">
+        <p className="small muted">Lo scontro a turni è facoltativo: serve per gli incontri preparati, come un boss. Per usare abilità e incantesimi durante il gioco non serve: c'è «Usa abilità» nel pannello combattimento della plancia.</p>
+      </Win>
+      <StartBattle onStarted={onStarted} />
     </div>
-  );
-}
-
-/** Un clic: plancia con tutto il gruppo; i nemici si aggiungono dalla plancia quando servono. */
-function QuickStart({ onStarted }: { onStarted: (b: Battle) => void }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  async function go() {
-    setBusy(true);
-    setErr(null);
-    try { onStarted(await battleApi.start({ tutti: true })); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
-  }
-  return (
-    <Win title="Plancia di scontro">
-      <p className="small muted">Apre la plancia con tutto il gruppo e tira l'iniziativa. I nemici li aggiungi dalla plancia (a mano o da un
-        incontro della Forgia), anche a scontro iniziato. Ogni abilità della scheda è usabile: quelle senza meccanica pagano il costo e
-        scrivono l'effetto nel registro, e lo applichi tu.</p>
-      <div className="row">
-        <button type="button" className="btn primary" disabled={busy} onClick={go}>Apri la plancia con il gruppo</button>
-      </div>
-      {err && <p className="hint bad" role="alert">{err}</p>}
-    </Win>
   );
 }

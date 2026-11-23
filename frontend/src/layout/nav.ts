@@ -49,7 +49,8 @@ export function sections({ role, charId, tickets, battle }: NavCtx): NavSection[
       {
         key: "tavolo", label: "Tavolo", icon: "table", to: "/master/plancia", dot: battle,
         match: (p) => p.startsWith("/master/plancia") || p.startsWith("/scontro"),
-        tabs: [{ label: "Plancia", to: "/master/plancia" }, { label: "Scontro", to: "/scontro", dot: battle }],
+        // Lo scontro a turni è facoltativo: la scheda compare solo se ne è stato avviato uno (da un incontro preparato)
+        tabs: battle ? [{ label: "Plancia", to: "/master/plancia" }, { label: "Scontro", to: "/scontro", dot: true }] : [],
       },
       richieste,
       {
@@ -84,9 +85,9 @@ export function sections({ role, charId, tickets, battle }: NavCtx): NavSection[
       tabs: charId != null ? [{ label: "Scheda", to: pg(), end: true }, { label: "Level up", to: pg("/level-up") }] : [],
     },
     {
-      key: "gioca", label: "Gioca", icon: "dice", to: battle ? "/scontro" : pg("/plancia"), dot: battle,
+      key: "gioca", label: "Gioca", icon: "dice", to: pg("/plancia"), dot: battle,
       match: (p) => (isChar(p) && charSub(p) === "/plancia") || p.startsWith("/scontro"),
-      tabs: [{ label: "Tavolo", to: pg("/plancia") }, { label: "Scontro", to: "/scontro", dot: battle }],
+      tabs: battle ? [{ label: "Tavolo", to: pg("/plancia") }, { label: "Scontro", to: "/scontro", dot: true }] : [],
     },
     richieste,
     { key: "diario", label: "Diario", icon: "book", to: "/diario", match: (p) => p.startsWith("/diario"), tabs: [] },

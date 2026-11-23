@@ -17,8 +17,10 @@ def give(client, master, char_id, name, mech=None, **extra):
 
 def test_list_and_preview_and_use_on_spoken_target(client, master):
     give(client, master, 1, "Dardo", {**TPL[1], "cooldown": {"valore": 2, "unita": "turni"}})
-    abs_ = client.get("/api/characters/1/abilita", headers=master).json()
+    out = client.get("/api/characters/1/abilita", headers=master).json()
+    abs_ = out["abilita"]
     assert any(a["nome"] == "Dardo" for a in abs_) and any(a["base"] for a in abs_)
+    assert any(p["nome"] == "Eric" for p in out["bersagli"]["pg"])
     body = {"abilita": "Dardo", "bersaglio": {"tipo": "voce", "nome": "Golem", "difesa": 0}}
     p = client.post("/api/characters/1/abilita/anteprima", json=body, headers=master).json()
     assert p["stima"]["Golem"]["danno"][0] > 0 and p["colpire"] is not None
@@ -29,6 +31,7 @@ def test_list_and_preview_and_use_on_spoken_target(client, master):
     assert c["resources"]["mp"] == mp0 - 30
     assert {"name": "Dardo", "turns": 2} in c["combat"]["cooldowns"]
     assert any("Golem" in line for line in c["combat"]["log"])
+    assert not any("999" in line for line in c["combat"]["log"])  # vita fittizia del bersaglio a voce
     # in ricarica: non si riusa finché il turno non scala
     r = client.post("/api/characters/1/abilita", json=body, headers=master)
     assert r.status_code == 422 and "ricarica" in r.json()["detail"]
@@ -61,6 +64,8 @@ def test_damage_creature_of_live_encounter(client, master):
     e = client.post("/api/forge/entries", json={"kind": "encounters", "draft": draft}, headers=master).json()["entry"]
     client.post(f"/api/forge/encounters/{e['id']}/live", json={"action": "start"}, headers=master)
     give(client, master, 1, "Dardo", TPL[1])
+    cr = client.get("/api/characters/1/abilita", headers=master).json()["bersagli"]["creature"]
+    assert cr and cr[0]["nome"] == "Bandito" and cr[0]["count"] == 2
     body = {"abilita": "Dardo", "bersaglio": {"tipo": "creatura", "id": e["id"], "index": 0}, "tiri": {"colpo:bersaglio": 1}}
     r = client.post("/api/characters/1/abilita", json=body, headers=master)
     assert r.status_code == 200, r.text

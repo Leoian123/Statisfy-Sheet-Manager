@@ -8,6 +8,7 @@ import type { Character, CombatActionType, Death, RulesConfig } from "../api/typ
 import { n, plural } from "../lib/format";
 import { resourcesFor } from "../lib/resources";
 import { DerivedRow } from "./DerivedRow";
+import { UseAbility } from "./combat/UseAbility";
 
 const COMBAT_KEYS = ["iniziativa", "attacchi", "precisione", "evasione", "critico", "blocco", "difesa", "difesaMag", "moltFis", "moltMag"];
 
@@ -88,6 +89,7 @@ export function CombatPanel({ c, rules, busy, amt, setAmt, apply, onDied, open, 
           <span className="pg-disclose" id="pg-cb-h"><span>Combattimento</span><span className="pg-disclose-sum xs muted">{summary}</span></span>
         )}
       </header>
+      <div className="pg-ua"><UseAbility c={c} busy={busy} apply={apply} /></div>
       <div className="win-b pg-combat-body" id="pg-cb-body" hidden={!open}>
         <div className="stack" style={{ gap: 8 }}>
           <div className="pg-amt-row">
