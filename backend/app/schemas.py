@@ -1,7 +1,9 @@
 """Schemi Pydantic per i corpi delle richieste (le risposte sono dict costruiti in serialize.py)."""
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from . import mech as MECH
 
 
 # Tetti generici: oltre questi valori i numeri non hanno senso di gioco e gli interi non stanno in SQLite (int64)
@@ -139,6 +141,19 @@ class StatRowEdit(BaseModel):
 class _Item(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: Name
+
+    @model_validator(mode="after")
+    def _mech(self):
+        """`mech` (meccanica strutturata, facoltativa) deve essere valida: si salva normalizzata."""
+        extra = self.model_extra or {}
+        raw = extra.get("mech")
+        if raw is None:
+            return self
+        m, errs = MECH.parse(raw)
+        if errs:
+            raise ValueError(f"Meccanica di «{self.name}»: " + "; ".join(errs[:3]))
+        extra["mech"] = MECH.dump(m)
+        return self
 
 
 class TitleIn(_Item):

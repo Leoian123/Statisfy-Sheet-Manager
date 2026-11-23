@@ -238,7 +238,7 @@ def test_spell_and_miracle_assignment(client, master):
     assert c["backlash"]["score"] == 2 and c["effect"]["kind"] == "Danno"
     # Ignis non è posseduta da Kelvin: serve forzare
     two = {**spell, "name": "Fiamma di Forza", "spheres": [*spell["spheres"], {"s": "Ignis", "role": "sostanza", "trav": False}]}
-    assert "non possiede Ignis" in preview(client, master, "spells", two)["steps"][4]
+    assert "non possiede Ignis" in preview(client, master, "spells", two)["steps"][-1]
     assert save(client, master, "spells", spell).status_code == 201
     assert char(client, master, kid)["active_skills"][-1]["cost"] == "20 MP"
 
@@ -249,7 +249,7 @@ def test_spell_and_miracle_assignment(client, master):
     assert pv["computed"]["cost"] == 25 and pv["computed"]["fede"] == 10
     # guarigione fuori dal dominio di Luxor: favore richiesto +1 grado (Favorito)
     assert pv["computed"]["sugg_favor_name"] == "Favorito"
-    assert "non è un chierico" in pv["steps"][4]
+    assert "non è un chierico" in pv["steps"][-1]
     r = save(client, master, "miracles", {**miracle, "force": True})
     assert r.status_code == 201 and r.json()["entry"]["data"]["forced"] is True
     assert char(client, master, kid)["active_skills"][-1]["kind"] == "Miracolo"

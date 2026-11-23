@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from .. import forge, rules
+from .. import forge, mech, mech_templates, rules, status_catalog
 from ..auth import require_master
 from ..db import get_db
 from ..models import Campaign, Character, ForgeEntry, Npc
@@ -148,6 +148,7 @@ def meta(db: Session = Depends(get_db)):
         "equip_types": [{"key": k, "label": v["label"], "slots": [rules.SLOT_LABELS[x] for x in v["slots"]],
                          "two_handed": bool(v.get("two_handed"))} for k, v in rules.EQUIP_TYPES.items()],
         "assignable": list(forge.ASSIGNABLE),
+        "mech": {**mech.vocabulary(), "status": status_catalog.catalog(), "templates": mech_templates.templates()},
     }
 
 

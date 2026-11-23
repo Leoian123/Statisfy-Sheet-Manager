@@ -15,6 +15,7 @@ import re
 import unicodedata
 from typing import Any, Callable
 
+from . import mech as MECH
 from . import rules as R
 
 KIND_LABEL = {"skills": "Skill", "classes": "Classi", "races": "Razze", "titles": "Titoli", "npcs": "PNG",
@@ -25,6 +26,54 @@ KIND_ONE = {"skills": "Skill", "classes": "Classe", "races": "Razza", "titles": 
             "encounters": "Incontro", "spells": "Incantesimo", "miracles": "Miracolo", "items": "Oggetto"}
 KIND_FEMININE = {"skills", "classes", "races"}
 KINDS = list(KIND_LABEL)
+
+
+# ---------- Meccanica strutturata (passo «Meccanica» di incantesimi, miracoli e skill) ----------
+def mech_msg(d: dict) -> str:
+    """Il passo Meccanica è facoltativo: senza `mech` l'abilità resta descrittiva."""
+    raw = d.get("mech")
+    if not raw:
+        return ""
+    _, errs = MECH.parse(raw)
+    return errs[0] if errs else ""
+
+
+def mech_final(d: dict, tipo: str, cost: Any = None, res: str = "MP", cd: Any = None, tags: Any = ()) -> dict | None:
+    """Meccanica da salvare: costo, ricarica ed etichette del wizard riempiono ciò che il Master non ha indicato."""
+    raw = d.get("mech")
+    if not raw or not isinstance(raw, dict):
+        return None
+    m = dict(raw)
+    m["tipo"] = "passiva" if m.get("tipo") == "passiva" else tipo
+    if not m.get("costi") and cost and m["tipo"] != "passiva":
+        m["costi"] = [{"risorsa": res if res in MECH.RESOURCES else "MP", "valore": cost, "per": "lancio"}]
+    if not (m.get("cooldown") or {}).get("valore") and cd:
+        m["cooldown"] = {"valore": int(cd), "unita": "turni"}
+    et = [str(x) for x in (m.get("etichette") or [])]
+    for t in tags:
+        if t and t not in et:
+            et.append(str(t))
+    m["etichette"] = et[:12]
+    parsed, errs = MECH.parse(m)
+    return MECH.dump(parsed) if parsed else None
+
+
+def with_mech(check: Callable, compute: Callable) -> tuple[Callable, Callable]:
+    """Aggiunge il passo Meccanica (penultimo) a un wizard e la sua descrizione all'anteprima."""
+    def c(d: dict, ctx: dict) -> list[str]:
+        msgs = check(d, ctx)
+        return msgs[:-1] + [mech_msg(d)] + msgs[-1:]
+
+    def k(d: dict, ctx: dict) -> dict:
+        out = compute(d, ctx)
+        raw = d.get("mech")
+        if raw:
+            m, errs = MECH.parse(raw)
+            out["mech"] = {"text": MECH.describe(m) if m else "", "errors": errs}
+        else:
+            out["mech"] = None
+        return out
+    return c, k
 
 
 # ---------- Helper ----------
@@ -190,6 +239,8 @@ def skill_build(d: dict, ctx: dict) -> dict:
         "costRedPerGrade": R.clean(as_num(d.get("costRed")) or 0) if att else 0, "passiveX": txt(d.get("passiveX")),
         "school": txt(d.get("schoolName")) if d.get("school") else None, "grade1": txt(d.get("grade1")),
         "method": txt(d.get("method")) or "Level up", "assignedTo": c["id"] if c else None,
+        "mech": mech_final(d, "skill" if att else "passiva", as_int(d.get("cost"), 1, 99999) if att else None,
+                           str(d.get("res") or "SP"), as_int(d.get("cd"), 0, 99) if att else None, [d.get("type")]),
         "summary": f"{d.get('type')} · {'attiva, ' + R.fmt_n(as_num(d.get('cost')) or 0) + ' ' + str(d.get('res')) + ', cd ' + R.fmt_n(as_num(d.get('cd')) or 0) if att else 'passiva'}"
                    f" · Grado I: {g1}" + (f" · assegnata a {c['name']}" if c else ""),
     }
@@ -198,9 +249,11 @@ def skill_build(d: dict, ctx: dict) -> dict:
 def skill_apply(e: dict, pg: dict) -> list[str]:
     if e["mode"] == "attiva":
         pg["active_skills"].append({"name": e["name"], "effect": e["effect"], "lvl": 1, "pct": 0,
-                                    "cost": f"{e['cost']} {e['res']}", "cd": e["cd"], "kind": "Skill"})
+                                    "cost": f"{e['cost']} {e['res']}", "cd": e["cd"], "kind": "Skill",
+                                    **({"mech": e["mech"]} if e.get("mech") else {})})
         return [f"{pg['name']}: nuova skill attiva «{e['name']}», Grado I · 0%."]
-    pg["skills"].append({"name": e["name"], "lvl": 1, "pct": 0, "type": e["type"]})
+    pg["skills"].append({"name": e["name"], "lvl": 1, "pct": 0, "type": e["type"],
+                         **({"mech": e["mech"]} if e.get("mech") else {})})
     return [f"{pg['name']}: nuova skill «{e['name']}», Grado I · 0%."]
 
 
@@ -719,12 +772,15 @@ def spell_build(d: dict, ctx: dict) -> dict:
         "cost": int(V["cost"]), "castTurns": V["turns"], "cd": int(V["cd"]),
         "backlash": {"score": B["score"], "band": B["band"]}, "assignedTo": A["char"]["id"] if assign else None,
         "forced": bool(assign and A["missing"]),
+        "mech": mech_final(d, "incantesimo", int(V["cost"]), "MP", int(V["cd"]), [x["s"] for x in sph]),
     }
 
 
 def spell_apply(e: dict, pg: dict) -> list[str]:
     pg["active_skills"].append({"name": e["name"], "effect": e["effect"], "lvl": 1, "pct": 1, "cost": f"{e['cost']} MP",
-                                "cd": e["cd"], "kind": "Incantesimo", "spheres": [x["sphere"] for x in e["spheres"]]})
+                                "cd": e["cd"], "kind": "Incantesimo", "spheres": [x["sphere"] for x in e["spheres"]],
+                                "category": e.get("category"), "efficacia": e.get("efficacy"),
+                                **({"mech": e["mech"]} if e.get("mech") else {})})
     return [f"Aggiunto al grimorio di {pg['name']}: Grado I · 1%."]
 
 
@@ -816,12 +872,14 @@ def miracle_build(d: dict, ctx: dict) -> dict:
         "level": V["L"], "fede": int(V["fede"]), "favor": int(V["favor"]), "favorName": R.favor_name(V["favor"]),
         "cost": int(V["cost"]), "cd": int(V["cd"]), "vows": _vows(d), "against": d.get("against"), "againstNote": txt(d.get("againstNote")),
         "assignedTo": A["char"]["id"] if assign else None, "forced": bool(assign and A["issues"]),
+        "mech": mech_final(d, "miracolo", int(V["cost"]), "MP", int(V["cd"]), [V["god"]["name"]]),
     }
 
 
 def miracle_apply(e: dict, pg: dict) -> list[str]:
     pg["active_skills"].append({"name": e["name"], "effect": e["effect"], "lvl": 1, "pct": 1, "cost": f"{e['cost']} MP",
-                                "cd": e["cd"], "kind": "Miracolo", "god": e["god"]})
+                                "cd": e["cd"], "kind": "Miracolo", "god": e["god"], "efficacia": e.get("level"),
+                                **({"mech": e["mech"]} if e.get("mech") else {})})
     return [f"Assegnato a {pg['name']}: Grado I · 1%."]
 
 
@@ -985,9 +1043,13 @@ def assign_preview(kind: str, e: dict, c: dict) -> dict:
 # ======================================================================
 # Registro dei wizard
 # ======================================================================
+_SK = with_mech(skill_check, skill_compute)
+_SP = with_mech(spell_check, spell_compute)
+_MI = with_mech(miracle_check, miracle_compute)
+
 WIZARDS: dict[str, dict[str, Any]] = {
-    "skills": {"steps": ["Identità", "Effetto", "Gradi", "Ottenimento", "Assegna"], "check": skill_check,
-               "compute": skill_compute, "build": skill_build, "apply": skill_apply},
+    "skills": {"steps": ["Identità", "Effetto", "Gradi", "Ottenimento", "Meccanica", "Assegna"],
+               "check": _SK[0], "compute": _SK[1], "build": skill_build, "apply": skill_apply},
     "classes": {"steps": ["Identità", "Sblocco", "Abilità iniziale", "Equipaggiamento e talenti"], "check": class_check,
                 "compute": class_compute, "build": class_build, "apply": None},
     "races": {"steps": ["Identità", "Talenti razziali", "Statistiche", "Lingue e rapporti"], "check": race_check,
@@ -998,10 +1060,10 @@ WIZARDS: dict[str, dict[str, Any]] = {
              "compute": npc_compute, "build": npc_build, "apply": None},
     "encounters": {"steps": ["Scena", "Gruppo", "Creature", "Bottino e ganci"], "check": encounter_check,
                    "compute": encounter_compute, "build": encounter_build, "apply": None},
-    "spells": {"steps": ["Concetto", "Sfere", "Potenza", "Costo e rischi", "Anteprima"], "check": spell_check,
-               "compute": spell_compute, "build": spell_build, "apply": spell_apply},
-    "miracles": {"steps": ["Divinità", "Natura", "Requisiti e costo", "Voti e tabù", "Anteprima"], "check": miracle_check,
-                 "compute": miracle_compute, "build": miracle_build, "apply": miracle_apply},
+    "spells": {"steps": ["Concetto", "Sfere", "Potenza", "Costo e rischi", "Meccanica", "Anteprima"],
+               "check": _SP[0], "compute": _SP[1], "build": spell_build, "apply": spell_apply},
+    "miracles": {"steps": ["Divinità", "Natura", "Requisiti e costo", "Voti e tabù", "Meccanica", "Anteprima"],
+                 "check": _MI[0], "compute": _MI[1], "build": miracle_build, "apply": miracle_apply},
     "items": {"steps": ["Identità", "Effetti", "Requisiti e peso", "Assegna"], "check": item_check,
               "compute": item_compute, "build": item_build, "apply": item_apply},
 }
