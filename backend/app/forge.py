@@ -558,8 +558,10 @@ def _npc(d: dict, ctx: dict) -> dict:
     if key not in cache:
         try:
             cache[key] = PNG.da_bozza({**d, "completa": True}, set(ctx.get("npc_names") or []))
-        except ValueError as e:   # strato sconosciuto
+        except PNG.ErroreStrato as e:   # strato sconosciuto: il messaggio dice quali ci sono
             cache[key] = {"scheda": None, "errori": [str(e)], "avvisi": []}
+        except (ValueError, TypeError, KeyError, OverflowError):
+            cache[key] = {"scheda": None, "errori": ["bozza non valida: ricomincia il wizard"], "avvisi": []}
     return cache[key]
 
 

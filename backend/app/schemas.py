@@ -1,7 +1,7 @@
 """Schemi Pydantic per i corpi delle richieste (le risposte sono dict costruiti in serialize.py)."""
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from . import mech as MECH
 
@@ -298,8 +298,19 @@ class DeathIn(BaseModel):
 Trust = Literal["Scarso", "Neutrale", "Buono", "Eccellente"]
 
 
+def _nome_pieno(v: str | None) -> str | None:
+    """Nome con gli spazi compattati; vuoto (anche solo spazi) non è un nome."""
+    if v is None:
+        return v
+    v = " ".join(v.split())
+    if not v:
+        raise ValueError("il nome non può essere vuoto")
+    return v
+
+
 class NpcCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
+    _nome = field_validator("name")(_nome_pieno)
     level: int = Field(1, ge=1)
     race: str = ""
     place: str = ""
@@ -314,6 +325,7 @@ class NpcCreate(BaseModel):
 class NpcPatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str | None = Field(None, min_length=1, max_length=100)
+    _nome = field_validator("name")(_nome_pieno)
     level: int | None = Field(None, ge=1)
     race: str | None = None
     place: str | None = None

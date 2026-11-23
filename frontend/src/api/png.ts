@@ -155,7 +155,7 @@ export const pngApi = {
   combattimento: (id: number) => request<Combattimento>("GET", `/png/schede/${id}/combattimento`),
   promuovi: (id: number) => request<{ npc: Npc; avvisi: string[] }>("POST", `/png/schede/${id}/promuovi`),
   aggiorna: (id: number, ev: { giorno?: number; affinita?: number; motivo?: string; memoria?: string[]; legami?: string[]; morto?: string;
-                               eccezione?: boolean; prima_impressione?: boolean }) =>
+                               eccezione?: boolean; prima_impressione?: boolean; annulla_morte?: boolean }) =>
     request<{ npc: Npc; avvisi: string[] }>("POST", `/png/schede/${id}/aggiorna`, ev),
   riga: (id: number) => request<{ celle: string[]; markdown: string }>("GET", `/png/schede/${id}/riga`),
   controlla: () => request<Controllo>("GET", "/png/controlla"),

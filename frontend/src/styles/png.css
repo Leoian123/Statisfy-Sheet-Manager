@@ -92,7 +92,7 @@
 .png-li { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border: 0; border-radius: var(--radius); background: transparent; color: var(--fg); font: inherit; text-align: left; cursor: pointer; min-width: 0; }
 .png-li:hover { background: var(--panel-2); }
 .png-li.on { background: var(--violet-soft); box-shadow: inset 3px 0 0 var(--gold); }
-@media (max-width: 760px) { .png-cmp { flex-wrap: wrap; } .png-cmp .btn { min-height: 40px; } }
+@media (max-width: 760px) { .png-cmp .btn { min-height: 40px; } }
 
 /* archivio */
 .png-arch { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -117,3 +117,21 @@
 
 /* wizard della Forgia */
 .png-wz-pesca { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* barra di salvataggio sempre a portata (Nuovo) */
+.png-barra {
+  position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 -4px 12px #0003;
+}
+.png-barra .hint { flex: 1 1 200px; min-width: 0; }
+@media (max-width: 760px) { .png-barra { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); } .png-barra .btn { min-height: 44px; } }
+.png-cambiata { border-left: 2px solid var(--warn); padding-left: 8px; color: var(--fg); }
+.png-ultimi { margin-bottom: 8px; }
+.png-arch-f { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; margin-bottom: 8px; }
+.png-li.morto { opacity: 0.6; }
+.png-li.morto b { text-decoration: line-through; }
+.png-cmp details summary { cursor: pointer; list-style: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.png-cmp details summary::-webkit-details-marker { display: none; }
+.png-cmp details[open] summary { white-space: normal; }
+.png-cmp details > span { display: block; white-space: normal; padding-top: 2px; }
+.png-morte .input { flex: 1 1 220px; }

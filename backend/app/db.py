@@ -44,6 +44,7 @@ _ADDED_COLUMNS = [
     # sezione PNG: livello di dettaglio e scheda nata dai preset (righe vecchie: completa, NULL)
     ("npcs", "dettaglio", "ALTER TABLE npcs ADD COLUMN dettaglio VARCHAR(20) NOT NULL DEFAULT 'completa'"),
     ("npcs", "scheda", "ALTER TABLE npcs ADD COLUMN scheda JSON"),
+    ("npcs", "version", "ALTER TABLE npcs ADD COLUMN version INTEGER NOT NULL DEFAULT 1"),
 ]
 
 

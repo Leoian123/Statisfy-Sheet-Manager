@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -36,7 +36,7 @@ class Strati(BaseModel):
     regno: str | None = Field(None, max_length=60)
     insediamento: str | None = Field(None, max_length=30)
     zona: str | None = Field(None, max_length=80)
-    ritocchi: list[str] = Field(default_factory=list, max_length=20)
+    ritocchi: list[Annotated[str, Field(max_length=120)]] = Field(default_factory=list, max_length=20)
 
     def luogo(self) -> dict:
         return {k: v for k, v in (("regno", self.regno), ("insediamento", self.insediamento), ("zona", self.zona)) if v}
@@ -45,11 +45,11 @@ class Strati(BaseModel):
 class NuovoIn(Strati):
     seme: int | None = Field(None, ge=1, le=2**31)
     salva: bool = False
-    partita: str | None = Field(None, max_length=40)
+    partita: str | None = Field(None, max_length=40, pattern=r"^[\w-]+$")
     nome: str | None = Field(None, max_length=100)
     livello: int | None = Field(None, ge=1, le=999)
     genere: Literal["m", "f"] | None = None
-    campi: dict[str, str] = Field(default_factory=dict)
+    campi: dict[str, Annotated[str, Field(max_length=500)]] = Field(default_factory=dict, max_length=20)
     ritratto: dict | None = None
 
 
@@ -66,21 +66,22 @@ class ComparseIn(BaseModel):
 
 class AggiornaIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    partita: str | None = Field(None, max_length=40)
-    giorno: int | None = Field(None, ge=0)
+    partita: str | None = Field(None, max_length=40, pattern=r"^[\w-]+$")
+    giorno: int | None = Field(None, ge=0, le=100_000)
     affinita: int | None = Field(None, ge=-20, le=20)
     eccezione: bool = False
     prima_impressione: bool = False
     motivo: str = Field("", max_length=500)
-    memoria: list[str] = Field(default_factory=list, max_length=20)
-    legami: list[str] = Field(default_factory=list, max_length=20)
+    memoria: list[Annotated[str, Field(max_length=300)]] = Field(default_factory=list, max_length=20)
+    legami: list[Annotated[str, Field(max_length=300)]] = Field(default_factory=list, max_length=20)
     morto: str | None = Field(None, max_length=300)
+    annulla_morte: bool = False
 
 
 # Campi della scheda che il Master riscrive a mano (le rose pescate sono spunti da riscrivere sul posto)
 CAMPI_SCRIVIBILI = {"vuole", "teme", "difetto", "forestieri", "prezzo", "vita", "contraddizione", "voce", "tratti",
                     "sa", "dicerie", "puo_dare", "conta", "perche_qui", "motivo", "corporatura", "addestramento",
-                    "profilo", "mestiere", "ricchezza", "genere", "eta", "ritratto"}
+                    "profilo", "mestiere", "ricchezza", "genere", "eta", "ritratto", "completa"}
 
 
 class SchedaPatch(BaseModel):
@@ -127,7 +128,9 @@ def _immagini(r: Any) -> dict:
         raise HTTPException(422, "Al più 6 immagini per PNG.")
     out = []
     for i in imm:
-        src = str((i or {}).get("src") or "")
+        if not isinstance(i, dict):
+            raise HTTPException(422, "Immagine non valida.")
+        src = str(i.get("src") or "")
         if not re.fullmatch(r"data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+", src) or len(src) > 300_000:
             raise HTTPException(422, "Immagine non valida o troppo grande (massimo 300 kB dopo la riduzione).")
         out.append({"id": str(i.get("id") or "")[:40], "src": src, "principale": bool(i.get("principale")),
@@ -155,7 +158,7 @@ def catalogo():
 def componi_preset(data: Strati):
     try:
         return vista(componi(data.ruolo, data.eta, data.razza, data.luogo(), data.ritocchi))
-    except ErroreStrato as x:
+    except (ErroreStrato, ValueError, OverflowError) as x:
         raise _errore(x)
 
 
@@ -163,7 +166,7 @@ def componi_preset(data: Strati):
 def confronta(ruolo: str, regno: str = "valeria", insediamento: str = "villaggio"):
     try:
         return G.confronta(ruolo, {"regno": regno, "insediamento": insediamento})
-    except ErroreStrato as x:
+    except (ErroreStrato, ValueError, OverflowError) as x:
         raise _errore(x)
 
 
@@ -173,7 +176,7 @@ def nuovo(data: NuovoIn, db: Session = Depends(get_db)):
     bozza = data.model_dump(exclude={"salva", "partita", "ritratto"}) | data.luogo()
     try:
         out = G.da_bozza(bozza, _usati(db))
-    except ErroreStrato as x:
+    except (ErroreStrato, ValueError, OverflowError) as x:
         raise _errore(x)
     if out["scheda"] is None:
         raise HTTPException(422, "; ".join(out["errori"]))
@@ -194,7 +197,7 @@ def comparse(data: ComparseIn, db: Session = Depends(get_db)):
     luogo = {k: v for k, v in (("regno", data.regno), ("insediamento", data.insediamento), ("zona", data.zona)) if v}
     try:
         out = G.comparse(luogo, data.quante, data.ruoli, data.seme, _usati(db))
-    except ErroreStrato as x:
+    except (ErroreStrato, ValueError, OverflowError) as x:
         raise _errore(x)
     if data.salva:
         out["npc"] = []
@@ -224,23 +227,91 @@ def ritocca(npc_id: int, data: SchedaPatch, db: Session = Depends(get_db)):
     if fuori:
         raise HTTPException(422, f"Campi non modificabili qui: {', '.join(fuori)}. "
                                  "Vita e danno non si scrivono: si calcolano con «combattimento».")
+    if n.dettaglio == "comparsa" and set(data.campi) - {"ritratto"}:
+        raise HTTPException(409, "Una comparsa è una riga: promuovila a scheda prima di riscriverne i campi.")
     s = scheda_di(n)
-    if "ritratto" in data.campi:
-        data.campi["ritratto"] = _immagini(data.campi["ritratto"])
-    s.update(data.campi)
-    for k in [k for k in data.campi if k != "ritratto"]:
+    campi = _valida_campi(data.campi, s)
+    s.update(campi)
+    for k in [k for k in campi if k != "ritratto"]:
         if k in (s.get("da_ritoccare") or []):
             s["da_ritoccare"].remove(k)
         s.setdefault("origine", {})[k] = "scritto a mano"
-    if data.nome:
-        s["nome"] = data.nome
+    nome = " ".join((data.nome or "").split())
+    if data.nome is not None and not nome:
+        raise HTTPException(422, "Il nome non può essere vuoto.")
+    if nome:
+        s["nome"] = nome
     if data.livello:
         s["livello"] = data.livello
-        s["origine"]["livello"] = "scritto a mano"
+        s.setdefault("origine", {})["livello"] = "scritto a mano"
     _salva(db, s, n)
     db.commit()
     avvisi = K.controlla_schede([scheda_di(n)]).vista()
     return {"npc": npc_out(n), **avvisi}
+
+
+TESTI_SCHEDA = {"vuole", "teme", "difetto", "forestieri", "prezzo", "vita", "contraddizione", "voce", "perche_qui", "motivo"}
+LISTE_SCHEDA = {"tratti", "sa", "dicerie", "puo_dare"}
+
+
+def _valida_campi(campi: dict[str, Any], s: dict) -> dict:
+    """Ogni campo scritto a mano con il suo tipo: testi brevi, elenchi di testi, valori delle scale. Un tipo sbagliato
+    salvato romperebbe la scheda in tutte le schermate che la mostrano."""
+    reg = D.catalogo().regole.dati or {}
+    out: dict[str, Any] = {}
+    for k, v in campi.items():
+        if k in TESTI_SCHEDA:
+            if v is not None and not isinstance(v, str):
+                raise HTTPException(422, f"«{k}» dev'essere un testo.")
+            out[k] = " ".join((v or "").split())[:500] or None
+        elif k in LISTE_SCHEDA:
+            if not isinstance(v, list) or len(v) > 20 or not all(isinstance(x, str) for x in v):
+                raise HTTPException(422, f"«{k}» dev'essere un elenco di al più 20 testi.")
+            out[k] = [t for t in (" ".join(x.split())[:200] for x in v) if t]
+        elif k in ("corporatura", "addestramento", "ricchezza", "conta", "genere"):
+            ammessi = D.SCALE.get(k) or (list(reg.get("conta") or {}) if k == "conta" else ["m", "f"])
+            if v not in ammessi:
+                raise HTTPException(422, f"«{k}»: {v!r} non è ammesso (si può: {', '.join(ammessi)}).")
+            out[k] = v
+        elif k == "profilo":
+            if not isinstance(v, dict) or any(a not in D.STATISTICHE or b not in D.SCALE["profilo"] for a, b in v.items()):
+                raise HTTPException(422, "«profilo»: STR, DEX, VIT, INT con bassa, media o alta.")
+            out[k] = {**(s["profilo"] if isinstance(s.get("profilo"), dict) else {}), **v}
+        elif k == "mestiere":
+            if v is None:
+                out[k] = None
+            elif (not isinstance(v, dict) or not isinstance(v.get("nome"), str) or not v["nome"].strip()
+                  or v.get("grado") not in (None, *D.GRADI)):
+                raise HTTPException(422, "«mestiere»: {nome, grado} con grado da I a X, oppure nessuno.")
+            else:
+                out[k] = {"nome": " ".join(v["nome"].split())[:100], "grado": v.get("grado")}
+        elif k == "eta":
+            eta = {**(s["eta"] if isinstance(s.get("eta"), dict) else {"fase": None, "apparente": None, "vera": None})}
+            if not isinstance(v, dict):
+                raise HTTPException(422, "«eta»: {apparente, vera}.")
+            for a in ("apparente", "vera"):
+                if a in v:
+                    x = v[a]
+                    if x is not None and (not isinstance(x, int) or isinstance(x, bool) or not 0 <= x <= 10_000):
+                        raise HTTPException(422, f"«eta.{a}»: un numero di anni da 0 a 10.000.")
+                    eta[a] = x
+            out[k] = eta
+        elif k == "ritratto":
+            out[k] = _immagini(v)
+        elif k == "completa":
+            # scheda completa (Sistema_PNG §4): sezioni di testi brevi, unite a quelle che ci sono
+            if s.get("dettaglio") != "completa":
+                raise HTTPException(409, "Solo una scheda completa ha background, obiettivi e quest: promuovila prima.")
+            if not isinstance(v, dict) or not all(isinstance(x, dict) and all(isinstance(t, str) for t in x.values()) for x in v.values()):
+                raise HTTPException(422, "«completa»: sezioni con campi di testo.")
+            att = dict(s.get("completa") or {})
+            for sez, campi_sez in v.items():
+                if sez not in ("background", "obiettivi", "quest") or not set(campi_sez) <= {
+                        "origine", "eventi_formativi", "relazioni", "segreti", "breve", "lungo", "conflitti", "principale", "secondarie", "ganci"}:
+                    raise HTTPException(422, f"«completa.{sez}»: campo sconosciuto.")
+                att[sez] = {**(att.get(sez) or {}), **{a: " ".join(t.split())[:1000] for a, t in campi_sez.items()}}
+            out[k] = att
+    return out
 
 
 @router.get("/schede/{npc_id}/combattimento")
@@ -252,7 +323,12 @@ def combattimento(npc_id: int, db: Session = Depends(get_db)):
 @router.post("/schede/{npc_id}/promuovi")
 def promuovi(npc_id: int, db: Session = Depends(get_db)):
     n = _npc(db, npc_id)
-    out = G.promuovi(scheda_di(n), _usati(db) - {n.name})
+    try:
+        out = G.promuovi(scheda_di(n), _usati(db) - {n.name})
+    except ErroreStrato as x:
+        raise HTTPException(422, f"Questo PNG non si può promuovere: {x}")
+    except (ValueError, KeyError, TypeError):
+        raise HTTPException(422, "Questo PNG non si può promuovere: la sua scheda è incompleta.")
     if out["errori"]:
         raise HTTPException(422, "; ".join(out["errori"]))
     _salva(db, out["scheda"], n)

@@ -240,3 +240,58 @@ def test_api_flusso(client, master):
     old = client.get("/api/npcs", headers=master).json()[0]
     assert old["scheda"] is None
     assert client.get(f"/api/png/schede/{old['id']}/combattimento", headers=master).status_code == 409
+
+
+# ---------- regressioni dagli attacchi (agente malintenzionato) ----------
+def test_attacchi_nomi_vuoti_e_numeri_enormi(client, master):
+    assert client.post("/api/npcs", headers=master, json={"name": "\t "}).status_code == 422
+    nid = client.post("/api/png/nuovo", headers=master, json={"ruolo": "cittadino", "zona": "alba-chiara", "seme": 1, "salva": True}).json()["npc"]["id"]
+    assert client.patch(f"/api/png/schede/{nid}", headers=master, json={"nome": "   "}).status_code == 422
+    assert client.post("/api/png/nuovo", headers=master, json={"ruolo": "cittadino", "zona": "alba-chiara"}).status_code == 200
+    for r in ["livello 9223372036854775807", "livello 50-1", "livello " + "9" * 5000, "anni 99999999999999999", "livello 0"]:
+        out = client.post("/api/png/nuovo", headers=master, json={"ruolo": "guardia", "zona": "alba-chiara", "seme": 2, "ritocchi": [r]})
+        assert out.status_code in (200, 422), (r, out.status_code)
+        if out.status_code == 200:
+            assert 1 <= out.json()["scheda"]["livello"] <= 999
+    c = client.post("/api/png/componi", headers=master, json={"ruolo": "guardia", "zona": "alba-chiara", "ritocchi": ["livello 50-1"]}).json()
+    assert c["campi"]["livello"]["valore"] == [1, 50]
+
+
+def test_attacchi_campi_con_tipi_sbagliati(client, master):
+    nid = client.post("/api/png/nuovo", headers=master, json={"ruolo": "fabbro", "zona": "alba-chiara", "seme": 3, "salva": True}).json()["npc"]["id"]
+    for campi in [{"eta": "anziano"}, {"addestramento": ["a"]}, {"tratti": 123}, {"vuole": {"x": 1}}, {"corporatura": "titanica"},
+                  {"profilo": "x"}, {"sa": "stringa"}, {"mestiere": {"nome": "", "grado": "XI"}}, {"ritratto": {"immagini": ["abc"]}}]:
+        assert client.patch(f"/api/png/schede/{nid}", headers=master, json={"campi": campi}).status_code == 422, campi
+    assert client.get(f"/api/png/schede/{nid}/combattimento", headers=master).status_code == 200
+    assert client.get("/api/png/controlla", headers=master).status_code == 200
+    ok = client.patch(f"/api/png/schede/{nid}", headers=master, json={"campi": {"tratti": ["burbero"], "eta": {"apparente": 50}}}).json()
+    assert ok["npc"]["scheda"]["eta"]["fase"] == "adulto" and ok["npc"]["scheda"]["eta"]["apparente"] == 50
+
+
+def test_attacchi_comparse_e_bozze_storte(client, master):
+    c = client.post("/api/png/comparse", headers=master, json={"zona": "alba-chiara", "quante": 1, "salva": True}).json()["npc"][0]
+    assert client.patch(f"/api/png/schede/{c['id']}", headers=master, json={"campi": {"vuole": "a"}}).status_code == 409
+    r = client.patch(f"/api/png/schede/{c['id']}", headers=master, json={"livello": 5}).json()
+    assert r["npc"]["level"] == 5 and r["npc"]["place"] == c["place"]
+    for draft in [{"ruolo": "fabbro", "campi": "x"}, {"ruolo": "fabbro", "storia": ["a"]}, {"ruolo": "fabbro", "regno": ["valeria"]},
+                  {"ruolo": "fabbro", "ritocchi": "ex soldato"}, {"ruolo": "fabbro", "ritocchi": ["livello 50-2"]}]:
+        pv = client.post("/api/forge/preview", headers=master, json={"kind": "npcs", "draft": draft})
+        assert pv.status_code == 200, (draft, pv.text)
+        assert "Exceeds" not in pv.text and "randrange" not in pv.text
+
+
+def test_attacchi_morto_e_limiti_di_aggiorna(client, master):
+    nid = client.post("/api/png/nuovo", headers=master, json={"ruolo": "cittadino", "zona": "alba-chiara", "seme": 4, "salva": True}).json()["npc"]["id"]
+    assert client.post(f"/api/png/schede/{nid}/aggiorna", headers=master, json={"giorno": 10**30}).status_code == 422
+    assert client.post(f"/api/png/schede/{nid}/aggiorna", headers=master, json={"partita": "../x"}).status_code == 422
+    client.post(f"/api/png/schede/{nid}/aggiorna", headers=master, json={"giorno": 1, "morto": "lupi"})
+    r = client.post(f"/api/png/schede/{nid}/aggiorna", headers=master, json={"giorno": 2, "affinita": 1, "memoria": ["x"]}).json()
+    st = list(r["npc"]["scheda"]["stato"].values())[0]
+    assert st["vivo"] is False and not st["memoria"] and "morto" in r["avvisi"][0]
+
+
+def test_attacchi_omonimi_hanno_id_diversi(client, master):
+    b = {"ruolo": "cittadino", "zona": "alba-chiara", "seme": 5, "nome": "Gilda Fornari", "salva": True}
+    a = client.post("/api/png/nuovo", headers=master, json=b).json()["npc"]["scheda"]["id"]
+    c = client.post("/api/png/nuovo", headers=master, json=b).json()["npc"]["scheda"]["id"]
+    assert a == "alba-chiara/gilda-fornari" and c == "alba-chiara/gilda-fornari-2"

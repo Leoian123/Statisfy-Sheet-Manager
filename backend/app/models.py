@@ -106,6 +106,8 @@ class Npc(Base):
     # partita, immagini). NULL = PNG scritto a mano prima della sezione PNG.
     dettaglio: Mapped[str] = mapped_column(String(20), default="completa", server_default="completa")
     scheda: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version}
 
 
 class Issue(Base):

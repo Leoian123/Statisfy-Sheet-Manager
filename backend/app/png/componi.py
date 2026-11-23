@@ -29,31 +29,52 @@ class ErroreStrato(ValueError):
 # ---------------------------------------------------------------------------------------------------------------
 # Ritocchi: righe libere («ex soldato», «livello 61») o chiavi esplicite. Una riga che non è un campo è un motivo.
 # ---------------------------------------------------------------------------------------------------------------
+LIVELLO_MAX = 999        # come il wizard della Forgia e le API: oltre non è un PNG ma un dio fuori scala
+ANNI_MAX = 10_000        # anni apparenti: un tetto solo per non far esplodere i conti
+RITOCCHI_MAX = 20
+RITOCCO_LUNGO = 120
+
+
 def leggi_ritocchi(ritocchi: list | dict | None) -> dict:
-    out: dict[str, Any] = {"motivi": [], "profilo": {}, "righe": []}
-    voci = ritocchi if isinstance(ritocchi, list) else [ritocchi] if ritocchi else []
+    """Le righe libere diventano campi o motivi. I numeri sono riportati nei limiti (livello 1-999, anni 0-10.000);
+    una fascia scritta al contrario («livello 40-30») si raddrizza. Ciò che non si può usare finisce in `scartati`."""
+    out: dict[str, Any] = {"motivi": [], "profilo": {}, "righe": [], "scartati": []}
+    voci = ritocchi if isinstance(ritocchi, list) else [ritocchi] if isinstance(ritocchi, (str, dict)) and ritocchi else []
+    if len(voci) > RITOCCHI_MAX:
+        out["scartati"].append(f"più di {RITOCCHI_MAX} ritocchi: tengo i primi {RITOCCHI_MAX}")
+        voci = voci[:RITOCCHI_MAX]
     for v in voci:
         if isinstance(v, dict):
+            v = {str(k): x for k, x in v.items() if isinstance(x, (str, int, float, dict)) and not isinstance(x, bool)}
             for k, x in v.items():
                 if k == "motivo":
-                    out["motivi"].append(str(x))
+                    out["motivi"].append(str(x)[:RITOCCO_LUNGO])
                 elif k == "profilo" and isinstance(x, dict):
-                    out["profilo"].update(x)
+                    out["profilo"].update({str(a): str(b) for a, b in x.items()})
+                elif k == "livello" and isinstance(x, (int, float)):
+                    out["livello"] = [_lv(x), _lv(x)]
+                elif k == "anni" and isinstance(x, (int, float)):
+                    out["anni"] = max(0, min(ANNI_MAX, int(x)))
+                elif k in ("corporatura", "addestramento", "ricchezza", "conta", "genere", "nome", "mestiere", "grado", "voce"):
+                    out[k] = str(x).strip()[:RITOCCO_LUNGO]
                 else:
-                    out[k] = x
-            out["righe"].append(", ".join(f"{k} {x}" for k, x in v.items()))
+                    out["scartati"].append(f"ritocco «{k}» sconosciuto")
+            out["righe"].append(", ".join(f"{k} {x}" for k, x in v.items())[:RITOCCO_LUNGO])
             continue
-        t = str(v).strip()
+        if not isinstance(v, (str, int, float)) or isinstance(v, bool):
+            continue
+        t = " ".join(str(v).split())[:RITOCCO_LUNGO]
         if not t:
             continue
         out["righe"].append(t)
-        m = re.fullmatch(r"(?i)livello\s+(\d+)(?:\s*-\s*(\d+))?", t)
+        m = re.fullmatch(r"(?i)livello\s+(-?\d{1,9})(?:\s*-\s*(-?\d{1,9}))?", t)
         if m:
-            out["livello"] = [int(m[1]), int(m[2] or m[1])]
+            a, b = _lv(int(m[1])), _lv(int(m[2] or m[1]))
+            out["livello"] = [min(a, b), max(a, b)]
             continue
-        m = re.fullmatch(r"(?i)anni\s+(\d+)", t)
+        m = re.fullmatch(r"(?i)anni\s+(-?\d{1,9})", t)
         if m:
-            out["anni"] = int(m[1])
+            out["anni"] = max(0, min(ANNI_MAX, int(m[1])))
             continue
         m = re.fullmatch(r"(?i)(STR|DEX|VIT|INT)\s+(bassa|media|alta)", t)
         if m:
@@ -69,7 +90,12 @@ def leggi_ritocchi(ritocchi: list | dict | None) -> dict:
             continue
         m = re.fullmatch(r"(?i)motivo\s*:\s*(.+)", t)
         out["motivi"].append(m[1].strip() if m else t)
+    out["motivi"] = list(dict.fromkeys(out["motivi"]))   # «ex soldato» due volte resta un motivo solo
     return out
+
+
+def _lv(x: int | float) -> int:
+    return max(1, min(LIVELLO_MAX, int(x)))
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -298,7 +324,7 @@ def componi(ruolo: str, eta: str, razza: str, luogo: dict, ritocchi: list | dict
     c.atteggiamento["frequenze"] = frequenze(c.atteggiamento["pesi"], float(cat.regole.dati.get("tetto_atteggiamento") or 100),
                                              c.avvisi)
     if c.motivo_richiesto and not rit["motivi"]:
-        c.errori += [f"serve un motivo — {m}" for m in c.motivo_richiesto]
+        c.errori += [f"serve un motivo — {m}. Scrivilo nei Ritocchi (es. «porta i conti di Tek al mercante»)." for m in c.motivo_richiesto]
     elif c.motivo_richiesto:
         c.avvisi += [f"motivo dato ({'; '.join(rit['motivi'])}) per: {m}" for m in c.motivo_richiesto]
     return c
@@ -372,7 +398,7 @@ def _luogo(c: Composizione, cat: D.Catalogo, lu: dict, razza: str) -> None:
             c.metti("rara_nel_luogo", True, _o(f"regno {lu['regno']}", cat.regni, lu["regno"], "popoli"))
             if not c.ritocchi["motivi"]:
                 c.avvisi.append(f"razza rara nel luogo: {razza} a {reg.get('nome') or lu['regno']} "
-                                f"({'non elencata' if quota is None else f'{quota} su cento'}); la scheda deve dire perché è lì")
+                                f"({'non elencata' if quota is None else f'{quota} su cento'}); scrivi perché è lì nel campo «Perché è qui»")
     c.metti("moneta", reg.get("moneta"), _o(f"regno {lu['regno']}", cat.regni, lu["regno"], "moneta"))
     c.metti("conta_nel_regno", reg.get("conta"), _o(f"regno {lu['regno']}", cat.regni, lu["regno"], "conta"))
     ins = (cat.insediamenti.dati or {}).get(lu["insediamento"]) or {}
@@ -406,17 +432,35 @@ def _ritocchi(c: Composizione, eta: str) -> None:
         if regola and "livello" not in r:
             nuova, _ = interseca(c.campi["livello"]["valore"], fascia_da_anni(c.valore("anni"), regola))
             c.metti("livello", nuova, {"da": f"età {eta} (anni del ritocco)", "dove": "", "nota": ""})
+    c.avvisi += [f"ritocco ignorato: {x}" for x in r.get("scartati") or []]
+    # un ritocco con un valore che la scala non conosce non entra nella scheda: avvisa e lascia il valore composto
+    ammessi = {**{k: D.SCALE[k] for k in ("corporatura", "addestramento", "ricchezza")},
+               "conta": list((c.cat.regole.dati or {}).get("conta") or {}), "genere": ["m", "f"]}
+    for k, ok in ammessi.items():
+        if k in r and str(r[k]).lower() not in ok:
+            c.avvisi.append(f"ritocco ignorato: {k} «{r[k]}» (si può: {', '.join(ok)})")
+            r.pop(k)
+        elif k in r:
+            r[k] = str(r[k]).lower()
     for k in ("corporatura", "addestramento", "ricchezza", "conta", "voce"):
         if k in r:
             c.metti(k, r[k], o, forza=True)
-    for s, v in (r.get("profilo") or {}).items():
-        c.metti(f"profilo.{s}", v, o, forza=True)
+    for s, v in list((r.get("profilo") or {}).items()):
+        if s.upper() not in D.STATISTICHE or str(v).lower() not in D.SCALE["profilo"]:
+            c.avvisi.append(f"ritocco ignorato: profilo {s} «{v}»")
+            r["profilo"].pop(s)
+            continue
+        c.metti(f"profilo.{s.upper()}", str(v).lower(), o, forza=True)
     if "mestiere" in r:
         c.metti("mestiere.nome", r["mestiere"], o, forza=True)
         if not c.valore("mestiere.grado"):
             c.metti("mestiere.grado", ["I", "I"], o, forza=True)
     if "grado" in r:
-        c.metti("mestiere.grado", [r["grado"], r["grado"]], o, forza=True)
+        if str(r["grado"]).upper() in D.GRADI:
+            g = str(r["grado"]).upper()
+            c.metti("mestiere.grado", [g, g], o, forza=True)
+        else:
+            c.avvisi.append(f"ritocco ignorato: grado «{r['grado']}» (i gradi vanno da I a X)")
     if eta == "bambino":
         if c.valore("mestiere.nome"):
             c.avvisi.append("ritocco: un bambino con un mestiere (un bambino non è un adulto piccolo)")

@@ -225,8 +225,9 @@ table.t td { overflow-wrap: anywhere; }
 .ms-npc-wrap { container-type: inline-size; min-width: 0; }
 .ms-npc { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
 @container (min-width: 560px) { .ms-npc { grid-template-columns: minmax(0, 220px) minmax(0, 1fr); } }
-.ms-npc-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.ms-npc-list .pick { padding: 10px 12px; gap: 4px; }
+.ms-npc-list { display: flex; flex-direction: column; gap: 6px; min-width: 0; --scroll-max: min(60vh, 520px); }
+.ms-npc-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-npc-list .pick { padding: 6px 10px; gap: 2px; flex: none; }
 .ms-npc-name { font-weight: 600; overflow-wrap: anywhere; }
 .ms-detail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .ms-facts { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }

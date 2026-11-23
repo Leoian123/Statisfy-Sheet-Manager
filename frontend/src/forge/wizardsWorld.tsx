@@ -38,7 +38,7 @@ function PngPersona() {
     </div>
     <div className="png-wz-pesca">
       <span className="label">Seme</span><span className="mono small">{x.d.seme}</span>
-      <button type="button" className="btn" onClick={() => x.upd((d) => { d.seme = nuovoSeme(); d.campi = {}; })}>Rigenera la pescata</button>
+      <button type="button" className="btn" onClick={() => x.upd((d) => { d.seme = nuovoSeme(); })} title="Ciò che hai scritto a mano resta">Rigenera la pescata</button>
     </div>
     <Ref>Lo stesso seme ridà la stessa persona: è salvato nella scheda, così si sa sempre da dove viene.</Ref>
   </>;
@@ -66,6 +66,7 @@ const png: WizardDef = {
   heading: "Nuovo PNG",
   intro: "I PNG non sanno che gli Immortali sono giocatori: li vedono come forestieri. La morte di un PNG è definitiva (Sistema PNG, Regola aurea). Il ritratto si aggiunge dall'archivio in Mondo → PNG.",
   fresh: () => ({ ...bozzaNuova(), storia: {}, knows: "", debts: "" }),
+  saveLabel: () => "Salva nell'archivio PNG",
   steps: [
     { render: () => <PngStrati /> },
     { render: () => <PngPersona /> },

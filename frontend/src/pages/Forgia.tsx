@@ -30,7 +30,17 @@ export function Forgia() {
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
   const [active, setActive] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, DraftState & { dirty?: boolean }>>({});
+  // le bozze restano per la sessione del browser: cambiare pagina a metà wizard non le perde
+  const [drafts, setDraftsRaw] = useState<Record<string, DraftState & { dirty?: boolean }>>(() => {
+    try { return JSON.parse(sessionStorage.getItem("forgia-bozze") || "{}"); } catch { return {}; }
+  });
+  const setDrafts = useCallback((f: (ds: Record<string, DraftState & { dirty?: boolean }>) => Record<string, DraftState & { dirty?: boolean }>) => {
+    setDraftsRaw((ds) => {
+      const n = f(ds);
+      try { sessionStorage.setItem("forgia-bozze", JSON.stringify(n)); } catch { /* storage pieno o non disponibile */ }
+      return n;
+    });
+  }, []);
   const [libKind, setLibKind] = useState<ForgeKind | "all">("all");
   const topRef = useRef<HTMLDivElement>(null);
   const [params, setParams] = useSearchParams();
@@ -75,7 +85,11 @@ export function Forgia() {
         <button type="button" className="btn ghost fg-back" onClick={back}>← Torna alla Forgia</button>
         <Wizard key={w.id} def={w} meta={meta} state={state}
           setState={(s) => setDrafts((ds) => ({ ...ds, [w.id]: { ...s, dirty: true } }))}
-          onCancel={() => { setDrafts((ds) => { const n = { ...ds }; delete n[w.id]; return n; }); setActive(null); }}
+          onCancel={() => {
+            if (drafts[w.id]?.dirty && !window.confirm(`Scarto la bozza di «${w.title}»? Quello che hai scritto si perde.`)) return;
+            setDrafts((ds) => { const n = { ...ds }; delete n[w.id]; return n; });
+            setActive(null);
+          }}
           onSaved={(e) => {
             if (!e) return;
             setDrafts((ds) => { const n = { ...ds }; delete n[w.id]; return n; });

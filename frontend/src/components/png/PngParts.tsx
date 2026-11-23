@@ -121,8 +121,9 @@ export function StratiForm({ value, onChange, cat, idp }: StratiProps) {
           <input className="input" id={`${id}-rit`} value={riga} maxLength={120} placeholder="«ex soldato», «livello 61», «STR alta»…"
             onChange={(e) => setRiga(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); aggiungi(); } }}
             onBlur={aggiungi} />
+          <button type="button" className="btn" disabled={!riga.trim()} onMouseDown={(e) => e.preventDefault()} onClick={aggiungi}>Aggiungi</button>
         </div>
-        <span className="hint">Un ritocco vince su ogni strato. «livello N», «anni N», «STR alta», «grado VII» fissano un valore; ogni altra riga vale come motivo.</span>
+        <span className="hint">Premi Invio o «Aggiungi». «livello N», «anni N», «STR alta», «grado VII» fissano un valore; ogni altra riga vale come motivo e vince su ogni strato.</span>
       </div>
     </div>
   );
@@ -203,6 +204,10 @@ interface SchedaProps {
   /** Campi scritti a mano (bozza): se c'è, i sette campi diventano modificabili. */
   campi?: Record<string, string>;
   onCampo?: (k: string, v: string) => void;
+  /** Chiamata quando un campo perde il fuoco (l'archivio salva subito: niente testo perso cambiando pagina). */
+  onBlurCampo?: (k: string) => void;
+  /** Scheda completa: salva una voce di background, obiettivi o quest. */
+  onStoria?: (sez: string, campo: string, v: string) => void;
   combattimento?: Combattimento | null;
   onCombattimento?: () => void;
   partita?: string;
@@ -210,7 +215,25 @@ interface SchedaProps {
 
 const PROFILO = ["STR", "DEX", "VIT", "INT"] as const;
 
-export function SchedaView({ s, campi, onCampo, combattimento, onCombattimento, partita }: SchedaProps) {
+/** Una scheda salvata con tipi storti (dati vecchi o scritti a mano) non deve rompere la schermata. */
+function normalizza(s: Scheda): Scheda {
+  const lista = (v: unknown) => (Array.isArray(v) ? v.map(String) : typeof v === "string" && v ? [v] : []);
+  const testo = (v: unknown) => (v == null ? null : typeof v === "string" ? v : JSON.stringify(v));
+  const eta = s.eta && typeof s.eta === "object" ? s.eta : { fase: String(s.eta ?? "—"), apparente: null, vera: null };
+  return {
+    ...s, eta, tratti: lista(s.tratti), sa: lista(s.sa), dicerie: lista(s.dicerie), puo_dare: lista(s.puo_dare),
+    no_tipici: lista(s.no_tipici), malizia: lista(s.malizia), segni: lista(s.segni), limiti: lista(s.limiti),
+    profilo: s.profilo && typeof s.profilo === "object" ? s.profilo : { STR: "media", DEX: "media", VIT: "media", INT: "media" },
+    voce: testo(s.voce) ?? "", corporatura: testo(s.corporatura) ?? "—", addestramento: testo(s.addestramento) ?? "—",
+    ricchezza: testo(s.ricchezza) ?? "—", conta: testo(s.conta) ?? "—", origine: s.origine && typeof s.origine === "object" ? s.origine : {},
+    da_ritoccare: lista(s.da_ritoccare), stato: s.stato && typeof s.stato === "object" ? s.stato : {},
+    mestiere: s.mestiere && typeof s.mestiere === "object" ? s.mestiere : null,
+    ...Object.fromEntries((["vuole", "teme", "difetto", "forestieri", "prezzo", "vita", "contraddizione", "motivo"] as const).map((k) => [k, testo(s[k])])),
+  } as Scheda;
+}
+
+export function SchedaView({ s: grezza, campi, onCampo, onBlurCampo, onStoria, combattimento, onCombattimento, partita }: SchedaProps) {
+  const s = normalizza(grezza);
   const o = s.origine ?? {};
   const riga = (label: string, v: ReactNode, tip?: string) => tip
     ? <TipRow key={label} className="png-r" tip={<span>{tip}</span>}><span className="png-k">{label}</span><span className="png-v">{v}</span></TipRow>
@@ -242,11 +265,12 @@ export function SchedaView({ s, campi, onCampo, combattimento, onCombattimento, 
               <span className="png-k" title={SETTE_HELP[k]}>{SETTE_LABEL[k]}{o[k] && <small className="muted">{o[k]}</small>}</span>
               <textarea className={`input${daRiscrivere && !scritto ? " png-spunto" : ""}`} rows={k === "contraddizione" ? 2 : 1} maxLength={300}
                 value={scritto} placeholder={pescato || (k === "contraddizione" ? s.contraddizione_spunto ?? "" : "")}
-                onChange={(e) => onCampo(k, e.target.value)} />
+                onChange={(e) => onCampo(k, e.target.value)} onBlur={() => onBlurCampo?.(k)} />
             </label>
           );
         })}
       </section>
+      {s.completa && <StoriaView completa={s.completa} onStoria={onStoria} />}
       <section className="png-sec">
         <span className="label">Come parla, che cosa sa e che cosa può dare</span>
         {riga("Voce", s.voce, o.voce)}
@@ -278,6 +302,34 @@ export function SchedaView({ s, campi, onCampo, combattimento, onCombattimento, 
         </section>
       )}
     </div>
+  );
+}
+
+const STORIA: [string, string, string][] = [
+  ["background", "origine", "Origine"], ["background", "eventi_formativi", "Eventi formativi"], ["background", "relazioni", "Relazioni"],
+  ["obiettivi", "lungo", "Obiettivo a lungo termine"], ["quest", "ganci", "Ganci per le quest"], ["background", "segreti", "Segreti (solo Master)"],
+];
+
+/** Scheda completa (Sistema_PNG §4): background, obiettivi e quest, salvati quando il campo perde il fuoco. */
+function StoriaView({ completa, onStoria }: { completa: NonNullable<Scheda["completa"]>; onStoria?: (sez: string, campo: string, v: string) => void }) {
+  const val = (sez: string, k: string) => String(((completa[sez] as Record<string, unknown> | undefined) ?? {})[k] ?? "");
+  const [bozza, setBozza] = useState<Record<string, string>>({});
+  return (
+    <section className="png-sec">
+      <span className="label">Storia (scheda completa)</span>
+      {STORIA.map(([sez, k, l]) => {
+        const id = `${sez}.${k}`;
+        if (!onStoria) return val(sez, k) ? <div key={id} className="png-r"><span className="png-k">{l}</span><span className="png-v">{val(sez, k)}</span></div> : null;
+        return (
+          <label key={id} className="png-sette">
+            <span className="png-k">{l}</span>
+            <textarea className="input" rows={1} maxLength={1000} value={bozza[id] ?? val(sez, k)}
+              onChange={(e) => setBozza({ ...bozza, [id]: e.target.value })}
+              onBlur={() => { if (bozza[id] != null && bozza[id] !== val(sez, k)) onStoria(sez, k, bozza[id]); }} />
+          </label>
+        );
+      })}
+    </section>
   );
 }
 

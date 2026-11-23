@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorText } from "../api/client";
 import type { Campaign, Issue, Npc, Trust } from "../api/types";
@@ -171,9 +171,22 @@ function NpcsWin({ npcs, setNpcs, session }: { npcs: Npc[]; setNpcs: (n: Npc[]) 
 
   const replace = (np: Npc) => setNpcs(npcs.map((x) => (x.id === np.id ? np : x)));
 
+  const detail = useRef<HTMLDivElement>(null);
   function select(id: number) {
     if (id !== npcId) { setNpcId(id); setLogOpen(false); setDraft(""); setError(null); }
+    // su telefono il dettaglio sta sotto la lista: portalo in vista, se no il tocco sembra non fare niente
+    requestAnimationFrame(() => {
+      const r = detail.current?.getBoundingClientRect();
+      if (r && (r.top > window.innerHeight || r.bottom < 0)) detail.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
   }
+  const statoPng = (x: Npc) => (x.scheda ? Object.values(x.scheda.stato ?? {})[0] : undefined);
+  const chipPng = (x: Npc) => {
+    const st = statoPng(x);
+    if (!x.scheda) return <span className={`chip ${TRUST[x.trust] || "muted"}`}>{x.trust}</span>;
+    if (st && !st.vivo) return <span className="chip bad">morto</span>;
+    return <span className="chip violet" title="Affinità (Status Sociale §3)">affinità {st ? (st.affinita > 0 ? `+${st.affinita}` : st.affinita) : "—"}</span>;
+  };
   async function setTrust(t: Trust) {
     if (!sel) return;
     const res = await run(() => api.patchNpc(sel.id, { trust: t }));
@@ -191,36 +204,36 @@ function NpcsWin({ npcs, setNpcs, session }: { npcs: Npc[]; setNpcs: (n: Npc[]) 
     <Win title="Archivio PNG" right={<><Link className="xs" to="/master/png">Mondo → PNG</Link> <span className="chip muted">{npcs.length} PNG</span></>}>
       <div className="ms-npc-wrap">
         <div className="ms-npc">
-          <div className="ms-npc-list" role="group" aria-label="PNG">
+          <div className="ms-npc-list scroll-y" role="group" aria-label="PNG">
             {npcs.map((x) => (
-              <button className="pick" type="button" key={x.id} aria-pressed={sel?.id === x.id} onClick={() => select(x.id)}>
+              <button className="pick" type="button" key={x.id} aria-pressed={sel?.id === x.id} onClick={() => select(x.id)} title={`${x.role} · ${x.place}`}>
                 <span className="ms-npc-name">{x.name}</span>
-                <span className="xs muted">{x.role}</span>
-                <span className="xs muted">{x.place}</span>
-                <span><span className={`chip ${TRUST[x.trust] || "muted"}`}>{x.trust}</span></span>
+                <span className="xs muted ms-npc-sub">Lv {x.level} · {x.role.replace(/_/g, " ")}</span>
+                <span>{chipPng(x)}</span>
               </button>
             ))}
             {!npcs.length && <p className="ms-empty">Archivio vuoto.</p>}
           </div>
           {!sel ? <p className="ms-empty">Seleziona un PNG dalla lista.</p> : (
-            <div className="ms-detail" aria-live="polite">
+            <div className="ms-detail" aria-live="polite" ref={detail}>
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="ms-pc-name">{sel.name}</span>
-                <span className={`chip ${TRUST[sel.trust] || "muted"}`}>Fiducia: {sel.trust}</span>
+                {sel.scheda ? chipPng(sel) : <span className={`chip ${TRUST[sel.trust] || "muted"}`}>Fiducia: {sel.trust}</span>}
               </div>
-              {sel.scheda && <p className="xs muted">Nato dai preset ({sel.dettaglio}): sette campi, affinità per partita, combattimento e ritratto sono in <Link to="/master/png">Mondo → PNG</Link>.</p>}
+              {sel.scheda && <p className="small">Nato dai preset ({sel.dettaglio}): sette campi, affinità, morte, combattimento e ritratto si gestiscono in{" "}
+                <Link to={`/master/png?tab=archivio&id=${sel.id}`}>Mondo → PNG → Archivio</Link>.</p>}
               <div className="ms-facts">
                 <div className="kv"><span className="label">Livello</span><span className="v num">{sel.level}</span></div>
                 <div className="kv"><span className="label">Razza</span><span className="v">{sel.race}</span></div>
                 <div className="kv"><span className="label">Luogo</span><span className="v">{sel.place}</span></div>
                 <div className="kv"><span className="label">Ruolo</span><span className="v">{sel.role}</span></div>
               </div>
-              <div className="field">
+              {!sel.scheda && <div className="field">
                 <label className="label" htmlFor="ms-npc-trust">Fiducia verso il gruppo</label>
                 <select className="input" id="ms-npc-trust" value={sel.trust} disabled={busy} onChange={(e) => setTrust(e.target.value as Trust)}>
                   {TRUST_LEVELS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
-              </div>
+              </div>}
               <div className="ms-block"><span className="label">Cosa sa dei PG</span><p>{sel.knows || "—"}</p></div>
               <div className="ms-block"><span className="label">Debiti e favori</span><p>{sel.debts || "—"}</p></div>
               <div className="ms-block"><span className="label">Ultima interazione</span><p>{sel.last || "—"}</p></div>

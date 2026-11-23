@@ -13,7 +13,7 @@ from typing import Any
 
 from .. import rules as R
 from . import dati as D
-from .componi import Composizione, componi, fascia_da_anni, interseca, vista
+from .componi import Composizione, ErroreStrato, componi, fascia_da_anni, interseca, vista
 
 CAMPI_ROSA = ["vuole", "teme", "difetto", "forestieri", "prezzo", "vita"]
 
@@ -50,7 +50,7 @@ def nome_per(cat: D.Catalogo, razza: str, regno: str, genere: str, rng: random.R
         stile = None
     if not isinstance(stile, dict):
         return None
-    usati_l = {u.lower() for u in usati} | {u.split()[0].lower() for u in usati if u}
+    usati_l = {u.lower().strip() for u in usati if u and u.strip()} | {u.split()[0].lower() for u in usati if u and u.split()}
     usati_l |= {u.lower() for u in (stile.get("usati") or [])}
     nomi = [n for n in (stile.get(genere) or []) if n.lower() not in usati_l] or list(stile.get(genere) or [])
     if not nomi:
@@ -336,14 +336,16 @@ def combattimento(s: dict, cat: D.Catalogo | None = None) -> dict:
     reg = cat.regole.dati
     if s.get("dettaglio") == "comparsa" and "addestramento" not in s:
         return {"combatte": None, "nota": "una comparsa non ha i numeri: promuovila a scheda"}
-    if (s.get("eta") or {}).get("fase") == "bambino":
+    if isinstance(s.get("eta"), dict) and s["eta"].get("fase") == "bambino":
         return {"combatte": False, "nota": "un bambino non è un bersaglio: non ha blocco di combattimento"}
-    add = (reg.get("addestramento") or {}).get(s.get("addestramento") or "nessuno") or {}
+    a_key = s.get("addestramento") if isinstance(s.get("addestramento"), str) else "nessuno"
+    add = (reg.get("addestramento") or {}).get(a_key) or {}
     if add.get("blocco") is False:
         return {"combatte": False,
                 "nota": "non combatte: scappa, grida, si arrende. La morte è definitiva e non rischia senza motivo "
                         "(Sistema_PNG §3)."}
-    taglia = (reg.get("corporatura") or {}).get(s.get("corporatura") or "normale", "Normale")
+    c_key = s.get("corporatura") if isinstance(s.get("corporatura"), str) else "normale"
+    taglia = (reg.get("corporatura") or {}).get(c_key, "Normale")
     rarita = reg.get("rarita_png") or "Comune"
     lv = int(s["livello"])
     fattore = float(add.get("danno", 1))
@@ -427,6 +429,15 @@ def aggiorna(s: dict, partita: str, evento: dict, cat: D.Catalogo | None = None)
     st.setdefault("registro", [])
     avvisi: list[str] = []
     giorno = evento.get("giorno")
+    if evento.get("annulla_morte") and not st.get("vivo", True):
+        st["vivo"] = True
+        st.pop("morte", None)
+        return {"scheda": n, "avvisi": ["morte annullata: era un errore di registrazione, il PNG è di nuovo vivo"]}
+    if not st.get("vivo", True) and (evento.get("affinita") or evento.get("memoria") or evento.get("legami") or evento.get("morto")):
+        # la morte è definitiva (Sistema_PNG §1): la scheda resta com'era, niente nuova affinità né memoria
+        return {"scheda": n, "avvisi": [f"{n.get('nome', 'Questo PNG')} è morto: la scheda resta com'era, non si aggiorna più"]}
+    if len(st.get("registro") or []) >= 500:
+        st["registro"] = st["registro"][-499:]   # il registro tiene le ultime 500 variazioni
     if "affinita" in evento and evento["affinita"] not in (None, 0):
         x = int(evento["affinita"])
         applicato = x
@@ -459,7 +470,8 @@ def aggiorna(s: dict, partita: str, evento: dict, cat: D.Catalogo | None = None)
         st["affinita"] = nuovo_v
     for k in ("memoria", "legami"):
         for v in evento.get(k) or []:
-            st.setdefault(k, []).append(v if isinstance(v, dict) else {"giorno": giorno, "testo": str(v)})
+            st.setdefault(k, []).append({"giorno": giorno, "testo": " ".join(str(v).split())[:300]})
+        st[k] = (st.get(k) or [])[-200:]
     if evento.get("morto"):
         m = evento["morto"] if isinstance(evento["morto"], dict) else {"causa": str(evento["morto"])}
         st["vivo"] = False
@@ -478,8 +490,10 @@ def da_bozza(d: dict, usati: set[str] | None = None, cat: D.Catalogo | None = No
     Bozza: {ruolo, eta, razza, regno?, insediamento?, zona?, ritocchi[], seme, nome?, livello?, genere?,
             campi: {vuole…perche_qui}, completa?: bool, storia: {origine, eventi, relazioni, obiettivo_lungo, ganci, segreto}}"""
     cat = cat or D.catalogo()
-    luogo = {k: d.get(k) for k in ("regno", "insediamento", "zona") if d.get(k)}
-    rit = [str(r) for r in (d.get("ritocchi") or []) if str(r).strip()]
+    d = {k: (v if not isinstance(v, (list, dict)) or k in ("ritocchi", "campi", "storia") else None) for k, v in d.items()}
+    luogo = {k: str(d[k])[:80] for k in ("regno", "insediamento", "zona") if d.get(k)}
+    grezzi = d.get("ritocchi") if isinstance(d.get("ritocchi"), list) else []   # una stringa non va spezzata in lettere
+    rit = [str(r) for r in grezzi if isinstance(r, (str, int, float)) and str(r).strip()]
     if d.get("genere") in ("m", "f"):
         rit.append(f"genere {d['genere']}")
     try:
@@ -491,21 +505,23 @@ def da_bozza(d: dict, usati: set[str] | None = None, cat: D.Catalogo | None = No
     s = out["scheda"]
     if s is None:
         return out
-    nome = str(d.get("nome") or "").strip()
-    if nome:
+    testo = lambda v, n: " ".join(v.split())[:n] if isinstance(v, str) else ""   # solo stringhe, spazi compattati
+    nome = testo(d.get("nome"), 100)
+    if nome and D.slug(nome):
         s["nome"] = nome[:100]
         s["origine"]["nome"] = "scritto a mano"
         s["id"] = s["id"].rsplit("/", 1)[0] + "/" + D.slug(nome)
     try:
-        lv = int(d.get("livello")) if str(d.get("livello") or "").strip() else None
-    except (TypeError, ValueError):
+        lv = int(d.get("livello")) if isinstance(d.get("livello"), (int, str)) and str(d.get("livello")).strip() else None
+    except (TypeError, ValueError, OverflowError):
         lv = None
-    if lv:
+    if lv is not None:
         s["livello"] = max(1, min(999, lv))
         s["origine"]["livello"] = "scritto a mano"
-    for k, v in (d.get("campi") or {}).items():
-        if k in CAMPI_BOZZA and str(v or "").strip():
-            s[k] = str(v).strip()
+    campi = d.get("campi") if isinstance(d.get("campi"), dict) else {}
+    for k, v in campi.items():
+        if k in CAMPI_BOZZA and testo(v, 300):
+            s[k] = testo(v, 300)
             s["origine"][k] = "scritto a mano"
             if k in s["da_ritoccare"]:
                 s["da_ritoccare"].remove(k)
@@ -514,13 +530,14 @@ def da_bozza(d: dict, usati: set[str] | None = None, cat: D.Catalogo | None = No
     s["ritratto"]["descrizione"] = descrizione_ritratto(s)
     if d.get("completa"):
         s = promuovi(s, cat=cat)["scheda"]
-        st = {k: str((d.get("storia") or {}).get(k) or "").strip() for k in STORIA}
+        storia = d.get("storia") if isinstance(d.get("storia"), dict) else {}
+        st = {k: testo(storia.get(k), 1000) for k in STORIA}
         c = s["completa"]
         c["background"].update({"origine": st["origine"], "eventi_formativi": st["eventi"],
                                 "relazioni": st["relazioni"], "segreti": st["segreto"]})
         c["obiettivi"]["lungo"] = st["obiettivo_lungo"]
         c["quest"]["ganci"] = st["ganci"]
-    if lv:
+    if lv and lv > 0:
         out["avvisi"] = list(out["avvisi"]) + controlla_livello(s, None, cat)
     out["scheda"] = s
     out["combattimento"] = combattimento(s, cat)

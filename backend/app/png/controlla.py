@@ -314,37 +314,44 @@ def controlla_schede(schede: list[dict], cat: D.Catalogo | None = None) -> Esito
     for s in schede:
         if not s or s.get("dettaglio") == "comparsa":
             continue
-        nome = s.get("nome", "?")
-        dove = f"scheda {s.get('id') or nome}"
-        f = D.File(rel=dove, dati=s)
-        _derivati(e, f, {k: v for k, v in s.items() if k not in ("stato", "stato_iniziale")})
-        p = s.get("provenienza") or {}
-        ritocchi = " ".join(p.get("ritocchi") or []).lower()
-        fase = (s.get("eta") or {}).get("fase")
-        if fase == "bambino":
-            if s.get("mestiere"):
-                (e.avviso if "mestiere" in ritocchi else e.errore)(dove, f"{nome}: un bambino con un mestiere")
-            if (s.get("addestramento") or "nessuno") != "nessuno":
-                (e.avviso if "addestramento" in ritocchi else e.errore)(dove, f"{nome}: un bambino con un blocco di combattimento")
-        fascia = None
-        if p.get("ruolo") and p.get("eta") and p.get("razza"):
-            try:
-                c = componi(p["ruolo"], p["eta"], p["razza"], _luogo_di(s), None, cat)
-                fascia = c.valore("livello")
-                if c.valore("livello_da_anni") and (s.get("eta") or {}).get("apparente"):
-                    a = int(s["eta"]["apparente"])
-                    fascia, _ = interseca(fascia, fascia_da_anni([a, a], c.valore("livello_da_anni")))
-                if c.valore("rara_nel_luogo") and not s.get("perche_qui"):
-                    e.avviso(dove, f"{nome}: {p['razza']} è rara nel luogo e la scheda non dice perché è lì")
-            except ErroreStrato as x:
-                e.errore(dove, f"{nome}: {x}")
-        for a in controlla_livello(s, fascia, cat):
-            e.avviso(dove, a)
-        chiave = (s.get("luogo"), s.get("difetto"), s.get("voce"))
-        if all(chiave) and chiave in visti:
-            e.avviso(dove, f"{nome} e {visti[chiave]}: stesso luogo, stesso difetto e stessa voce")
-        visti.setdefault(chiave, nome)
+        try:
+            _scheda(e, s, cat, visti)
+        except (TypeError, ValueError, KeyError, AttributeError):
+            e.errore(f"scheda {s.get('id') or s.get('nome', '?')}", f"{s.get('nome', '?')}: scheda illeggibile, va riscritta a mano")
     return e
+
+
+def _scheda(e: Esito, s: dict, cat: D.Catalogo, visti: dict) -> None:
+    nome = s.get("nome", "?")
+    dove = f"scheda {s.get('id') or nome}"
+    f = D.File(rel=dove, dati=s)
+    _derivati(e, f, {k: v for k, v in s.items() if k not in ("stato", "stato_iniziale")})
+    p = s.get("provenienza") or {}
+    ritocchi = " ".join(p.get("ritocchi") or []).lower()
+    fase = (s.get("eta") or {}).get("fase")
+    if fase == "bambino":
+        if s.get("mestiere"):
+            (e.avviso if "mestiere" in ritocchi else e.errore)(dove, f"{nome}: un bambino con un mestiere")
+        if (s.get("addestramento") or "nessuno") != "nessuno":
+            (e.avviso if "addestramento" in ritocchi else e.errore)(dove, f"{nome}: un bambino con un blocco di combattimento")
+    fascia = None
+    if p.get("ruolo") and p.get("eta") and p.get("razza"):
+        try:
+            c = componi(p["ruolo"], p["eta"], p["razza"], _luogo_di(s), None, cat)
+            fascia = c.valore("livello")
+            if c.valore("livello_da_anni") and (s.get("eta") or {}).get("apparente"):
+                a = int(s["eta"]["apparente"])
+                fascia, _ = interseca(fascia, fascia_da_anni([a, a], c.valore("livello_da_anni")))
+            if c.valore("rara_nel_luogo") and not s.get("perche_qui"):
+                e.avviso(dove, f"{nome}: {p['razza']} è rara nel luogo e la scheda non dice perché è lì")
+        except ErroreStrato as x:
+            e.errore(dove, f"{nome}: {x}")
+    for a in controlla_livello(s, fascia, cat):
+        e.avviso(dove, a)
+    chiave = (s.get("luogo"), s.get("difetto"), s.get("voce"))
+    if all(chiave) and chiave in visti:
+        e.avviso(dove, f"{nome} e {visti[chiave]}: stesso luogo, stesso difetto e stessa voce")
+    visti.setdefault(chiave, nome)
 
 
 # ---------------------------------------------------------------------------------------------------------------
