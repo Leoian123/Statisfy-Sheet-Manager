@@ -41,6 +41,8 @@ def message(errors: list[dict]) -> str:
                 text = tmpl
             if e.get("type") == "literal_error" and e.get("ctx", {}).get("expected"):
                 text += f" (ammessi: {e['ctx']['expected']})"
+        elif e.get("type") == "value_error" and str(e.get("msg", "")).startswith("Value error, Meccanica"):
+            text = str(e["msg"]).removeprefix("Value error, ")  # messaggio già leggibile (mech.parse)
         else:
             text = "valore non valido"
         parts.append(f"{field}: {text}")

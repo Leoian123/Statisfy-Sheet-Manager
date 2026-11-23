@@ -131,6 +131,23 @@ class ForgeEntry(Base):
     __mapper_args__ = {"version_id_col": version}
 
 
+class Scontro(Base):
+    """Scontro in corso sulla plancia: stato completo del motore (`engine.py`) — ordine dei turni, combattenti,
+    status, effetti in attesa, registro. Uno solo attivo alla volta. `history` = ultimi stati per «Annulla»
+    (non inviati al client). Le risorse dei PG restano sincronizzate con `Character.resources`."""
+    __tablename__ = "scontri"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), default="")
+    encounter_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)  # ForgeEntry, senza FK
+    state: Mapped[dict] = mapped_column(JSON, default=dict)
+    history: Mapped[list] = mapped_column(JSON, default=list)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    created_at: Mapped[str] = mapped_column(String(40), default="")
+    closed_at: Mapped[str | None] = mapped_column(String(40), nullable=True, default=None)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    __mapper_args__ = {"version_id_col": version}
+
+
 class Roll(Base):
     """Tiro d100 al tavolo (plancia). Il risultato lo genera il server: tens/units dai d10, natural 1–100
     (00 + 0 = 100), total = natural + somma dei `mods` allegati.
