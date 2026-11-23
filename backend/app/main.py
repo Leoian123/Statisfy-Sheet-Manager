@@ -12,7 +12,7 @@ from .db import SessionLocal
 from .errors import message
 from .guard import BodyGuard
 from .web import SecurityHeaders, frontend_dist, page_csp, spa_handler
-from .routers import (admin, auth, characters, combat, equipment, forge, imports, journal, master, rules, scontri, table,
+from .routers import (ability_use, admin, auth, characters, combat, equipment, forge, imports, journal, master, rules, scontri, table,
                       tickets)
 from .seed import seed_if_empty
 
@@ -66,7 +66,7 @@ async def overflow_handler(request: Request, exc: OverflowError):
 
 
 for r in (auth.router, rules.router, characters.router, combat.router, equipment.router, master.router, imports.router,
-          forge.router, table.router, journal.router, tickets.router, admin.router, scontri.router):
+          forge.router, table.router, journal.router, tickets.router, admin.router, scontri.router, ability_use.router):
     app.include_router(r)
 
 
