@@ -115,3 +115,23 @@ test("coda del giocatore: il Master ti ha scritto = da fare", () => {
   assert.equal(bucketOf(tk({ mine: false, to_me: true, kind: "comunicazione" }), "giocatore"), "todo");
   assert.equal(bucketOf(tk({ mine: false, to_me: true, kind: "comunicazione", messages: [msg("player")] }), "giocatore"), "waiting");
 });
+
+test("richieste di incantesimo: si chiudono con l'approvazione e si correggono con il wizard", async () => {
+  const { isFormKind, canReviseIncanto, KIND_GROUPS } = await import("../src/lib/richieste.ts");
+  const inc = tk({ kind: "incanto" });
+  assert.equal(isFormKind("incanto"), true);
+  assert.equal(isFormKind("evoluzione"), true);
+  assert.equal(isFormKind("regola"), false);
+  // titolo e testo li scrive il server dalla bozza: niente «Modifica titolo e testo»
+  assert.equal(canEdit(inc), false);
+  assert.equal(canWithdraw(inc), true);
+  assert.equal(canReviseIncanto(inc), true);
+  assert.equal(canReviseIncanto(tk({ kind: "incanto", status: "in_esame" })), true);
+  assert.equal(canReviseIncanto(tk({ kind: "incanto", status: "respinta" })), false);
+  assert.equal(canReviseIncanto(tk({ kind: "incanto", mine: false })), false);
+  assert.equal(canReviseIncanto(tk({ kind: "incanto", archived_at: "2026-11-20T10:00:00+00:00" })), false);
+  assert.equal(canReviseIncanto(tk()), false);
+  assert.ok(KIND_GROUPS.some((g) => g.kinds.includes("incanto")));
+  // il Master lo vede da fare finché non risponde
+  assert.equal(bucketOf(inc, "master"), "todo");
+});

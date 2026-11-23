@@ -65,7 +65,19 @@ function LevelStepper({ label, why }: { label: string; why?: string }) {
   );
 }
 
-const charSel = (x: WCtx) => <SelF path="charId" label="PG" opts={x.meta.characters.map((c) => ({ v: String(c.id), l: `${c.name} · ${c.classe || "—"} · Lv ${c.level}` }))} />;
+/** PG che impara l'abilità. Nella revisione di una richiesta è quello della richiesta: non si cambia. */
+const charSel = (x: WCtx) => {
+  if (x.mode === "approve") {
+    const c = x.meta.characters.find((ch) => String(ch.id) === String(x.d.charId));
+    return <p className="small"><span className="muted">PG della richiesta:</span> <b>{c ? `${c.name} · ${c.classe || "—"} · Lv ${c.level}` : "—"}</b></p>;
+  }
+  return <SelF path="charId" label={x.mode === "player" ? "Personaggio che lo impara" : "PG"} opts={x.meta.characters.map((c) => ({ v: String(c.id), l: `${c.name} · ${c.classe || "—"} · Lv ${c.level}` }))} />;
+};
+
+/** Ultimo passo nella richiesta del giocatore: decide il Master. */
+const PlayerNote = ({ what, ch }: { what: string; ch: string }) => (
+  <Ref>Con «Invia al Master» la richiesta parte così com'è: se il Master la approva, {what} entra tra le skill attive di {ch} (Grado I · 1%). Requisiti non soddisfatti, costo e ricarica li valuta lui: può ritoccarli o chiederti modifiche.</Ref>
+);
 
 /* =====================================================================
    7. INCANTESIMO
@@ -87,6 +99,8 @@ const incantesimo: WizardDef = {
     env: { zone: "", ley: 0, anti: false }, risk: { fatigue: false, emotion: false, interrupt: false, overcast: "auto", protections: 0 },
     cost: null, cd: null, mech: null, charId: meta.characters[0] ? String(meta.characters[0].id) : "", assign: true, force: false }),
   saveLabel: (x) => (x.d.assign && x.c.can_skill && x.c.char ? `Salva e aggiungi a ${x.c.char.name}` : "Salva nella libreria"),
+  playerHeading: "Richiedi un incantesimo",
+  playerIntro: "Componi l'incantesimo con il sistema delle sfere: effetto, meccanica, sfere, livello, costo e rischi. I numeri li calcola il System; il Master lo rivede e lo approva o lo respinge.",
   steps: [
     { render: (x) => <>
       <TextF path="name" label="Nome dell'incantesimo" req max={40} ph="Es. Palla di Fuoco"
@@ -215,9 +229,12 @@ const incantesimo: WizardDef = {
           </ul> : <span className="small muted">Nessun PG.</span>}
           <span className="xs muted">Grado della sfera = skill di tipo Knowledge con lo stesso nome.</span>
         </div>
-        <CheckF path="assign" disabled={!x.c.can_skill} label={`Aggiungi al grimorio di ${ch?.name ?? "—"}`}
-          hint={x.c.can_skill ? "Diventa una skill attiva di Grado I all'1%." : "Un incantesimo improvvisato non diventa una skill."} />
-        {x.d.assign && x.c.can_skill && x.c.missing > 0 && <CheckF path="force" label="Forza l'assegnazione (decisione del Master)" hint="Le sfere mancanti restano da imparare: il PG non può ancora lanciarlo." />}
+        {x.mode === "player" ? (x.c.can_skill ? <PlayerNote what="l'incantesimo" ch={ch?.name ?? "il tuo PG"} /> : <Ref>Un incantesimo improvvisato non diventa una skill: se il Master lo approva resta nella libreria della campagna.</Ref>) : <>
+          {x.mode === "forge" && <CheckF path="assign" disabled={!x.c.can_skill} label={`Aggiungi al grimorio di ${ch?.name ?? "—"}`}
+            hint={x.c.can_skill ? "Diventa una skill attiva di Grado I all'1%." : "Un incantesimo improvvisato non diventa una skill."} />}
+          {x.mode === "approve" && <Ref>{x.c.can_skill ? `Approvando entra nella libreria e nel grimorio di ${ch?.name ?? "—"} (Grado I · 1%).` : "Improvvisato: approvando entra solo nella libreria."}</Ref>}
+          {x.d.assign && x.c.can_skill && x.c.missing > 0 && <CheckF path="force" label="Forza l'assegnazione (decisione del Master)" hint="Le sfere mancanti restano da imparare: il PG non può ancora lanciarlo." />}
+        </>}
       </>;
     } },
   ],
@@ -286,6 +303,8 @@ const miracolo: WizardDef = {
     vows: [], customVows: "", against: "indebolito", againstNote: "", mech: null,
     charId: String((meta.characters.find((c) => /chieric/i.test(c.classe)) ?? meta.characters[0])?.id ?? ""), assign: true, force: false }),
   saveLabel: (x) => (x.d.assign && x.c.char ? `Salva e assegna a ${x.c.char.name}` : "Salva nella libreria"),
+  playerHeading: "Richiedi un miracolo",
+  playerIntro: "Il chierico chiede al suo dio: scegli la divinità, descrivi il miracolo e la sua meccanica, Fede, favore, voti e tabù. Il Master lo rivede e lo approva o lo respinge.",
   steps: [
     { render: (x) => <>
       {(["Luce", "Ombra"] as const).map((dom) => (
@@ -366,12 +385,17 @@ const miracolo: WizardDef = {
           </ul>}
           <span className="xs muted">Favore = reputazione cosmica del PG verso il dio (Sistema Status Sociale, Livello 5).</span>
         </div>
-        <CheckF path="assign" label={`Assegna a ${ch?.name ?? "—"}`} hint="Diventa una skill attiva di Grado I all'1%." />
-        {x.d.assign && issues.length > 0 && <>
-          <div className="sysmsg bad" role="alert"><span className="tag">[AVVISO]</span>{issues.map((t) => <span key={t}>{t}.</span>)}</div>
-          <CheckF path="force" label="Forza l'assegnazione (decisione del Master)" />
+        {x.mode === "player" ? <>
+          {issues.length > 0 && <div className="sysmsg bad" role="status"><span className="tag">[AVVISO]</span>{issues.map((t) => <span key={t}>{t}.</span>)}</div>}
+          <PlayerNote what="il miracolo" ch={ch?.name ?? "il tuo PG"} />
+        </> : <>
+          {x.mode === "forge" && <CheckF path="assign" label={`Assegna a ${ch?.name ?? "—"}`} hint="Diventa una skill attiva di Grado I all'1%." />}
+          {x.d.assign && issues.length > 0 && <>
+            <div className="sysmsg bad" role="alert"><span className="tag">[AVVISO]</span>{issues.map((t) => <span key={t}>{t}.</span>)}</div>
+            <CheckF path="force" label="Forza l'assegnazione (decisione del Master)" />
+          </>}
+          <Ref>{x.mode === "approve" ? `Approvando entra nella libreria e tra le skill attive di ${ch?.name ?? "—"} (Grado I · 1%).` : "Il miracolo entra comunque nella libreria della campagna."}</Ref>
         </>}
-        <Ref>Il miracolo entra comunque nella libreria della campagna.</Ref>
       </>;
     } },
   ],
@@ -397,7 +421,9 @@ const miracolo: WizardDef = {
           <span className={P.fm.mult ? "" : "wz-bad"}>{P.fm.state}</span></PvRow>}
         <PvRow label="Voti e tabù" tip={c.vows}>{(c.vows ?? []).length || DASH}</PvRow>
         <PvRow label="Contro la volontà" tip={ag ? [ag.text, String(d.againstNote ?? "").trim()] : undefined}>{ag?.name ?? DASH}</PvRow>
-        <PvRow label="Assegnazione" tip={issues}><span className={d.assign && issues.length ? "wz-warn" : ""}>{!d.assign ? "solo libreria" : issues.length ? (d.force ? "forzata" : "da verificare") : `a ${c.char?.name ?? "—"}`}</span></PvRow>
+        {x.mode === "player"
+          ? <PvRow label="Requisiti PG" tip={issues}><span className={issues.length ? "wz-warn" : "wz-ok"}>{!c.char ? "—" : issues.length ? "da valutare" : "ok"}</span></PvRow>
+          : <PvRow label="Assegnazione" tip={issues}><span className={d.assign && issues.length ? "wz-warn" : ""}>{!d.assign ? "solo libreria" : issues.length ? (d.force ? "forzata" : "da verificare") : `a ${c.char?.name ?? "—"}`}</span></PvRow>}
       </PvWin>
     );
   },

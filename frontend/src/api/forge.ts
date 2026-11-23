@@ -11,7 +11,7 @@ export type Computed = Record<string, any>;
 
 export interface Opt { v: string; l: string; sub?: string }
 export interface ForgeRarity { name: string; key: string; grade: number; creature_mult: number; weapon_base: [number, number | null] }
-export interface ForgeChar { id: number; name: string; level: number; classe: string; exp_pct: number }
+export interface ForgeChar { id: number; name: string; level: number; classe: string; exp_pct: number; /** Solo nella richiesta di incantesimo. */ cleric?: boolean }
 export interface Sphere { key: string; it: string; field: string; pure?: boolean }
 export interface God { key: string; name: string; domain: "Luce" | "Ombra"; origin?: boolean; epithet: string; sphere: string; tone: string; affine: string[]; vows: string[] }
 

@@ -18,6 +18,19 @@ export interface WCtx {
   c: Computed;
   meta: ForgeMeta;
   id: string;
+  /** "forge" = Forgia del Master; "player" = il giocatore compone una richiesta; "approve" = il Master la rivede. */
+  mode: WizardMode;
+}
+
+export type WizardMode = "forge" | "player" | "approve";
+
+/** Da dove arrivano anteprima e salvataggio: la Forgia (default) o le richieste di incantesimo. */
+export interface WizardApi {
+  preview: (kind: ForgeKind, d: Draft) => Promise<ForgePreview>;
+  /** Salva o invia; ritorna i messaggi per il toast (null = nessun toast). */
+  submit: (kind: ForgeKind, d: Draft) => Promise<{ tag: string; messages: string[] } | null>;
+  /** Testo dell'ultimo passo quando è tutto valido. */
+  ready?: string;
 }
 
 export interface StepDef { render: (x: WCtx) => ReactNode }
@@ -34,6 +47,9 @@ export interface WizardDef {
   steps: StepDef[];
   preview: (x: WCtx) => ReactNode;
   saveLabel?: (x: WCtx) => string;
+  /** Titolo e introduzione quando il wizard compone una richiesta al Master. */
+  playerHeading?: string;
+  playerIntro?: ReactNode;
 }
 
 export interface DraftState { d: Draft; step: number }
@@ -272,10 +288,20 @@ interface WizardProps {
   state: DraftState;
   setState: (s: DraftState) => void;
   onCancel: () => void;
-  onSaved: (e: ForgeEntry) => void;
+  /** Dopo il salvataggio: la voce creata nella Forgia (null con un'API diversa). */
+  onSaved: (e: ForgeEntry | null) => void;
+  mode?: WizardMode;
+  api?: WizardApi;
+  /** Testo del pulsante finale (sostituisce saveLabel). */
+  submitLabel?: (x: WCtx) => string;
+  /** Sopra il wizard (es. la richiesta che il Master sta rivedendo). */
+  extra?: ReactNode;
+  /** Sotto il wizard (es. note per il Master). */
+  footer?: ReactNode;
+  cancelTitle?: string;
 }
 
-export function Wizard({ def, meta, state, setState, onCancel, onSaved }: WizardProps) {
+export function Wizard({ def, meta, state, setState, onCancel, onSaved, mode = "forge", api, submitLabel, extra, footer, cancelTitle }: WizardProps) {
   const toast = useToast();
   const [pv, setPv] = useState<ForgePreview | null>(null);
   const [pvError, setPvError] = useState<string | null>(null);
@@ -290,7 +316,7 @@ export function Wizard({ def, meta, state, setState, onCancel, onSaved }: Wizard
   useEffect(() => {
     const n = ++seq.current;
     const t = window.setTimeout(() => {
-      forgeApi.preview(def.kind, d)
+      (api ? api.preview(def.kind, d) : forgeApi.preview(def.kind, d))
         .then((r) => { if (n === seq.current) { setPv(r); setPvError(null); } })
         .catch((e) => { if (n === seq.current) setPvError(errorText(e)); });
     }, pv ? 150 : 0);
@@ -298,7 +324,7 @@ export function Wizard({ def, meta, state, setState, onCancel, onSaved }: Wizard
   }, [d, def.kind]);
 
   const x: WCtx = {
-    d, c: pv?.computed ?? {}, meta, id: def.id,
+    d, c: pv?.computed ?? {}, meta, id: def.id, mode,
     set: (path, v) => { const nd = clone(d); setP(nd, path, v); setState({ d: nd, step }); },
     upd: (fn) => { const nd = clone(d); fn(nd); setState({ d: nd, step }); },
   };
@@ -324,9 +350,15 @@ export function Wizard({ def, meta, state, setState, onCancel, onSaved }: Wizard
     setSaving(true);
     setSaveError(null);
     try {
-      const r = await forgeApi.save(def.kind, d);
-      toast("FORGIA", r.messages, { gold: true });
-      onSaved(r.entry);
+      if (api) {
+        const r = await api.submit(def.kind, d);
+        if (r) toast(r.tag, r.messages, { gold: true });
+        onSaved(null);
+      } else {
+        const r = await forgeApi.save(def.kind, d);
+        toast("FORGIA", r.messages, { gold: true });
+        onSaved(r.entry);
+      }
     } catch (e) {
       setSaveError(errorText(e));
     } finally {
@@ -337,7 +369,11 @@ export function Wizard({ def, meta, state, setState, onCancel, onSaved }: Wizard
   return (
     <Ctx.Provider value={x}>
       <div className="stack wz">
-        <div className="stack wz-head"><h2>{def.heading}</h2><p className="muted small">{def.intro}</p></div>
+        <div className="stack wz-head">
+          <h2>{mode === "player" && def.playerHeading ? def.playerHeading : def.heading}</h2>
+          <p className="muted small">{mode === "player" && def.playerIntro ? def.playerIntro : def.intro}</p>
+        </div>
+        {extra}
         <Steps labels={labels} current={step} reachable={reachable} onGo={go} />
         <div className="wz-body">
           <section className="win wz-form" aria-labelledby={`wz-${def.id}-h`}>
@@ -347,16 +383,16 @@ export function Wizard({ def, meta, state, setState, onCancel, onSaved }: Wizard
               {pvError && <p className="hint bad" role="alert">Anteprima non disponibile: {pvError}</p>}
               {saveError && <p className="hint bad" role="alert">{saveError}</p>}
               <div className="wz-foot">
-                <button type="button" className="btn ghost" title="Scarta la bozza e torna alla Forgia" onClick={onCancel}>Annulla</button>
+                <button type="button" className="btn ghost" title={cancelTitle ?? "Scarta la bozza e torna alla Forgia"} onClick={onCancel}>Annulla</button>
                 <div className="wz-foot-r">
                   <span className={`hint wz-reason ${reason ? "bad" : "good"}`} id={`wz-${def.id}-reason`} role="status">
-                    {!pv ? "Verifica in corso…" : reason || (last ? "Pronto: salva per aggiungerlo alla libreria." : "Passo completo.")}
+                    {!pv ? "Verifica in corso…" : reason || (last ? (api?.ready ?? "Pronto: salva per aggiungerlo alla libreria.") : "Passo completo.")}
                   </span>
                   <div className="row">
                     <button type="button" className="btn" disabled={step === 0} onClick={() => go(step - 1)}>Indietro</button>
                     {last
                       ? <button type="button" className="btn primary" disabled={blocked || saving} aria-describedby={`wz-${def.id}-reason`} onClick={save}>
-                          {saving ? "Salvataggio…" : def.saveLabel ? def.saveLabel(x) : "Salva nella libreria"}
+                          {saving ? "Salvataggio…" : submitLabel ? submitLabel(x) : def.saveLabel ? def.saveLabel(x) : "Salva nella libreria"}
                         </button>
                       : <button type="button" className="btn primary" disabled={blocked} aria-describedby={`wz-${def.id}-reason`} onClick={() => go(step + 1)}>Avanti</button>}
                   </div>
@@ -366,6 +402,7 @@ export function Wizard({ def, meta, state, setState, onCancel, onSaved }: Wizard
           </section>
           <aside className="wz-preview" aria-label="Anteprima">{def.preview(x)}</aside>
         </div>
+        {footer}
       </div>
     </Ctx.Provider>
   );

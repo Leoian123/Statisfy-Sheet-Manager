@@ -411,6 +411,22 @@ Il giocatore vede solo le sue; il Master tutte. Chiusa da più di `STATISFY_TICK
   `promote_issue` su una `regola` risolta crea (una volta) una questione delle regole decisa → `issue_id`.
 - `POST /api/tickets/{id}/archive` (Master, solo chiuse) e `POST /api/tickets/rotate` (Master) → `{archived, archive_days}`.
 
+### Richieste di incantesimo (`/api/tickets/incanti`)
+
+Il giocatore compone un incantesimo (o un miracolo, se ha un chierico) con il wizard della Forgia e lo manda al Master:
+richiesta `kind: "incanto"` con `meta = {forge_kind: "spells"|"miracles", draft, card: {name, type, summary, effect, mech_text, issues}, note, entry_id, learned?}`.
+- `GET /incanti/meta` → come `GET /forge/meta`, ma solo `spells`/`miracles` e solo i PG di chi chiede (`characters[].cleric`).
+- `POST /incanti/preview` `{kind, draft}` → come `/forge/preview` sui soli PG di chi chiede; `assign` e `force` ignorati.
+- `POST /incanti` `{kind, draft, note?}` → 201 `Ticket`. La bozza deve passare tutti i passi (422 «Passo N …»); `draft.charId`
+  = un PG di chi chiede (404 altrimenti); 409 se il PG ha già una skill attiva con quel nome. Stessi tetti delle richieste (429).
+  Requisiti non soddisfatti (sfere, chierico, Fede, favore) non bloccano: finiscono in `card.issues` per il Master.
+- `PUT /incanti/{id}` `{version?, draft, note?}` (solo l'autore, richiesta attiva): nuova bozza, la richiesta torna `aperta`
+  con il messaggio «Ho aggiornato l'incantesimo.».
+- `POST /incanti/{id}/approva` (Master) `{version?, draft?, force?, risposta?}` → `{ticket, messages}`: la bozza (quella del
+  giocatore o ritoccata dal Master) passa dalla Forgia con `assign` sul PG della richiesta: voce nella libreria e skill
+  attiva Grado I · 1%; poi `risolta` con la risposta (o un testo automatico). 422 se mancano requisiti e `force` è falso.
+- Si respinge con `PATCH /api/tickets/{id}` `{status: "respinta", answer}`; `risolta` via PATCH e la modifica di titolo e testo → 422.
+
 ## Account e amministrazione
 
 - `User` = `{id, username, display_name, role, must_change_password}`. Con `must_change_password` (password provvisoria

@@ -77,6 +77,7 @@ export function Forgia() {
           setState={(s) => setDrafts((ds) => ({ ...ds, [w.id]: { ...s, dirty: true } }))}
           onCancel={() => { setDrafts((ds) => { const n = { ...ds }; delete n[w.id]; return n; }); setActive(null); }}
           onSaved={(e) => {
+            if (!e) return;
             setDrafts((ds) => { const n = { ...ds }; delete n[w.id]; return n; });
             setLibKind(e.kind);
             setActive(null);

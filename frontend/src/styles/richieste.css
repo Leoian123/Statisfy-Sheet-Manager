@@ -10,6 +10,12 @@
 .rq-placeholder { text-align: center; }
 .rq-back { display: none; align-self: flex-start; }
 .rq-new-open { align-self: flex-start; }
+.rq-new-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.rq-new-btns .rq-new-open { align-self: auto; }
+/* Richiesta di incantesimo: scheda del System nella richiesta */
+.rq-spell { gap: 8px; }
+.rq-spell .sysmsg { min-width: 0; overflow-wrap: anywhere; }
+.in-note { max-width: 720px; }
 
 .rq-sum { margin: 0; }
 
@@ -104,4 +110,9 @@
   .rq-check input { width: 20px; height: 20px; }
   .rq-kindsel, .rq-rotate, .rq-search { flex: 1 1 100%; }
   .rq-actions .btn { flex: 1 1 auto; }
+}
+
+/* Richiesta di incantesimo dal telefono: bersagli tattili da 44px anche nel wizard della Forgia */
+@media (max-width: 760px) {
+  .in-root .btn, .in-root .wz-step, .in-root .pick, .in-root .input { min-height: 44px; }
 }

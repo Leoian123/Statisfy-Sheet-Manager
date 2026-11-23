@@ -3,21 +3,26 @@
 import type { PlayerTicketKind, Ticket, TicketKind, TicketList, TicketStatus } from "../api/tickets";
 
 export const KIND_SHORT: Record<TicketKind, string> = {
-  funzione: "Funzione", contenuto: "Contenuto", regola: "Regola", evoluzione: "Evoluzione", comunicazione: "Dal Master",
+  funzione: "Funzione", contenuto: "Contenuto", regola: "Regola", incanto: "Incantesimo", evoluzione: "Evoluzione", comunicazione: "Dal Master",
 };
 export const KIND_HINTS: Record<TicketKind, string> = {
   funzione: "Un'idea per l'app: una schermata, un pulsante, un automatismo.",
   contenuto: "Oggetti, mostri, classi, missioni o luoghi da aggiungere al gioco.",
   regola: "Un dubbio sul regolamento: il Master risponde e può fissarlo nelle regole.",
+  incanto: "Componi un incantesimo (o un miracolo, se sei un chierico) con il wizard: il Master lo approva o lo respinge.",
   evoluzione: "Una skill ha raggiunto il Grado X: il Master definisce la passiva e il nuovo ciclo.",
   comunicazione: "Messaggio del Master: rispondi con un messaggio.",
 };
 export const KIND_ORDER: PlayerTicketKind[] = ["funzione", "contenuto", "regola"];
 /** Filtro del Master: anche le richieste aperte dal sistema. */
-export const KIND_FILTER: TicketKind[] = ["funzione", "contenuto", "regola", "evoluzione", "comunicazione"];
+export const KIND_FILTER: TicketKind[] = ["funzione", "contenuto", "regola", "incanto", "evoluzione", "comunicazione"];
 /** Aperte dal sistema: non si risolvono a mano (l'evoluzione si chiude con «Definisci evoluzione»). */
 export function isSystemKind(k: TicketKind): boolean {
   return k === "evoluzione" || k === "comunicazione";
+}
+/** Si chiudono «risolte» solo con il loro modulo (evoluzione, approvazione dell'incantesimo), non con «Risolvi». */
+export function isFormKind(k: TicketKind): boolean {
+  return isSystemKind(k) || k === "incanto";
 }
 /** Colore del chip di stato (classi .chip del tema). */
 export const STATUS_TONE: Record<TicketStatus, string> = {
@@ -72,7 +77,11 @@ export function archiveText(archiveAt: string | null, now: number = Date.now()):
 
 /** L'autore corregge titolo e testo solo finché la richiesta è aperta (e non in archivio). */
 export function canEdit(t: Ticket): boolean {
-  return t.mine && !isSystemKind(t.kind) && t.status === "aperta" && !t.archived_at;
+  return t.mine && !isFormKind(t.kind) && t.status === "aperta" && !t.archived_at;
+}
+/** L'autore riapre il wizard del suo incantesimo finché la richiesta è attiva. */
+export function canReviseIncanto(t: Ticket): boolean {
+  return t.mine && t.kind === "incanto" && (t.status === "aperta" || t.status === "in_esame") && !t.archived_at;
 }
 /** L'autore la ritira finché non è chiusa. */
 export function canWithdraw(t: Ticket): boolean {
@@ -172,6 +181,7 @@ export interface KindGroup { key: string; label: string; kinds: TicketKind[] }
 export const KIND_GROUPS: KindGroup[] = [
   { key: "evoluzione", label: "Evoluzioni", kinds: ["evoluzione"] },
   { key: "comunicazione", label: "Dal Master", kinds: ["comunicazione"] },
+  { key: "incanto", label: "Incantesimi", kinds: ["incanto"] },
   { key: "regola", label: "Domande", kinds: ["regola"] },
   { key: "idee", label: "Idee", kinds: ["funzione", "contenuto"] },
 ];

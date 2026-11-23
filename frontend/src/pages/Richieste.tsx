@@ -2,10 +2,10 @@
    Stessa pagina per i due ruoli. PC: elenco a sinistra e dettaglio a destra; telefono (≤ 760px): uno alla volta.
    Tutto il testo degli utenti (titolo, testo, messaggi, risposta) è reso come testo semplice (pre-wrap), mai come HTML. */
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, errorText } from "../api/client";
 import {
-  KIND_LABELS, STATUS_LABELS, TICKET_LIMITS, ticketsApi,
+  KIND_LABELS, STATUS_LABELS, TICKET_LIMITS, incantoMeta, ticketsApi,
   type PlayerTicketKind, type Ticket, type TicketList, type TicketPatch, type TicketStatus,
 } from "../api/tickets";
 import { EvolutionForm } from "../components/EvolutionForm";
@@ -16,8 +16,8 @@ import { Tabs } from "../components/Tabs";
 import { useToast } from "../components/Toast";
 import { Win } from "../components/Win";
 import {
-  BUCKET_EMPTY, BUCKET_LABELS, KIND_GROUPS, KIND_HINTS, KIND_ORDER, KIND_SHORT, STATUS_TONE, isSystemKind, ageText, archiveText,
-  bucketOf, canEdit, canWithdraw, countBuckets, dayText, isClosed, isUnread, masterMoves, newTicketError, pruneSeen, sortTickets,
+  BUCKET_EMPTY, BUCKET_LABELS, KIND_GROUPS, KIND_HINTS, KIND_ORDER, KIND_SHORT, STATUS_TONE, ageText, archiveText,
+  bucketOf, canEdit, canReviseIncanto, canWithdraw, countBuckets, dayText, isClosed, isFormKind, isUnread, masterMoves, newTicketError, pruneSeen, sortTickets,
   type Bucket, type Move,
 } from "../lib/richieste";
 import { usePolling } from "../lib/usePolling";
@@ -324,12 +324,22 @@ function NewTicket({ startOpen, onCreated }: { startOpen: boolean; onCreated: (t
     } finally { setBusy(false); }
   }
 
+  const spellBtn = (
+    <Link className="btn rq-new-open" to="/richieste/incanto" title="Componi un incantesimo o un miracolo con il wizard e mandalo al Master">
+      ✦ Richiedi un incantesimo
+    </Link>
+  );
   if (!shown) {
     return (
-      <button type="button" className="btn primary rq-new-open" onClick={() => setOpenForm(true)}>+ Nuova richiesta</button>
+      <div className="rq-new-btns">
+        <button type="button" className="btn primary rq-new-open" onClick={() => setOpenForm(true)}>+ Nuova richiesta</button>
+        {spellBtn}
+      </div>
     );
   }
   return (
+    <>
+    <div className="rq-new-btns">{spellBtn}</div>
     <Win title="Nuova richiesta" gold>
       <form className="stack rq-new" onSubmit={submit}>
         <div className="stack" style={{ gap: 4 }}>
@@ -369,6 +379,7 @@ function NewTicket({ startOpen, onCreated }: { startOpen: boolean; onCreated: (t
         </div>
       </form>
     </Win>
+    </>
   );
 }
 
@@ -500,7 +511,7 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
               {arch && <> · <span className="rq-arch" title={fullDate(t.archive_at)}>{arch}</span></>}
               {t.archived_at && <> · <span title={fullDate(t.archived_at)}>in archivio dal {dayText(t.archived_at)}</span></>}
             </p>
-            <p className="rq-pre rq-body">{t.body}</p>
+            {incantoMeta(t) ? <IncantoBox t={t} master={master} /> : <p className="rq-pre rq-body">{t.body}</p>}
             {canEdit(t) && (
               <div className="row">
                 <button type="button" className="cr-linkbtn small rq-link" onClick={() => { setETitle(t.title); setEBody(t.body); setEditing(true); setErr(null); }}>
@@ -532,7 +543,7 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
               <label className="label" htmlFor="rq-ans">Risposta o decisione</label>
               <textarea ref={ansRef} className="input" id="rq-ans" rows={3} maxLength={TICKET_LIMITS.body} value={ans}
                 placeholder={t.kind === "regola" ? "La regola è…" : "Cosa hai deciso e perché"} onChange={(e) => setAns(e.target.value)} />
-              <span className="hint">Obbligatoria per risolvere o respingere: il giocatore la legge come decisione.</span>
+              <span className="hint">{t.kind === "incanto" ? "Obbligatoria per respingere; per approvare usa «Rivedi e approva»." : "Obbligatoria per risolvere o respingere: il giocatore la legge come decisione."}</span>
             </div>
             {t.kind === "regola" && t.issue_id == null && (t.status === "aperta" || t.status === "in_esame") && (
               <label className="ms-check rq-check" htmlFor="rq-promote">
@@ -541,7 +552,7 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
               </label>
             )}
             <div className="row rq-actions">
-              {masterMoves(t.status).filter((m) => !(isSystemKind(t.kind) && m.to === "risolta") && !(t.kind === "comunicazione" && m.to !== "respinta")).map((m) => (
+              {masterMoves(t.status).filter((m) => !(isFormKind(t.kind) && m.to === "risolta") && !(t.kind === "comunicazione" && m.to !== "respinta")).map((m) => (
                 <button key={m.to + m.label} type="button" disabled={busy} className={`btn${m.primary ? " primary" : ""}${m.danger ? " danger" : ""}`} onClick={() => move(m)}>
                   {m.label}
                 </button>
@@ -616,5 +627,44 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
         </div>
       </div>
     </Win>
+  );
+}
+
+/** Scheda dell'incantesimo nella richiesta: riepilogo del System, requisiti da valutare e azioni del wizard. */
+function IncantoBox({ t, master }: { t: Ticket; master: boolean }) {
+  const navigate = useNavigate();
+  const m = incantoMeta(t)!;
+  const c = m.card;
+  const active = (t.status === "aperta" || t.status === "in_esame") && !t.archived_at;
+  return (
+    <div className="stack rq-spell">
+      <div className="sysmsg gold" role="group" aria-label={`Scheda: ${c.name}`}>
+        <span className="tag">[{c.type.toUpperCase()}] {c.name}</span>
+        <span className="small">{c.summary}</span>
+        {c.mech_text && <span className="small"><span className="muted">Meccanica</span> {c.mech_text}</span>}
+        <span className="small rq-pre"><span className="muted">Effetto</span> {c.effect}</span>
+        {m.note && <span className="small rq-pre"><span className="muted">Note per il Master</span> {m.note}</span>}
+      </div>
+      {c.issues.length > 0 && (
+        <div className="sysmsg bad" role="status">
+          <span className="tag">[DA VALUTARE{t.char_name ? ` · ${t.char_name}` : ""}]</span>
+          {c.issues.map((x) => <span key={x} className="small">{x}.</span>)}
+        </div>
+      )}
+      {t.status === "risolta" && m.entry_id != null && (
+        <p className="hint good">{m.learned ? `Nel grimorio di ${t.char_name ?? "—"}: skill attiva Grado I · 1%.` : "Nella libreria della campagna."}</p>
+      )}
+      {active && (master ? (
+        <div className="row">
+          <button type="button" className="btn primary" onClick={() => navigate(`/richieste/incanto?t=${t.id}`)}>Rivedi e approva</button>
+          <span className="hint">Apre il wizard completo: puoi ritoccare costo, livello e meccanica prima di approvare.</span>
+        </div>
+      ) : canReviseIncanto(t) && (
+        <div className="row">
+          <button type="button" className="btn" onClick={() => navigate(`/richieste/incanto?t=${t.id}`)}>Modifica l'incantesimo</button>
+          <span className="hint">Riapre il wizard; la nuova versione torna al Master.</span>
+        </div>
+      ))}
+    </div>
   );
 }

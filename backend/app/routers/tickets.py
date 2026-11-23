@@ -4,6 +4,7 @@ Ciclo di vita: aperta → in_esame → risolta | respinta; l'autore può ritirar
 Archiviazione (logrotate): una richiesta chiusa da più di `config.TICKET_ARCHIVE_DAYS` giorni passa in archivio
 (`archived_at`) a ogni lettura dell'elenco, all'avvio e con «Archivia ora» del Master. In archivio è solo leggibile.
 Una domanda sul regolamento risolta può diventare una «Questione delle regole» decisa (Area Master).
+Le richieste di incantesimo («incanto»: wizard della Forgia composto dal giocatore) stanno in routers/incanti.py.
 
 Permessi: il giocatore vede e scrive solo le sue richieste; il Master le vede tutte e ne cambia lo stato."""
 from datetime import datetime, timedelta, timezone
@@ -29,7 +30,8 @@ _CREATE_LOCK = threading.Lock()  # conteggio + inserimento atomici (un solo work
 router = APIRouter(prefix="/api/tickets", tags=["tickets"])
 
 Kind = Literal["funzione", "contenuto", "regola"]  # quelle che il giocatore può aprire
-AnyKind = Literal["funzione", "contenuto", "regola", "evoluzione", "comunicazione"]  # + quelle di sistema
+AnyKind = Literal["funzione", "contenuto", "regola", "incanto", "evoluzione", "comunicazione"]  # + incanti e quelle di sistema
+FORM_KINDS = ("evoluzione", "comunicazione", "incanto")  # si chiudono con il loro modulo, non con «Risolvi»
 Status = Literal["aperta", "in_esame", "risolta", "respinta", "ritirata"]
 ACTIVE = ("aperta", "in_esame")
 CLOSED = ("risolta", "respinta", "ritirata")
@@ -187,7 +189,8 @@ def create_ticket(data: TicketIn, user: User = Depends(current_user), db: Sessio
         return _create_ticket(data, user, db)
 
 
-def _create_ticket(data: TicketIn, user: User, db: Session):
+def check_limits(db: Session, user: User) -> None:
+    """Tetti per utente: richieste create nelle ultime 24 ore e richieste ancora in attesa (429)."""
     since = _iso(_now() - timedelta(days=1))
     today = db.scalar(select(func.count()).select_from(Ticket)
                       .where(Ticket.author_id == user.id, Ticket.created_at >= since)) or 0
@@ -197,6 +200,10 @@ def _create_ticket(data: TicketIn, user: User, db: Session):
                        .where(Ticket.author_id == user.id, Ticket.status.in_(ACTIVE))) or 0
     if active >= config.TICKET_MAX_ACTIVE:
         raise HTTPException(429, f"Hai già {active} richieste in attesa: aspetta che il Master ne chiuda qualcuna.")
+
+
+def _create_ticket(data: TicketIn, user: User, db: Session):
+    check_limits(db, user)
     title, body = _line(data.title), _clean_text(data.body).strip()
     if len(title) < 3 or not body:
         raise HTTPException(422, "Scrivi un titolo (almeno 3 caratteri) e il testo della richiesta.")
@@ -278,6 +285,10 @@ def patch_ticket(ticket_id: int, data: TicketPatch, user: User = Depends(current
         raise HTTPException(403, "Le comunicazioni del Master si commentano con un messaggio.")
     if t.kind in ("evoluzione", "comunicazione") and data.status == "risolta":
         raise HTTPException(422, "Un'evoluzione si chiude con «Definisci evoluzione».")
+    if t.kind == "incanto" and data.status == "risolta":
+        raise HTTPException(422, "Un incantesimo si approva con «Rivedi e approva»: entra nella libreria e nel grimorio del PG.")
+    if t.kind == "incanto" and ("title" in f or "body" in f):
+        raise HTTPException(422, "Un incantesimo si corregge riaprendo il wizard («Modifica l'incantesimo»).")
     if not master:
         # Il giocatore: ritira la sua richiesta o corregge titolo e testo finché nessuno l'ha presa in esame
         if "answer" in f or data.promote_issue or (data.status not in (None, "ritirata")):
@@ -378,3 +389,9 @@ def archive_now(ticket_id: int, user: User = Depends(current_user), db: Session 
 @router.post("/rotate", dependencies=[Depends(require_master)])
 def rotate_now(db: Session = Depends(get_db)):
     return {"archived": rotate(db), "archive_days": config.TICKET_ARCHIVE_DAYS}
+
+
+# Richieste di incantesimo (/api/tickets/incanti/...): in fondo perché incanti.py usa gli helper di questo modulo
+from . import incanti  # noqa: E402
+
+router.include_router(incanti.router)

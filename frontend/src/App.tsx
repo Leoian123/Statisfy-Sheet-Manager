@@ -18,6 +18,7 @@ import { Scontro } from "./pages/Scontro";
 import { Simulatore } from "./pages/Simulatore";
 import { Diario } from "./pages/Diario";
 import { Richieste } from "./pages/Richieste";
+import { Incanto } from "./pages/Incanto";
 import { Account, ForcedPassword } from "./pages/Account";
 import { Amministrazione } from "./pages/Amministrazione";
 
@@ -57,6 +58,7 @@ function Gate() {
           <Route path="/crea" element={<Crea />} />
           <Route path="/diario" element={<Diario />} />
           <Route path="/richieste" element={<Richieste />} />
+          <Route path="/richieste/incanto" element={<Incanto />} />
           <Route path="/account" element={<Account />} />
           <Route path="/master" element={<MasterOnly><Master /></MasterOnly>} />
           <Route path="/master/forgia" element={<MasterOnly><Forgia /></MasterOnly>} />

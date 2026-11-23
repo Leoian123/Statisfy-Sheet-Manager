@@ -1,12 +1,13 @@
 // API delle Richieste al Master (/api/tickets): proposte di funzioni e contenuti, domande sul regolamento.
 import { request } from "./client";
+import type { Draft, ForgeMeta, ForgePreview } from "./forge";
 
 /** Tipi che un giocatore apre; "evoluzione" e "comunicazione" le apre il sistema (skill al Grado X). */
 export type PlayerTicketKind = "funzione" | "contenuto" | "regola";
-export type TicketKind = PlayerTicketKind | "evoluzione" | "comunicazione";
+export type TicketKind = PlayerTicketKind | "incanto" | "evoluzione" | "comunicazione";
 export type TicketStatus = "aperta" | "in_esame" | "risolta" | "respinta" | "ritirata";
 export const KIND_LABELS: Record<TicketKind, string> = {
-  funzione: "Nuova funzione", contenuto: "Nuovo contenuto", regola: "Domanda sul regolamento",
+  funzione: "Nuova funzione", contenuto: "Nuovo contenuto", regola: "Domanda sul regolamento", incanto: "Incantesimo da approvare",
   evoluzione: "Evoluzione di una skill", comunicazione: "Dal Master",
 };
 export const STATUS_LABELS: Record<TicketStatus, string> = {
@@ -39,7 +40,7 @@ export interface Ticket {
   recipient_id?: number | null;
   recipient_name?: string | null;
   to_me?: boolean;
-  /** Dati di sistema: evoluzione {field, skill, ciclo, role, pair}. */
+  /** Dati di sistema: evoluzione {field, skill, ciclo, role, pair}. Per gli incantesimi leggerli con incantoMeta(t). */
   meta?: EvolutionMeta | null;
   created_at: string;
   updated_at: string;
@@ -50,6 +51,14 @@ export interface Ticket {
   version: number;
 }
 export interface EvolutionMeta { field: "skills" | "active_skills"; skill: string; ciclo: number; role: "master" | "giocatore"; pair?: number }
+/** Richiesta di incantesimo: bozza del wizard della Forgia e riepilogo calcolato dal server all'invio. */
+export type MagicKind = "spells" | "miracles";
+export interface IncantoCard { name: string; type: string; summary: string; effect: string; mech_text: string; issues: string[] }
+export interface IncantoMeta { forge_kind: MagicKind; draft: Draft; card: IncantoCard; note?: string; entry_id: number | null; learned?: boolean }
+export function incantoMeta(t: Ticket): IncantoMeta | null {
+  const m = t.meta as unknown as IncantoMeta | null | undefined;
+  return t.kind === "incanto" && m && typeof m === "object" && "draft" in m ? m : null;
+}
 export interface EvolveBody {
   version?: number; passiva_nome?: string; passiva_effetto?: string; passiva_mech?: unknown | null;
   skill_mech?: unknown | null; togli_meccanica?: boolean; risposta?: string;
@@ -96,5 +105,13 @@ export const ticketsApi = {
   /** Il Master apre a mano l'evoluzione di una skill già al Grado X. */
   openEvolution: (charId: number, field: "skills" | "active_skills", name: string) =>
     changed(request<{ opened: number[] }>("POST", `/characters/${id(charId)}/evoluzione`, { field, name })),
+  /** Richieste di incantesimo: wizard della Forgia ristretto ai PG del giocatore. */
+  incantoMeta: () => request<ForgeMeta>("GET", "/tickets/incanti/meta"),
+  incantoPreview: (kind: MagicKind, draft: Draft) => request<ForgePreview>("POST", "/tickets/incanti/preview", { kind, draft }),
+  incantoCreate: (kind: MagicKind, draft: Draft, note: string) => changed(request<Ticket>("POST", "/tickets/incanti", { kind, draft, note })),
+  incantoUpdate: (n: number, body: { version?: number; draft: Draft; note?: string }) => changed(request<Ticket>("PUT", `/tickets/incanti/${id(n)}`, body)),
+  /** Il Master approva (con la bozza eventualmente ritoccata): libreria della Forgia + skill attiva del PG. */
+  incantoApprove: (n: number, body: { version?: number; draft?: Draft; force?: boolean; risposta?: string }) =>
+    changed(request<{ ticket: Ticket; messages: string[] }>("POST", `/tickets/incanti/${id(n)}/approva`, body)),
   rotate: () => changed(request<{ archived: number; archive_days: number }>("POST", "/tickets/rotate")),
 };
