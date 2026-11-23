@@ -11,7 +11,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -21,13 +21,15 @@ from ..db import get_db
 from ..models import Character, Issue, Ticket, User
 import threading
 
+from .. import evolution
 from .journal import _clean_text, _like
 
 _CREATE_LOCK = threading.Lock()  # conteggio + inserimento atomici (un solo worker, vedi docs/DEPLOY.md)
 
 router = APIRouter(prefix="/api/tickets", tags=["tickets"])
 
-Kind = Literal["funzione", "contenuto", "regola"]
+Kind = Literal["funzione", "contenuto", "regola"]  # quelle che il giocatore può aprire
+AnyKind = Literal["funzione", "contenuto", "regola", "evoluzione", "comunicazione"]  # + quelle di sistema
 Status = Literal["aperta", "in_esame", "risolta", "respinta", "ritirata"]
 ACTIVE = ("aperta", "in_esame")
 CLOSED = ("risolta", "respinta", "ritirata")
@@ -68,6 +70,18 @@ class TicketPatch(BaseModel):
     promote_issue: bool = False  # solo Master, solo domande sul regolamento risolte
 
 
+class EvolveIn(BaseModel):
+    """Il Master definisce l'evoluzione di una skill arrivata al Grado X."""
+    model_config = ConfigDict(extra="forbid")
+    version: int | None = None
+    passiva_nome: str = Field("", max_length=120)
+    passiva_effetto: str = Field("", max_length=2000)
+    passiva_mech: dict | None = None
+    skill_mech: dict | None = None  # nuove caratteristiche della Forgia per la skill stessa (sostituisce la meccanica)
+    togli_meccanica: bool = False
+    risposta: str = Field("", max_length=5000)
+
+
 def rotate(db: Session, now: datetime | None = None) -> int:
     """Archivia le richieste chiuse da almeno TICKET_ARCHIVE_DAYS giorni. Ritorna quante. Idempotente."""
     now = now or _now()
@@ -85,6 +99,11 @@ def _names(db: Session) -> dict[int, str]:
     return {u.id: u.display_name for u in db.scalars(select(User))}
 
 
+def _unread(t: Ticket, user: User) -> bool:
+    return (t.author_id == user.id and not t.seen_by_author and user.role != "master") or \
+        (t.recipient_id == user.id and not t.seen_by_recipient)
+
+
 def _out(t: Ticket, names: dict[int, str], chars: dict[int, str], user: User) -> dict:
     archive_at = None
     if t.closed_at and not t.archived_at:
@@ -93,7 +112,9 @@ def _out(t: Ticket, names: dict[int, str], chars: dict[int, str], user: User) ->
             "char_id": t.char_id, "char_name": chars.get(t.char_id) if t.char_id else None,
             "kind": t.kind, "title": t.title, "body": t.body, "status": t.status, "answer": t.answer or "",
             "messages": t.messages or [], "issue_id": t.issue_id,
-            "unread": (t.author_id == user.id and not t.seen_by_author),
+            "unread": _unread(t, user), "recipient_id": t.recipient_id,
+            "recipient_name": names.get(t.recipient_id) if t.recipient_id else None,
+            "to_me": t.recipient_id == user.id, "meta": t.meta,
             "created_at": t.created_at, "updated_at": t.updated_at, "closed_at": t.closed_at,
             "archived_at": t.archived_at, "archive_at": archive_at, "version": t.version}
 
@@ -104,9 +125,14 @@ def _chars(db: Session) -> dict[int, str]:
 
 def _get(db: Session, user: User, ticket_id: int) -> Ticket:
     t = db.get(Ticket, ticket_id)
-    if t is None or (user.role != "master" and t.author_id != user.id):
+    if t is None or (user.role != "master" and user.id not in (t.author_id, t.recipient_id)):
         raise HTTPException(404, "Richiesta non trovata.")
     return t
+
+
+def _mine(user: User):
+    """Richieste visibili al giocatore: le sue e le comunicazioni del Master a lui."""
+    return or_(Ticket.author_id == user.id, Ticket.recipient_id == user.id)
 
 
 def _editable(t: Ticket) -> None:
@@ -118,20 +144,23 @@ def _editable(t: Ticket) -> None:
 def summary(user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Contatori per il menu: Master = richieste nuove (aperte); giocatore = sue richieste con risposte non lette."""
     if user.role == "master":
-        n = db.scalar(select(func.count()).select_from(Ticket).where(Ticket.status == "aperta", Ticket.archived_at.is_(None)))
+        n = db.scalar(select(func.count()).select_from(Ticket).where(Ticket.status == "aperta", Ticket.kind != "comunicazione",
+                                                                     Ticket.archived_at.is_(None)))
     else:
         n = db.scalar(select(func.count()).select_from(Ticket)
-                      .where(Ticket.author_id == user.id, Ticket.seen_by_author.is_(False), Ticket.archived_at.is_(None)))
+                      .where(or_(and_(Ticket.author_id == user.id, Ticket.seen_by_author.is_(False)),
+                                 and_(Ticket.recipient_id == user.id, Ticket.seen_by_recipient.is_(False))),
+                             Ticket.archived_at.is_(None)))
     return {"count": n or 0}
 
 
 @router.get("")
-def list_tickets(scope: Literal["attive", "archivio"] = "attive", status: Status | None = None, kind: Kind | None = None,
+def list_tickets(scope: Literal["attive", "archivio"] = "attive", status: Status | None = None, kind: AnyKind | None = None,
                  q: str | None = Query(None, max_length=100), limit: int = Query(50, ge=1, le=200),
                  offset: int = Query(0, ge=0, le=100000),
                  user: User = Depends(current_user), db: Session = Depends(get_db)):
     rotate(db)
-    base = [] if user.role == "master" else [Ticket.author_id == user.id]
+    base = [] if user.role == "master" else [_mine(user)]
     cond = [*base, Ticket.archived_at.is_(None) if scope == "attive" else Ticket.archived_at.is_not(None)]
     if status:
         cond.append(Ticket.status == status)
@@ -186,6 +215,11 @@ def _create_ticket(data: TicketIn, user: User, db: Session):
 @router.get("/{ticket_id}")
 def get_ticket(ticket_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     t = _get(db, user, ticket_id)
+    if t.recipient_id == user.id and not t.seen_by_recipient:
+        db.execute(update(Ticket).where(Ticket.id == t.id).values(seen_by_recipient=True)
+                   .execution_options(synchronize_session=False))
+        db.commit()
+        db.refresh(t)
     if t.author_id == user.id and not t.seen_by_author:
         # letta dall'autore: UPDATE diretto senza cambiare `version`, così chi ha la richiesta aperta (il Master)
         # non riceve un 409 solo perché l'autore l'ha letta
@@ -213,6 +247,20 @@ def add_message(ticket_id: int, data: MessageIn, user: User = Depends(current_us
     t.updated_at = now
     if user.id != t.author_id:
         t.seen_by_author = False
+    if t.recipient_id is not None and user.id != t.recipient_id:
+        t.seen_by_recipient = False
+    if t.kind == "comunicazione" and user.id == t.recipient_id:
+        # La proposta del giocatore arriva anche nella richiesta di evoluzione del Master
+        other = evolution.pair_of(db, t)
+        if other is not None and not other.archived_at:
+            om = list(other.messages or [])
+            if len(om) < config.TICKET_MAX_MESSAGES:
+                om.append({"by": user.id, "by_name": user.display_name, "role": user.role, "text": text, "at": now})
+                other.messages = om
+                flag_modified(other, "messages")
+                other.updated_at = now
+                if other.status == "in_esame":
+                    other.status = "aperta"  # proposta nuova: torna tra le richieste da guardare
     db.commit()
     return _out(t, _names(db), _chars(db), user)
 
@@ -226,6 +274,10 @@ def patch_ticket(ticket_id: int, data: TicketPatch, user: User = Depends(current
     f = data.model_dump(exclude_unset=True)
     master = user.role == "master"
     now = _now()
+    if not master and t.author_id != user.id:
+        raise HTTPException(403, "Le comunicazioni del Master si commentano con un messaggio.")
+    if t.kind in ("evoluzione", "comunicazione") and data.status == "risolta":
+        raise HTTPException(422, "Un'evoluzione si chiude con «Definisci evoluzione».")
     if not master:
         # Il giocatore: ritira la sua richiesta o corregge titolo e testo finché nessuno l'ha presa in esame
         if "answer" in f or data.promote_issue or (data.status not in (None, "ritirata")):
@@ -270,6 +322,44 @@ def patch_ticket(ticket_id: int, data: TicketPatch, user: User = Depends(current
             i.decision, i.resolved = t.answer, True
     t.updated_at = _iso(now)
     db.commit()
+    return _out(t, _names(db), _chars(db), user)
+
+
+@router.post("/{ticket_id}/evoluzione", dependencies=[Depends(require_master)])
+def define_evolution(ticket_id: int, data: EvolveIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Il Master definisce l'evoluzione: passiva nuova tra le skill, meccanica facoltativa della skill, ciclo completato.
+    Chiude la richiesta e la comunicazione al giocatore con la stessa risposta."""
+    t = _get(db, user, ticket_id)
+    _editable(t)
+    if t.kind == "comunicazione":
+        t = evolution.pair_of(db, t) or t
+    if t.kind != "evoluzione":
+        raise HTTPException(422, "Questa richiesta non è un'evoluzione.")
+    if data.version is not None and data.version != t.version:
+        raise HTTPException(409, "La richiesta è cambiata in un'altra sessione: ricarica e riprova.")
+    if t.status not in ACTIVE:
+        raise HTTPException(409, "L'evoluzione è già chiusa.")
+    try:
+        c, text = evolution.complete(db, t, data)
+    except ValueError as ex:
+        raise HTTPException(422, str(ex)) from None
+    from .. import rules as R
+    errs = R.sheet_errors({"skills": c.skills, "active_skills": c.active_skills, "stats": c.stats or [],
+                           "_changed": {"skills", "active_skills"}})
+    if errs:
+        raise HTTPException(422, " ".join(errs[:3]))
+    now = _iso(_now())
+    for x in (t, evolution.pair_of(db, t)):
+        if x is None or x.archived_at:
+            continue
+        x.answer = text
+        x.status = "risolta"
+        x.closed_at = now
+        x.updated_at = now
+        if x.recipient_id:
+            x.seen_by_recipient = False
+    db.commit()
+    db.refresh(t)
     return _out(t, _names(db), _chars(db), user)
 
 

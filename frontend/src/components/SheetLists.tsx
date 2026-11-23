@@ -4,7 +4,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { ActiveSkill, Character, Skill, Talent, Title } from "../api/types";
 import { useAppData } from "../auth/AppData";
-import { rarityKey } from "../lib/format";
+import { rarityKey, romanN } from "../lib/format";
 import type { Mech } from "../api/mech";
 import { mechSummary } from "./mech/summary";
 import { gradeRarity, initials, Kv, Mastery, OgOpts, OgRow, OgTipHead, roman, TipLayer, useOgTip } from "./og";
@@ -212,7 +212,7 @@ export function SkillsTab({ c }: { c: Character }) {
           <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
             label={`Skill ${s.name}, Grado ${roman(s.lvl)} ${gradeName(s.lvl)}, maestria ${s.pct === "MAX" ? "massima" : `${s.pct}%`}`}
             meta={<>{s.type || "—"} · {gradeName(s.lvl) || `Grado ${roman(s.lvl)}`}{s.passive ? <> · <span className="og-good">Passiva</span></> : null}<MechBadge m={s.mech} /></>}
-            right={<><span>{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
+            right={<><span title={cycleTitle(s)}>{s.cicli ? <small className="muted">{romanN(10 * s.cicli)}+</small> : null}{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
             tipProps={bind(i)} />
         ))} />
         <p className="footnote">Grado di maestria da I a X: al 100% la skill sale di grado. Passa sopra una skill (o toccala) per i dettagli.</p>
@@ -221,6 +221,20 @@ export function SkillsTab({ c }: { c: Character }) {
         <TipLayer id={tipId} anchor={tip.el} border={`var(--r-${gradeRarity(tipS.lvl)})`}><SkillTip s={tipS} gradeName={gradeName} /></TipLayer>
       )}
     </div>
+  );
+}
+
+/** Cicli di 10 Gradi completati: livello totale e passive ottenute a ogni Grado X. */
+function cycleTitle(s: { lvl: number; cicli?: number }): string | undefined {
+  return s.cicli ? `Livello ${s.cicli * 10 + (Number(s.lvl) || 0)}: ${s.cicli} ${s.cicli === 1 ? "ciclo completato" : "cicli completati"} + Grado ${roman(s.lvl)}` : undefined;
+}
+function CycleKv({ s }: { s: { lvl: number; cicli?: number; evoluzioni?: { ciclo: number; passiva: string }[] } }) {
+  if (!s.cicli) return null;
+  return (
+    <>
+      <Kv k="Livello">{s.cicli * 10 + (Number(s.lvl) || 0)} <span className="muted">· {s.cicli} {s.cicli === 1 ? "ciclo" : "cicli"} + {roman(s.lvl)}</span></Kv>
+      {s.evoluzioni?.length ? <Kv k="Evoluzioni">{s.evoluzioni.map((e) => e.passiva).join(", ")}</Kv> : null}
+    </>
   );
 }
 
@@ -233,6 +247,7 @@ function SkillTip({ s, gradeName }: { s: Skill; gradeName: (l: number) => string
     <>
       <OgTipHead name={s.name} rarity={gradeRarity(s.lvl)} />
       <GradeKv lvl={s.lvl} gradeName={gradeName} />
+      <CycleKv s={s} />
       <Kv k="Maestria"><Mastery pct={s.pct} /></Kv>
       <Kv k="Tipo">Passiva{s.type ? ` · ${s.type}` : ""}</Kv>
       <div className="og-sep">Passiva del Grado X</div>
@@ -282,7 +297,7 @@ export function ActiveListTab({ c, kind }: { c: Character; kind: ActiveSection }
             <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
               label={`${T.one} ${s.name}, Grado ${roman(s.lvl)}, costo ${s.cost || "nessuno"}, cooldown ${s.cd} turni`}
               meta={<>{s.cost || "—"} · CD {s.cd}{extra ? ` · ${extra}` : ""}<MechBadge m={s.mech} /></>}
-              right={<><span>{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
+              right={<><span title={cycleTitle(s)}>{s.cicli ? <small className="muted">{romanN(10 * s.cicli)}+</small> : null}{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
               tipProps={bind(i)} />
           );
         })} />
@@ -302,6 +317,7 @@ function ActiveTip({ s, type, gradeName }: { s: ActiveSkill; type: string; grade
     <>
       <OgTipHead name={s.name} rarity={gradeRarity(s.lvl)} />
       <GradeKv lvl={s.lvl} gradeName={gradeName} />
+      <CycleKv s={s} />
       <Kv k="Maestria"><Mastery pct={s.pct} /></Kv>
       <Kv k="Tipo">{type}</Kv>
       <div className="og-pair">

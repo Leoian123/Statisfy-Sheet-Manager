@@ -1512,6 +1512,10 @@ def sheet_errors(sheet: dict) -> list[str]:
         errs += _grade_errors(f"Skill «{sk.get('name')}»", sk.get("lvl"), sk.get("pct"))
     for sk in sheet.get("active_skills") or []:
         errs += _grade_errors(f"Skill attiva «{sk.get('name')}»", sk.get("lvl"), sk.get("pct"))
+    for sk in [*(sheet.get("skills") or []), *(sheet.get("active_skills") or [])]:
+        cy = sk.get("cicli")
+        if cy is not None and (not isinstance(cy, (int, float)) or cy != int(cy) or not 0 <= cy <= 99):
+            errs.append(f"«{sk.get('name')}»: i cicli completati vanno da 0 a 99 (ora {cy}).")
     for t in sheet.get("talents") or []:
         errs += _rarity_errors(f"Talento «{t.get('name')}»", t.get("rarity"))
     for it in sheet.get("inventory") or []:

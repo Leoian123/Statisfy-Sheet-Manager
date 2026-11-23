@@ -6,8 +6,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ApiError, errorText } from "../api/client";
 import {
   KIND_LABELS, STATUS_LABELS, TICKET_LIMITS, ticketsApi,
-  type Ticket, type TicketKind, type TicketList, type TicketPatch, type TicketStatus,
+  type PlayerTicketKind, type Ticket, type TicketKind, type TicketList, type TicketPatch, type TicketStatus,
 } from "../api/tickets";
+import { EvolutionForm } from "../components/EvolutionForm";
 import { useAppData } from "../auth/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { InlineError, Loading, SysMsg } from "../components/Status";
@@ -15,7 +16,7 @@ import { Tabs } from "../components/Tabs";
 import { useToast } from "../components/Toast";
 import { Win } from "../components/Win";
 import {
-  KIND_HINTS, KIND_ORDER, KIND_SHORT, STATUS_TONE, activeTotal, ageText, archiveText, canEdit, canWithdraw, dayText, isClosed,
+  KIND_FILTER, KIND_HINTS, KIND_ORDER, KIND_SHORT, STATUS_TONE, isSystemKind, activeTotal, ageText, archiveText, canEdit, canWithdraw, dayText, isClosed,
   isUnread, masterMoves, newTicketError, pruneSeen, sortTickets, type Move,
 } from "../lib/richieste";
 import { usePolling } from "../lib/usePolling";
@@ -274,7 +275,7 @@ function KindSelect({ kind, setKind }: { kind: TicketKind | ""; setKind: (k: Tic
       <label className="label" htmlFor="rq-kind">Tipo</label>
       <select className="input" id="rq-kind" value={kind} onChange={(e) => setKind(e.target.value as TicketKind | "")}>
         <option value="">Tutti i tipi</option>
-        {KIND_ORDER.map((k) => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}
+        {KIND_FILTER.map((k) => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}
       </select>
     </div>
   );
@@ -283,7 +284,8 @@ function KindSelect({ kind, setKind }: { kind: TicketKind | ""; setKind: (k: Tic
 function Row({ t, role, unread, selected, onOpen }: { t: Ticket; role: Role; unread: boolean; selected: boolean; onOpen: (id: number) => void }) {
   const tipId = `rq-tip-${t.id}`;
   const done = t.status === "risolta" || t.status === "respinta";
-  const meta = [KIND_SHORT[t.kind], role === "master" ? t.author_name : null, t.char_name, ageText(t.updated_at)].filter(Boolean).join(" · ");
+  const who = role === "master" ? (t.kind === "comunicazione" ? `a ${t.recipient_name ?? "giocatore"}` : t.kind === "evoluzione" ? null : t.author_name) : null;
+  const meta = [KIND_SHORT[t.kind], who, t.char_name, ageText(t.updated_at)].filter(Boolean).join(" · ");
   const msgs = t.messages.length;
   const arch = archiveText(t.archive_at);
   return (
@@ -312,7 +314,7 @@ function NewTicket({ startOpen, onCreated }: { startOpen: boolean; onCreated: (t
   const { chars } = useAppData();
   const toast = useToast();
   const [openForm, setOpenForm] = useState(false);
-  const [kind, setKind] = useState<TicketKind>("funzione");
+  const [kind, setKind] = useState<PlayerTicketKind>("funzione");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [charId, setCharId] = useState("");
@@ -533,6 +535,11 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
 
         {archived && <SysMsg lines={["In archivio: solo lettura."]} />}
 
+        {master && !archived && t.kind === "evoluzione" && t.meta && (t.status === "aperta" || t.status === "in_esame") && (
+          <EvolutionForm t={t} busy={busy} onDone={(x) => { onChange(x); onListChanged(); toast("RICHIESTE", ["Evoluzione definita: passiva aggiunta e nuovo ciclo."], { gold: true }); onReload(); }}
+            onError={(m) => setErr(m)} />
+        )}
+
         {master && !archived && (
           <div className="stack rq-master">
             <div className="field">
@@ -548,7 +555,7 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
               </label>
             )}
             <div className="row rq-actions">
-              {masterMoves(t.status).map((m) => (
+              {masterMoves(t.status).filter((m) => !(isSystemKind(t.kind) && m.to === "risolta") && !(t.kind === "comunicazione" && m.to !== "respinta")).map((m) => (
                 <button key={m.to + m.label} type="button" disabled={busy} className={`btn${m.primary ? " primary" : ""}${m.danger ? " danger" : ""}`} onClick={() => move(m)}>
                   {m.label}
                 </button>
@@ -613,7 +620,7 @@ function Detail({ t, role, onChange, onReload, onBack, onListChanged }: DetailPr
             <div className="field rq-reply">
               <label className="rq-sr" htmlFor="rq-reply">Rispondi</label>
               <textarea className="input" id="rq-reply" rows={2} maxLength={TICKET_LIMITS.message} value={reply}
-                placeholder={master ? "Scrivi al giocatore…" : "Scrivi al Master…"} onChange={(e) => setReply(e.target.value)} onKeyDown={onReplyKey} />
+                placeholder={master ? "Scrivi al giocatore…" : t.kind === "comunicazione" ? "Scrivi la tua proposta al Master…" : "Scrivi al Master…"} onChange={(e) => setReply(e.target.value)} onKeyDown={onReplyKey} />
               <div className="row">
                 <button type="button" className="btn" disabled={busy || !reply.trim()} onClick={send}>Invia</button>
                 <span className="hint">Ctrl+Invio per inviare{reply.length > TICKET_LIMITS.message * 0.9 ? ` · ${TICKET_LIMITS.message - reply.length} caratteri rimasti` : ""}</span>

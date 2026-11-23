@@ -60,7 +60,13 @@ export interface Title {
   /** Campi facoltativi (voci della Forgia o aggiunte a mano): come si ottiene, effetto, evoluzione */
   how?: string; effect?: { type: string | null; text: string } | string | null; next?: string | null; evoCond?: string; prev?: string | null;
 }
-export interface Skill { name: string; lvl: number; pct: number | "MAX"; type: string; passive?: string | null; mech?: Mech }
+/** Ciclo completato di una skill (passiva ottenuta al Grado X). */
+export interface SkillEvolution { ciclo: number; passiva: string; at: string }
+export interface Skill {
+  name: string; lvl: number; pct: number | "MAX"; type: string; passive?: string | null; mech?: Mech;
+  /** Cicli di 10 Gradi completati: livello totale = cicli × 10 + lvl */
+  cicli?: number; evoluzioni?: SkillEvolution[]; origine?: string; ciclo?: number;
+}
 /** Skill attive, incantesimi e miracoli stanno tutti in `active_skills`: li distingue `kind` (assente = skill attiva). */
 export type ActiveKind = "Skill" | "Incantesimo" | "Miracolo";
 export interface ActiveSkill {
@@ -68,6 +74,7 @@ export interface ActiveSkill {
   kind?: ActiveKind | string; spheres?: string[]; god?: string;
   /** Meccanica strutturata (motore di combattimento): facoltativa */
   mech?: Mech; efficacia?: number;
+  cicli?: number; evoluzioni?: SkillEvolution[];
 }
 export interface Talent { name: string; rarity: string; origin: string; effect: string; mech?: Mech }
 export type SlotKey =

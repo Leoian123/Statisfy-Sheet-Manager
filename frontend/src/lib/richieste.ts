@@ -1,14 +1,24 @@
 /* Richieste al Master: funzioni pure della pagina (ordine, stato "da leggere", testi delle date, mosse del Master).
    Testate in tests/richieste.test.ts. Solo `import type`: il client HTTP non va caricato nei test. */
-import type { Ticket, TicketKind, TicketList, TicketStatus } from "../api/tickets";
+import type { PlayerTicketKind, Ticket, TicketKind, TicketList, TicketStatus } from "../api/tickets";
 
-export const KIND_SHORT: Record<TicketKind, string> = { funzione: "Funzione", contenuto: "Contenuto", regola: "Regola" };
+export const KIND_SHORT: Record<TicketKind, string> = {
+  funzione: "Funzione", contenuto: "Contenuto", regola: "Regola", evoluzione: "Evoluzione", comunicazione: "Dal Master",
+};
 export const KIND_HINTS: Record<TicketKind, string> = {
   funzione: "Un'idea per l'app: una schermata, un pulsante, un automatismo.",
   contenuto: "Oggetti, mostri, classi, missioni o luoghi da aggiungere al gioco.",
   regola: "Un dubbio sul regolamento: il Master risponde e può fissarlo nelle regole.",
+  evoluzione: "Una skill ha raggiunto il Grado X: il Master definisce la passiva e il nuovo ciclo.",
+  comunicazione: "Messaggio del Master: rispondi con un messaggio.",
 };
-export const KIND_ORDER: TicketKind[] = ["funzione", "contenuto", "regola"];
+export const KIND_ORDER: PlayerTicketKind[] = ["funzione", "contenuto", "regola"];
+/** Filtro del Master: anche le richieste aperte dal sistema. */
+export const KIND_FILTER: TicketKind[] = ["funzione", "contenuto", "regola", "evoluzione", "comunicazione"];
+/** Aperte dal sistema: non si risolvono a mano (l'evoluzione si chiude con «Definisci evoluzione»). */
+export function isSystemKind(k: TicketKind): boolean {
+  return k === "evoluzione" || k === "comunicazione";
+}
 /** Colore del chip di stato (classi .chip del tema). */
 export const STATUS_TONE: Record<TicketStatus, string> = {
   aperta: "gold", in_esame: "violet", risolta: "good", respinta: "bad", ritirata: "muted",
@@ -62,11 +72,11 @@ export function archiveText(archiveAt: string | null, now: number = Date.now()):
 
 /** L'autore corregge titolo e testo solo finché la richiesta è aperta (e non in archivio). */
 export function canEdit(t: Ticket): boolean {
-  return t.mine && t.status === "aperta" && !t.archived_at;
+  return t.mine && !isSystemKind(t.kind) && t.status === "aperta" && !t.archived_at;
 }
 /** L'autore la ritira finché non è chiusa. */
 export function canWithdraw(t: Ticket): boolean {
-  return t.mine && (t.status === "aperta" || t.status === "in_esame") && !t.archived_at;
+  return t.mine && !isSystemKind(t.kind) && (t.status === "aperta" || t.status === "in_esame") && !t.archived_at;
 }
 
 export interface Move { to: TicketStatus; label: string; primary?: boolean; danger?: boolean; needsAnswer: boolean }
@@ -85,6 +95,10 @@ export function masterMoves(s: TicketStatus): Move[] {
  *  del giocatore, a meno che il Master non l'abbia già vista in questa versione (`seenAt` = updated_at visto). */
 export function masterUnread(t: Ticket, seenAt: string | undefined): boolean {
   if (t.archived_at) return false;
+  if (t.kind === "comunicazione") {  // scritta dal Master: chiede attenzione solo se il giocatore ha risposto
+    const last = t.messages[t.messages.length - 1];
+    return !!last && last.role !== "master" && !isClosed(t.status) && !(seenAt && ms(t.updated_at) <= ms(seenAt));
+  }
   if (seenAt && ms(t.updated_at) <= ms(seenAt)) return false;
   if (t.status === "aperta") return true;
   const last = t.messages[t.messages.length - 1];

@@ -218,6 +218,11 @@ class Ticket(Base):
     answer: Mapped[str] = mapped_column(Text, default="")
     messages: Mapped[list] = mapped_column(JSON, default=list)  # [{by, by_name, role, text, at}]
     issue_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)  # questione delle regole creata
+    # Comunicazioni del Master al giocatore (kind "comunicazione"): destinatario, lettura; `meta` = dati di sistema
+    # (evoluzione di una skill: {field, skill, ciclo, role, pair})
+    recipient_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None, index=True)
+    seen_by_recipient: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    meta: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
     seen_by_author: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[str] = mapped_column(String(40), default="")
     updated_at: Mapped[str] = mapped_column(String(40), default="")

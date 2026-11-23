@@ -1,12 +1,15 @@
 import copy
 import re
 
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 from fastapi import APIRouter, Body, Depends, HTTPException, Response
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from .. import rules
+from .. import evolution, rules
 from ..auth import current_user
 from ..db import get_db
 from ..errors import validate
@@ -185,6 +188,7 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
     if errs:
         raise HTTPException(422, " ".join(errs[:3]) + (f" (e altri {len(errs) - 3})" if len(errs) > 3 else ""))
 
+    before = {f: copy.deepcopy(getattr(c, f) or []) for f in ("skills", "active_skills")}
     for k, v in fields.items():
         setattr(c, k, v)
         if isinstance(v, (dict, list)):
@@ -194,6 +198,8 @@ def patch_character(char_id: int, body: dict = Body(...), user: User = Depends(c
         res = rules.clamp_resources(c.resources, new_max)
         if res != (c.resources or {}):
             set_json(c, "resources", res)
+    if user.role == "master" and {"skills", "active_skills"} & set(fields):
+        evolution.open_requests(db, c, user, before)  # Grado X raggiunto ora: richieste al Master e al giocatore
     if combat_patch is not None:
         pos = combat_patch["position"]
         combat = copy.deepcopy(c.combat or {})
@@ -272,3 +278,27 @@ def distribute(char_id: int, data: DistributeIn, user: User = Depends(current_us
     rules.add_log(combat, f"Distribuzione confermata: {' · '.join(parts)}.")
     set_json(c, "combat", combat)
     return save(db, c)
+
+
+class EvolutionOpenIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    field: Literal["skills", "active_skills"]
+    name: str = Field(min_length=1, max_length=120)
+
+
+@router.post("/{char_id}/evoluzione")
+def open_evolution(char_id: int, data: EvolutionOpenIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Il Master apre a mano l'evoluzione di una skill già al Grado X (es. importata così)."""
+    if user.role != "master":
+        raise HTTPException(403, "Solo il Master apre un'evoluzione.")
+    c = get_char(char_id, user, db)
+    sk = evolution.find_skill(c, data.field, data.name.strip())
+    if sk is None:
+        raise HTTPException(404, "Skill non trovata.")
+    if int(sk.get("lvl") or 0) != 10:
+        raise HTTPException(422, "L'evoluzione si apre al Grado X.")
+    made = evolution.open_requests(db, c, user, only=(data.field, data.name))
+    if not made:
+        raise HTTPException(409, "C'è già un'evoluzione per questo ciclo.")
+    db.commit()
+    return {"opened": [t.id for t in made]}

@@ -37,6 +37,10 @@ _ADDED_COLUMNS = [
     ("users", "last_login_at", "ALTER TABLE users ADD COLUMN last_login_at VARCHAR(40) NOT NULL DEFAULT ''"),
     # profilo del personaggio (razza, età, aspetto, alleanze): le righe vecchie restano NULL = profilo vuoto
     ("characters", "profile", "ALTER TABLE characters ADD COLUMN profile JSON"),
+    # richieste: comunicazioni al giocatore ed evoluzione delle skill
+    ("tickets", "recipient_id", "ALTER TABLE tickets ADD COLUMN recipient_id INTEGER"),
+    ("tickets", "seen_by_recipient", "ALTER TABLE tickets ADD COLUMN seen_by_recipient BOOLEAN NOT NULL DEFAULT 1"),
+    ("tickets", "meta", "ALTER TABLE tickets ADD COLUMN meta JSON"),
 ]
 
 

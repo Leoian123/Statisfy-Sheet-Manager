@@ -33,6 +33,15 @@ export function fmtDiff(diff: number, kind: DerivedFmt | "int"): string {
 }
 
 export const ROMAN = ["—", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+/** Numero romano qualsiasi (XX, XXX, XL…): nomi delle passive di evoluzione. */
+export function romanN(v: number): string {
+  let x = Math.max(0, Math.floor(v));
+  let out = "";
+  for (const [k, s] of [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]] as [number, string][]) {
+    while (x >= k) { out += s; x -= k; }
+  }
+  return out || "—";
+}
 
 export function rarityKey(r: string | null | undefined): string {
   return String(r || "").toLowerCase().replace(/\s+/g, "").trim();

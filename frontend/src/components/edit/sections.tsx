@@ -5,6 +5,8 @@ import type { Mech } from "../../api/mech";
 import type { Character, Profile, Pvp, ResourceKey, Resources, RulesConfig, StatRow } from "../../api/types";
 import { useAppData } from "../../auth/AppData";
 import { n, ROMAN } from "../../lib/format";
+import { ticketsApi } from "../../api/tickets";
+import { errorText } from "../../api/client";
 import { RESOURCE_DEFS } from "../../lib/resources";
 import { useBusy } from "../../lib/useCharacter";
 import { MechField } from "../mech/MechField";
@@ -193,7 +195,28 @@ const skillFields: FieldDef[] = [
   { key: "name", label: "Nome", kind: "text" },
   { key: "lvl", label: "Grado", kind: "grade" },
   { key: "pct", label: "%", kind: "pct" },
+  { key: "cicli", label: "Cicli completati", kind: "int", min: 0,
+    hint: "Ogni Grado X completato è un ciclo: livello totale = cicli × 10 + Grado (es. 3 cicli + IV = 34)" },
 ];
+
+/** Pulsante «Apri evoluzione» per una skill salvata al Grado X (richieste al Master e al giocatore). */
+function OpenEvolution({ charId, field, s }: { charId: number; field: "skills" | "active_skills"; s: Item }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  async function go() {
+    setBusy(true);
+    try {
+      await ticketsApi.openEvolution(charId, field, String(s.name ?? ""));
+      toast("RICHIESTE", [`Evoluzione di «${String(s.name)}» aperta: richiesta a te e comunicazione al giocatore.`], { gold: true });
+    } catch (e) { toast("RICHIESTE", [errorText(e)], { bad: true }); } finally { setBusy(false); }
+  }
+  return <button type="button" className="btn ghost" disabled={busy} onClick={go}>Apri evoluzione</button>;
+}
+const evoField = (charId: number, field: "skills" | "active_skills"): FieldDef => ({
+  key: "evoluzione", label: "Evoluzione", kind: "static", when: (s) => Number(s.lvl) === 10,
+  hint: "Si apre da sola quando salvi la skill al Grado X; qui per quelle che c'erano già",
+  render: (s) => <OpenEvolution charId={charId} field={field} s={s} />,
+});
 
 function listDefs(c: Character): Record<ListKey, ListDef> {
   const codes = c.stats.map((s: StatRow) => s.code);
@@ -211,12 +234,12 @@ function listDefs(c: Character): Record<ListKey, ListDef> {
     skills: {
       noun: "Skill", blank: () => ({ name: "", lvl: 1, pct: 0, type: "", passive: null }),
       summary: (s) => <>{s.type || "—"} · {gradeText(s.lvl)} · {pctText(s.pct)}</>,
-      fields: [...skillFields, { key: "type", label: "Tipo", kind: "text", hint: "Craft, Combat, Utility…" }, { key: "passive", label: "Passiva", kind: "area" }],
+      fields: [...skillFields, evoField(c.id, "skills"), { key: "type", label: "Tipo", kind: "text", hint: "Craft, Combat, Utility…" }, { key: "passive", label: "Passiva", kind: "area" }],
     },
     active_skills: {
       noun: "Skill attiva", blank: () => ({ name: "", effect: "", lvl: 1, pct: 0, cost: "", cd: 0 }),
       summary: (s) => <>{gradeText(s.lvl)} · {pctText(s.pct)} · {s.cost || "—"} · CD {s.cd}</>,
-      fields: [...skillFields, { key: "cost", label: "Costo", kind: "text", hint: "es. 20 MP" },
+      fields: [...skillFields, evoField(c.id, "active_skills"), { key: "cost", label: "Costo", kind: "text", hint: "es. 20 MP" },
         { key: "cd", label: "Cooldown (turni)", kind: "int", min: 0 },
         { key: "kind", label: "Tipo", kind: "select", options: ["", "Skill", "Incantesimo", "Miracolo"],
           hint: "Decide il tab: Skill attive, Incantesimi o Miracoli (vuoto = skill attiva)" },
