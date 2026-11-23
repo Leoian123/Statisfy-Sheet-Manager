@@ -127,7 +127,7 @@ export function Scontro() {
       </div>
       {!actor && cur && <p className="small muted">Turno di <b>{cur.nome}</b>: aspetta il tuo.</p>}
       {!showLog && st.registro.length > 0 && (
-        <p className="xs muted b1-last" title="Ultimo evento">{st.registro[st.registro.length - 1].t}</p>
+        <p className="xs muted b1-last"><span className="label">Ultimo</span> {st.registro[st.registro.length - 1].t}</p>
       )}
     </div>
   );

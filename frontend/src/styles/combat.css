@@ -15,7 +15,7 @@
 .cb-turn.cur { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); color: var(--gold); font-weight: 600; }
 .cb-turn.down { opacity: 0.45; text-decoration: line-through; }
 
-.cb-banner { align-items: center; flex-wrap: wrap; }
+.cb-banner { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 6px 12px; font-family: var(--font-body); }
 .cb-banner .btn { margin-left: auto; }
 .cb-pending { display: flex; flex-wrap: wrap; gap: 6px; }
 

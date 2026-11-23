@@ -18,7 +18,7 @@ import { CritChip, RollLog, RollResult } from "../components/RollViews";
 import { CallPicker } from "../components/CallPicker";
 import { usePolling } from "../lib/usePolling";
 import { quickAsks } from "../lib/asks";
-import { CloseEncounter, WIZARDS } from "./Forgia";
+import { CloseEncounter } from "./Forgia";
 import { battleApi } from "../api/scontri";
 import { BattleBanner } from "../components/combat/BattleBanner";
 import "../styles/forge.css";
@@ -34,7 +34,6 @@ const KIND_ORDER: ForgeKind[] = ["titles", "items", "skills", "spells", "miracle
 
 export function Plancia() {
   const { refreshChars } = useAppData();
-  const toast = useToast();
   const [board, setBoard] = useState<Board | null>(null);
   const [meta, setMeta] = useState<ForgeMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +73,6 @@ export function Plancia() {
   if (!board || !meta) return <Loading text="Accensione della plancia…" />;
 
   const camp = board.campaign;
-  const avg = board.party.length ? Math.round(board.party.reduce((s, p) => s + p.level, 0) / board.party.length) : 0;
   const active = board.encounters.find((e) => e.id === board.active_encounter_id) ?? null;
 
   function goAsk(id: number) {
@@ -86,41 +84,16 @@ export function Plancia() {
     setTab("assegna");
     requestAnimationFrame(() => assignRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
-  async function newSession() {
-    try {
-      const c = await api.newSession();
-      toast("SISTEMA", [`Sessione ${c.session} aperta.`], { gold: true });
-      refresh();
-    } catch (e) { toast("SISTEMA", [errorText(e)], { bad: true }); }
-  }
-
   return (
     <div className="pl-root" data-tab={tab}>
-      <header className="pl-head">
-        <div className="pl-head-t">
-          <span className="label pl-gold">Plancia di comando · {camp?.master_name ?? "Master"}</span>
-          <h1 className="pl-title">{camp?.name ?? "Campagna"}</h1>
-          <span className="small muted">Sessione <b className="pl-fg">{camp?.session ?? "—"}</b>{active ? <> · in gioco: {active.name}{active.data.place ? `, ${active.data.place}` : ""}</> : null}</span>
-        </div>
-        <div className="pl-kpis">
-          <div className="kv"><span className="label">PG</span><span className="v">{board.party.length}</span></div>
-          <div className="kv"><span className="label">Livello medio</span><span className="v">{avg}</span></div>
-          <div className="kv"><span className="label">Quest aperte</span><span className="v">{camp?.open_quests.length ?? 0}</span></div>
-          <div className="kv"><span className="label">Libreria</span><span className="v">{Object.values(board.counts).reduce((a, b) => a + b, 0)}</span></div>
-        </div>
-        <div className="row">
-          <Link className="btn" to="/master/forgia">Apri la Forgia</Link>
-          <button type="button" className="btn primary" onClick={newSession}>Nuova sessione</button>
-        </div>
-      </header>
-
-      <nav className="pl-sec pl-quick" data-sec="forgia" aria-label="Crea al volo">
-        <span className="label">Crea al volo</span>
-        <div className="pl-quick-b">
-          {WIZARDS.map((w) => <Link key={w.id} className="btn ghost" to={`/master/forgia?w=${w.id}`}>{w.title}</Link>)}
-        </div>
+      <nav className="pl-tabbar" aria-label="Sezioni della plancia">
+        {([["gruppo", "Gruppo", ICONS.gruppo], ["tiri", "Tiri", ICONS.tiri], ["incontro", "Incontro", ICONS.incontro], ["assegna", "Assegna", ICONS.assegna], ["altro", "Altro", ICONS.altro]] as [Tab, string, ReactNode][])
+          .map(([k, label, icon]) => (
+            <button key={k} type="button" aria-current={tab === k ? "page" : undefined} onClick={() => { setTab(k); window.scrollTo({ top: 0 }); }}>
+              {icon}<span>{label}</span>{k === "incontro" && active && <span className="pl-dot" aria-label="incontro in corso" />}
+            </button>
+          ))}
       </nav>
-
       <div className="pl-cols">
         <div className="pl-main">
           <BattleBanner />
@@ -159,14 +132,6 @@ export function Plancia() {
         </div>
       </div>
 
-      <nav className="pl-tabbar" aria-label="Sezioni della plancia">
-        {([["gruppo", "Gruppo", ICONS.gruppo], ["tiri", "Tiri", ICONS.tiri], ["incontro", "Incontro", ICONS.incontro], ["forgia", "Forgia", ICONS.forgia], ["assegna", "Assegna", ICONS.assegna], ["altro", "Altro", ICONS.altro]] as [Tab, string, ReactNode][])
-          .map(([k, label, icon]) => (
-            <button key={k} type="button" aria-current={tab === k ? "page" : undefined} onClick={() => { setTab(k); window.scrollTo({ top: 0 }); }}>
-              {icon}<span>{label}</span>{k === "incontro" && active && <span className="pl-dot" aria-label="incontro in corso" />}
-            </button>
-          ))}
-      </nav>
     </div>
   );
 }

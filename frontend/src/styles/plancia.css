@@ -93,7 +93,7 @@
 .pl-dot { position: absolute; top: 8px; right: calc(50% - 16px); width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
 
 @media (max-width: 760px) {
-  .pl-root { padding-bottom: 84px; gap: 14px; }
+  .pl-root { gap: 14px; }
   .pl-head { padding: 12px 14px; gap: 10px; }
   .pl-kpis { display: none; }
   .pl-head .row { width: 100%; }
@@ -109,16 +109,20 @@
   .pl-quick-b .btn { justify-content: center; min-height: 48px; }
   .pl-pc-act .btn, .pl-dmg .btn, .pl-enc-act .btn, .pl-chipbtn, .pl-kinds button, .pl-note .btn { min-height: 44px; }
   .pl-party { grid-template-columns: minmax(0, 1fr); }
+  /* Sezioni della plancia: schede in cima, sotto l'intestazione (la barra in basso è quella dell'app) */
   .pl-tabbar {
-    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--panel);
-    border-top: 1px solid var(--line); padding: 0 4px env(safe-area-inset-bottom, 0px);
+    display: flex; gap: 6px; position: sticky; top: var(--topbar-h, 0px); z-index: 15; margin: -4px 0 0;
+    padding: 6px 0; background: var(--bg); overflow-x: auto; scrollbar-width: none;
   }
+  .pl-tabbar::-webkit-scrollbar { display: none; }
   .pl-tabbar button {
-    position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    min-height: 58px; background: transparent; border: 0; color: var(--muted); cursor: pointer;
-    font-family: var(--font-display); font-weight: 600; font-size: var(--fs-xs);
+    position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); cursor: pointer;
+    font-family: var(--font-display); font-weight: 600; font-size: var(--fs-sm);
   }
-  .pl-tabbar button[aria-current="page"] { color: var(--gold); box-shadow: inset 0 2px 0 var(--gold); }
+  .pl-tabbar button svg { width: 16px; height: 16px; }
+  .pl-tabbar button[aria-current="page"] { color: var(--gold); border-color: var(--gold); }
+  .pl-tabbar .pl-dot { position: static; }
 }
 .pl-root a.btn { color: var(--fg); text-decoration: none; }
 .pl-root a.btn:hover { color: var(--fg); }
