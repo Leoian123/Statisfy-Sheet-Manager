@@ -73,6 +73,59 @@ function MechTip({ m }: { m?: Mech | null }) {
   return <><div className="og-sep">Meccanica</div><OgOpts lines={s.lines.length ? s.lines : [s.short]} /></>;
 }
 
+/* ---------- Albero delle evoluzioni: la skill e, rientrate sotto, le passive dei suoi cicli ---------- */
+const keyOf = (x: string) => x.trim().toLowerCase();
+/** Passive di evoluzione di una skill (campo `origine`), in ordine di ciclo. */
+function evoKids(skills: Skill[], parent: string): { s: Skill; i: number }[] {
+  return skills.map((s, i) => ({ s, i })).filter(({ s }) => s.origine && keyOf(s.origine) === keyOf(parent))
+    .sort((a, b) => (a.s.ciclo ?? 0) - (b.s.ciclo ?? 0) || a.s.name.localeCompare(b.s.name, "it"));
+}
+function useOpen(cid: number) {
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  useEffect(() => setOpen(new Set()), [cid]);
+  const toggle = (k: string) => setOpen((o) => { const n = new Set(o); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  return [open, toggle] as const;
+}
+
+/** Ramo espandibile: freccia + riga della skill; aperto mostra le passive collegate da una linea. */
+function EvoBranch({ head, kids, open, onToggle, name }: { head: ReactNode; kids: ReactNode[]; open: boolean; onToggle: () => void; name: string }) {
+  return (
+    <div className={`og-tree${open ? " is-open" : ""}`}>
+      <div className="og-tree-h">
+        <button type="button" className="og-tree-t" aria-expanded={open} onClick={onToggle}
+          aria-label={`${open ? "Chiudi" : "Apri"} le evoluzioni di ${name} (${kids.length})`} title={`${kids.length} ${kids.length === 1 ? "evoluzione" : "evoluzioni"}`}>
+          <span className="og-tree-a" aria-hidden="true">▸</span><small className="num">{kids.length}</small>
+        </button>
+        {head}
+      </div>
+      {open && <div className="og-tree-k" role="group" aria-label={`Evoluzioni di ${name}`}>{kids}</div>}
+    </div>
+  );
+}
+
+/** Intestazione del ramo quando la skill di origine sta in un'altra scheda (es. un incantesimo). */
+function EvoGroupHead({ name, where, lvl, cicli }: { name: string; where: string; lvl: number; cicli?: number }) {
+  return (
+    <div className="og-item og-row og-tree-g" data-rarity={gradeRarity(lvl || 10)}>
+      <span className="og-ico" aria-hidden="true">{initials(name)}</span>
+      <span className="og-iname">[{name}]</span>
+      <span className="og-iqty"><span title={cycleTitle({ lvl, cicli })}>{cicli ? <small className="muted">{romanN(10 * cicli)}+</small> : null}{lvl ? roman(lvl) : ""}</span></span>
+      <span className="og-imeta">{where}</span>
+    </div>
+  );
+}
+
+/** Riga di una passiva di evoluzione dentro il ramo. */
+function evoRow(s: Skill, key: string | number, tipProps: ReturnType<ReturnType<typeof useOgTip>["bind"]>) {
+  return (
+    <OgRow key={key} rarity={gradeRarity(10)} icon={initials(s.name)} name={s.name}
+      label={`Passiva di evoluzione ${s.name}${s.ciclo ? `, ciclo ${s.ciclo}` : ""}`}
+      meta={<>Evoluzione{s.ciclo ? ` n. ${s.ciclo}` : ""} · <span className="og-good">Passiva</span><MechBadge m={s.mech} /></>}
+      right={s.ciclo ? <small className="muted">ciclo {s.ciclo}</small> : null}
+      tipProps={tipProps} />
+  );
+}
+
 function ListBody({ rows, empty }: { rows: ReactNode[]; empty: string }) {
   return (
     <div className="og-list">
@@ -185,6 +238,41 @@ export function SkillsTab({ c }: { c: Character }) {
         : b.s.lvl - a.s.lvl || pctN(b.s) - pctN(a.s) || a.s.name.localeCompare(b.s.name, "it"));
   const maxed = c.skills.filter((s) => s.lvl >= 10).length;
   const tipS = tip ? c.skills[tip.key] : undefined;
+  const [open, toggle] = useOpen(c.id);
+  // Albero solo con «Tutti» e senza ricerca: le passive di evoluzione stanno sotto la loro skill
+  const tree = activeT === "Tutti" && !nq;
+  const own = new Set(c.skills.map((s) => keyOf(s.name)));
+  const isKid = (s: Skill) => !!s.origine;
+  const skillRow = (s: Skill, i: number) => (
+    <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
+      label={`Skill ${s.name}, Grado ${roman(s.lvl)} ${gradeName(s.lvl)}, maestria ${s.pct === "MAX" ? "massima" : `${s.pct}%`}`}
+      meta={<>{s.type || "—"} · {gradeName(s.lvl) || `Grado ${roman(s.lvl)}`}{s.passive ? <> · <span className="og-good">Passiva</span></> : null}<MechBadge m={s.mech} /></>}
+      right={<><span title={cycleTitle(s)}>{s.cicli ? <small className="muted">{romanN(10 * s.cicli)}+</small> : null}{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
+      tipProps={bind(i)} />
+  );
+  const rows: ReactNode[] = [];
+  if (tree) {
+    // Rami con la skill di origine in un'altra scheda (incantesimi, skill attive): in cima
+    const away = Array.from(new Set(c.skills.filter((s) => s.origine && !own.has(keyOf(s.origine))).map((s) => s.origine as string)));
+    for (const name of away) {
+      const parent = c.active_skills.find((a) => keyOf(a.name) === keyOf(name));
+      const kids = evoKids(c.skills, name);
+      rows.push(<EvoBranch key={`g-${name}`} name={name} open={open.has(`g-${name}`)} onToggle={() => toggle(`g-${name}`)}
+        head={<EvoGroupHead name={parent?.name ?? name} lvl={parent?.lvl ?? 0} cicli={parent?.cicli}
+          where={parent ? `${parent.kind === "Incantesimo" ? "Incantesimo" : parent.kind === "Miracolo" ? "Miracolo" : "Skill attiva"} · ${kids.length} evoluzioni` : "Skill di origine non trovata"} />}
+        kids={kids.map(({ s, i }) => evoRow(s, i, bind(i)))} />);
+    }
+    for (const { s, i } of shown) {
+      if (isKid(s)) continue; // sta nel ramo della sua skill
+      const kids = evoKids(c.skills, s.name);
+      rows.push(kids.length
+        ? <EvoBranch key={i} name={s.name} open={open.has(String(i))} onToggle={() => toggle(String(i))} head={skillRow(s, i)}
+          kids={kids.map((k) => evoRow(k.s, k.i, bind(k.i)))} />
+        : skillRow(s, i));
+    }
+  } else {
+    for (const { s, i } of shown) rows.push(skillRow(s, i));
+  }
 
   return (
     <div className="og-tab">
@@ -208,13 +296,7 @@ export function SkillsTab({ c }: { c: Character }) {
           <Chips options={types} active={activeT} onChange={setType} label="Filtra per tipo"
             count={(t) => (t === "Tutti" ? c.skills.length : c.skills.filter((s) => (s.type || "—") === t).length)} />
         )}
-        <ListBody empty={c.skills.length ? "Nessuna skill trovata." : "Nessuna skill."} rows={shown.map(({ s, i }) => (
-          <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
-            label={`Skill ${s.name}, Grado ${roman(s.lvl)} ${gradeName(s.lvl)}, maestria ${s.pct === "MAX" ? "massima" : `${s.pct}%`}`}
-            meta={<>{s.type || "—"} · {gradeName(s.lvl) || `Grado ${roman(s.lvl)}`}{s.passive ? <> · <span className="og-good">Passiva</span></> : null}<MechBadge m={s.mech} /></>}
-            right={<><span title={cycleTitle(s)}>{s.cicli ? <small className="muted">{romanN(10 * s.cicli)}+</small> : null}{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
-            tipProps={bind(i)} />
-        ))} />
+        <ListBody empty={c.skills.length ? "Nessuna skill trovata." : "Nessuna skill."} rows={rows} />
         <p className="footnote">Grado di maestria da I a X: al 100% la skill sale di grado. Passa sopra una skill (o toccala) per i dettagli.</p>
       </Win>
       {tip && tipS && (
@@ -271,14 +353,16 @@ const ACTIVE_TEXT: Record<ActiveSection, { title: string; one: string; empty: st
 export function ActiveListTab({ c, kind }: { c: Character; kind: ActiveSection }) {
   const gradeName = useGradeName();
   const [q, setQ, nq] = useQuery(c.id);
-  const { tip, tipId, bind } = useOgTip<number>();
+  const { tip, tipId, bind } = useOgTip<string>();
+  const [open, toggle] = useOpen(c.id);
   const T = ACTIVE_TEXT[kind];
   const all = c.active_skills.map((s, i) => ({ s, i })).filter(({ s }) => activeKind(s) === kind);
   const shown = all.filter(({ s }) => !nq || norm(s.name).includes(nq) || norm(s.effect || "").includes(nq)
     || (s.spheres || []).some((x) => norm(x).includes(nq)) || norm(s.god || "").includes(nq));
   const spheres = Array.from(new Set(all.flatMap(({ s }) => s.spheres || [])));
   const gods = Array.from(new Set(all.map(({ s }) => s.god).filter(Boolean) as string[]));
-  const tipS = tip ? c.active_skills[tip.key] : undefined;
+  const tipS = tip && tip.key.startsWith("a") ? c.active_skills[Number(tip.key.slice(1))] : undefined;
+  const tipK = tip && tip.key.startsWith("s") ? c.skills[Number(tip.key.slice(1))] : undefined;
 
   return (
     <div className="og-tab">
@@ -293,13 +377,18 @@ export function ActiveListTab({ c, kind }: { c: Character; kind: ActiveSection }
         )}
         <ListBody empty={all.length ? "Nessun risultato." : T.empty} rows={shown.map(({ s, i }) => {
           const extra = kind === "Incantesimo" ? (s.spheres || []).join(" + ") : kind === "Miracolo" ? s.god : "";
-          return (
+          const row = (
             <OgRow key={i} rarity={gradeRarity(s.lvl)} icon={initials(s.name)} name={s.name}
               label={`${T.one} ${s.name}, Grado ${roman(s.lvl)}, costo ${s.cost || "nessuno"}, cooldown ${s.cd} turni`}
               meta={<>{s.cost || "—"} · CD {s.cd}{extra ? ` · ${extra}` : ""}<MechBadge m={s.mech} /></>}
               right={<><span title={cycleTitle(s)}>{s.cicli ? <small className="muted">{romanN(10 * s.cicli)}+</small> : null}{roman(s.lvl)}</span><Mastery pct={s.pct} /></>}
-              tipProps={bind(i)} />
+              tipProps={bind(`a${i}`)} />
           );
+          const kids = evoKids(c.skills, s.name);
+          return kids.length
+            ? <EvoBranch key={i} name={s.name} open={open.has(String(i))} onToggle={() => toggle(String(i))} head={row}
+              kids={kids.map((k) => evoRow(k.s, `s${k.i}`, bind(`s${k.i}`)))} />
+            : row;
         })} />
         <p className="footnote">Cooldown in turni. Passa sopra una voce (o toccala) per i dettagli.</p>
       </Win>
@@ -307,6 +396,9 @@ export function ActiveListTab({ c, kind }: { c: Character; kind: ActiveSection }
         <TipLayer id={tipId} anchor={tip.el} border={`var(--r-${gradeRarity(tipS.lvl)})`}>
           <ActiveTip s={tipS} type={T.type} gradeName={gradeName} />
         </TipLayer>
+      )}
+      {tip && tipK && (
+        <TipLayer id={tipId} anchor={tip.el} border={`var(--r-${gradeRarity(10)})`}><SkillTip s={tipK} gradeName={gradeName} /></TipLayer>
       )}
     </div>
   );

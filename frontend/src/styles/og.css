@@ -87,3 +87,22 @@
 .og-tip .good { color: var(--good); } .og-tip .bad { color: var(--bad); } .og-tip .gold { color: var(--gold); }
 .og-tip .inv-tl { display: flex; justify-content: space-between; gap: 14px; }
 .og-tip .inv-hint { color: var(--muted); font-family: var(--font-mono); font-size: var(--fs-xs); }
+
+/* Albero delle evoluzioni: freccia a sinistra della skill, passive dei cicli rientrate con una linea */
+.og-tree { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.og-tree-h { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 4px; align-items: stretch; }
+.og-tree-t {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); color: var(--muted);
+  cursor: pointer; font: inherit;
+}
+.og-tree-t:hover, .og-tree-t:focus-visible { border-color: var(--violet); color: var(--fg); }
+.og-tree-a { display: inline-block; transition: transform .15s; line-height: 1; }
+.og-tree.is-open .og-tree-a { transform: rotate(90deg); }
+.og-tree-t small { font-size: var(--fs-xs); }
+.og-tree-k { display: flex; flex-direction: column; gap: 4px; margin-left: 15px; padding-left: 19px; border-left: 2px solid var(--line); }
+.og-tree-k > .og-row { position: relative; }
+.og-tree-k > .og-row::before { content: ""; position: absolute; left: -21px; top: 50%; width: 17px; border-top: 2px solid var(--line); }
+.og-tree-g { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .og-tree-a { transition: none; } }
+@media (max-width: 760px) { .og-tree-h { grid-template-columns: 44px minmax(0, 1fr); } .og-tree-t { min-height: 44px; } .og-tree-k { margin-left: 21px; padding-left: 12px; } .og-tree-k > .og-row::before { left: -14px; width: 10px; } }
